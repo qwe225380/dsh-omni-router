@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.0] - 2026-08-18
+
+- Bundle 插件化：支持 `dsh plugin add dsh-omni-router` 一键安装
+- 新增自动安装器插件：加载 bundle 时自动复制预设到 `.agent-presets`
+
 ## [0.6.0] - 2026-08-18
 
 - 项目上下文智能裁剪：按任务类型选择关键文件，并限制注入长度
