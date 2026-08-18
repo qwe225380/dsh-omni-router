@@ -67,6 +67,14 @@
 
 ## 安装
 
+### 通过 DSH 插件命令一键安装
+
+```bash
+dsh plugin --profile web add dsh-omni-router
+```
+
+安装后会自动把 Omni Router 预设复制到 `~/.dsh/.agent-presets/omni-router`，重启 DSH 后选择 **Omni Router (experimental)**。
+
 ### 通过 npm 安装
 
 ```bash
