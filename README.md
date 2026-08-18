@@ -40,14 +40,16 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 
 1. The first real user message is classified as `plan` or `direct`.
 2. Coding tasks are further classified as `bugfix` / `feature` / `refactor` / `test` / `review` / `other`.
-3. `plan` tasks enter DSH's built-in plan mode.
-4. In plan mode the model receives:
+3. A thinking mode is selected automatically: `spec` (plan-first), `react` (direct doer), or `balanced` (auto).
+4. `plan` tasks enter DSH's built-in plan mode.
+5. In plan mode the model receives:
    - A code-oriented plan template (goal, scope, involved files, steps, interface/data changes, test plan, risks, compatibility, rollback, acceptance criteria)
    - An auto-collected project context summary (root structure + key files like README/package.json)
    - TDD guidance for coding tasks (write a failing test first)
    - A delivery-gate hint (verify with tests/doublecheck before declaring done)
-5. The user approves via `exit_plan_mode`; execution starts only after approval.
-6. Direct tasks receive a lightweight verification hint (run relevant tests or a syntax check before declaring done).
+   - Git workflow guidance (branch/commit/diff review)
+6. The user approves via `exit_plan_mode`; execution starts only after approval.
+7. Direct tasks receive a lightweight verification hint (run relevant tests or a syntax check before declaring done).
 
 ## Manual overrides
 
@@ -57,14 +59,28 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
   - `/omni status` — show current classification and gate state.
   - `/omni plan` — enter plan-first mode.
   - `/omni direct` — leave plan-first mode.
+  - `/omni mode spec|react|balanced` — set thinking mode.
 - Or call the model tools:
   - `omni_status` — show current classification and gate state.
   - `omni_plan` — enter plan-first mode.
   - `omni_direct` — leave plan-first mode.
+  - `omni_mode` — set thinking mode.
+
+## Recommended plugins
+
+Omni Router works standalone, but for the best experience we recommend installing these profile bundle plugins:
+
+| Plugin | Provides |
+|---|---|
+| [dsh-trio](https://github.com/huey1in/trio) | Browser automation, MCP, GitHub/GitLab integration |
+| [dsh-doublecheck](https://github.com/PerryLink/dsh-doublecheck) | Delivery quality gate, verification, rework detection |
+| [superpowers-dsh](https://github.com/LayneChai/superpowers-dsh) | TDD, debugging, planning, collaboration skills |
+
+Install them with your DSH profile package manager, then restart DSH.
 
 ## Compatibility
 
-- Uses only DSH's public extension seams (`session/event`, `system-prompt/assemble`, `ctx.planMode`, `ctx.tools.register`).
+- Uses only DSH's public extension seams (`session/event`, `system-prompt/assemble`, `ctx.planMode`, `ctx.tools.register`, `ctx.commands`).
 - Does **not** require dsh-trio, dsh-doublecheck, or superpowers-dsh. If those are installed in the profile, their capabilities are available; if not, the preset still works.
 - Does not modify other presets.
 
