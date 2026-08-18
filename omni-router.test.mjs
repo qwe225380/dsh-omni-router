@@ -5,11 +5,14 @@ import {
   buildContextSummary,
   classifyComplexity,
   classifyTaskType,
+  deliveryGateHint,
   filterReadOnlyTools,
+  lightVerificationHint,
   normalizeParameters,
   planTemplateForType,
   readStateFromEvents,
   shouldEnterPlanMode,
+  tddHintForType,
 } from './omni-router.mjs'
 
 const baseConfig = {
@@ -127,4 +130,24 @@ test('planTemplateForType returns code-specific plan sections', () => {
   assert.match(plan, /Involved files/)
   assert.match(plan, /Test plan/)
   assert.match(plan, /Rollback/)
+})
+
+test('tddHintForType gives TDD guidance for coding tasks', () => {
+  for (const type of ['bugfix', 'feature', 'refactor', 'test']) {
+    const hint = tddHintForType(type)
+    assert.match(hint, /TDD|failing test|red-green/i)
+  }
+  assert.doesNotMatch(tddHintForType('review'), /red-green/i)
+})
+
+test('deliveryGateHint asks for doublecheck before declaring done', () => {
+  const hint = deliveryGateHint('feature')
+  assert.match(hint, /doublecheck|delivery gate|quality gate/i)
+  assert.match(hint, /rework|verify/i)
+})
+
+test('lightVerificationHint requires a lightweight check for direct tasks', () => {
+  const hint = lightVerificationHint()
+  assert.match(hint, /test|syntax|check/i)
+  assert.match(hint, /before declaring done/i)
 })

@@ -28,7 +28,10 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 4. In plan mode the model receives:
    - A code-oriented plan template (goal, scope, involved files, steps, interface/data changes, test plan, risks, compatibility, rollback, acceptance criteria)
    - An auto-collected project context summary (root structure + key files like README/package.json)
+   - TDD guidance for coding tasks (write a failing test first)
+   - A delivery-gate hint (verify with tests/doublecheck before declaring done)
 5. The user approves via `exit_plan_mode`; execution starts only after approval.
+6. Direct tasks receive a lightweight verification hint (run relevant tests or a syntax check before declaring done).
 
 ## Manual overrides
 

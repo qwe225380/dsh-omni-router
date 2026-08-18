@@ -182,6 +182,30 @@ Task-type hint: ${typeHint}`
 }
 
 /**
+ * Return a TDD hint for coding task types. Non-coding types get an empty string.
+ */
+export function tddHintForType(type) {
+  if (!['bugfix', 'feature', 'refactor', 'test'].includes(type)) return ''
+  return 'Use TDD: write a failing test first (red), run it to confirm it fails, implement the change, then run it again to see it pass (green). If a red-green-tdd or test-driven-development skill is available, load and follow it.'
+}
+
+/**
+ * Return a delivery-gate hint that prevents "claiming done without proof".
+ */
+export function deliveryGateHint(type = 'other') {
+  const coding = ['bugfix', 'feature', 'refactor', 'test'].includes(type)
+  if (!coding) return ''
+  return 'Before declaring the task done, run the delivery/quality gate: verify requirements, test evidence, implementation consistency, and review conclusion. If dsh-doublecheck tools are available (doublecheck_report, doublecheck_spec, etc.), use them; otherwise perform the same checks manually. If any red item remains, report rework required instead of done.'
+}
+
+/**
+ * Return a lightweight verification hint for direct/simple tasks.
+ */
+export function lightVerificationHint() {
+  return 'This is a direct task. After making changes, run a lightweight verification before declaring done: run the relevant tests or at least a syntax/type check. If a check fails, fix it before reporting completion.'
+}
+
+/**
  * Cordis plugin entry.
  */
 export function apply(ctx, config = {}) {
@@ -317,45 +341,68 @@ export function apply(ctx, config = {}) {
     }
   })
 
-  // For complex tasks, inject the project context and a code-oriented plan
-  // template. When plan mode is unavailable, also restrict the tool catalog to
-  // read-only tools so the model cannot mutate before approval.
+  // Inject workflow guidance based on the routed task:
+  //   - complex coding tasks: project context + code plan + TDD + delivery gate
+  //   - complex non-coding tasks: project context + generic plan
+  //   - direct tasks: lightweight verification before declaring done
+  // When plan mode is unavailable for a plan task, also restrict tools to read-only.
   ctx.on('system-prompt/assemble', async (assembled, context, next) => {
     const result = await next()
     const agent = context.agent
     if (!agent) return result
     const state = states.get(agent.session.id)
-    if (!state || state.kind !== 'plan' || !state.planRequested) return result
-
-    const taskType = state.taskType || 'other'
-    if (state.context === undefined) {
-      state.context = await getProjectContext(agent.session)
-    }
+    if (!state) return result
 
     const sections = Array.isArray(result.sections) ? [...result.sections] : []
-    sections.push({
-      name: 'omni-router:plan-template',
-      order: 40,
-      text: `Produce a structured plan with these sections:\n\n${planTemplateForType(taskType)}`,
-    })
-    if (state.context) {
+    const taskType = state.taskType || 'other'
+
+    if (state.kind === 'plan' && state.planRequested) {
+      if (state.context === undefined) {
+        state.context = await getProjectContext(agent.session)
+      }
       sections.push({
-        name: 'omni-router:project-context',
-        order: 39,
-        text: state.context,
+        name: 'omni-router:plan-template',
+        order: 40,
+        text: `Produce a structured plan with these sections:\n\n${planTemplateForType(taskType)}`,
       })
+      if (state.context) {
+        sections.push({
+          name: 'omni-router:project-context',
+          order: 39,
+          text: state.context,
+        })
+      }
+      const tdd = tddHintForType(taskType)
+      if (tdd) {
+        sections.push({ name: 'omni-router:tdd', order: 42, text: tdd })
+      }
+      const gate = deliveryGateHint(taskType)
+      if (gate) {
+        sections.push({ name: 'omni-router:delivery-gate', order: 43, text: gate })
+      }
+
+      const pm = planMode()
+      if (pm) return { ...result, sections } // hard gate is active; no tool filtering
+
+      sections.push({
+        name: 'omni-router:read-only-fallback',
+        order: 41,
+        text: `Plan mode is unavailable, so this session is restricted to read-only tools. Do not mutate any files or run mutating commands until the user explicitly confirms the plan.`,
+      })
+      const tools = filterReadOnlyTools(result.tools, READ_ONLY_TOOLS)
+      return { ...result, sections, tools }
     }
 
-    const pm = planMode()
-    if (pm) return { ...result, sections } // hard gate is active; no tool filtering
+    if (state.kind === 'direct') {
+      sections.push({
+        name: 'omni-router:light-verification',
+        order: 40,
+        text: lightVerificationHint(),
+      })
+      return { ...result, sections }
+    }
 
-    sections.push({
-      name: 'omni-router:read-only-fallback',
-      order: 41,
-      text: `Plan mode is unavailable, so this session is restricted to read-only tools. Do not mutate any files or run mutating commands until the user explicitly confirms the plan.`,
-    })
-    const tools = filterReadOnlyTools(result.tools, READ_ONLY_TOOLS)
-    return { ...result, sections, tools }
+    return result
   })
 
   // ---- model-facing manual controls -------------------------------------
