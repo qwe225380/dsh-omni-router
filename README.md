@@ -9,9 +9,24 @@ A minimal DeepSeek Harness agent preset that auto-routes tasks by complexity:
 
 ## Install
 
-Copy this directory to `$DSH_HOME/.agent-presets/omni-router`, then restart DSH and select **Omni Router (experimental)** in a new session.
+### One-command install (recommended)
 
-PowerShell:
+From this repository root:
+
+```bash
+# Linux / macOS
+./install.sh
+
+# Windows PowerShell
+./install.ps1
+
+# Or cross-platform via Node
+node scripts/install-preset.mjs
+```
+
+This copies the preset to `$DSH_HOME/.agent-presets/omni-router`, then restart DSH and select **Omni Router (experimental)** in a new session.
+
+### Manual install
 
 ```powershell
 $target = Join-Path $env:USERPROFILE '.dsh\.agent-presets\omni-router'
@@ -37,6 +52,10 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 
 - Say **“直接做”** / **“直接执行”** to force direct execution.
 - Say **“先出方案”** / **“先设计方案”** to force plan-first.
+- Use the `/omni` command:
+  - `/omni status` — show current classification and gate state.
+  - `/omni plan` — enter plan-first mode.
+  - `/omni direct` — leave plan-first mode.
 - Or call the model tools:
   - `omni_status` — show current classification and gate state.
   - `omni_plan` — enter plan-first mode.
@@ -57,6 +76,7 @@ Configuration lives in `agent.cordis.yml` under the `omni-router` row:
   name: ./omni-router.mjs
   config:
     requireConfirmation: true
+    useLLMClassification: false   # set true to let the model judge uncertain tasks
     # planFirstKeywords: [自定义, 关键词]
     # directKeywords: [直接跑, 马上改]
 ```

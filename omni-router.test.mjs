@@ -7,7 +7,9 @@ import {
   classifyTaskType,
   deliveryGateHint,
   filterReadOnlyTools,
+  gitWorkflowHint,
   lightVerificationHint,
+  needsLLMClassification,
   normalizeParameters,
   planTemplateForType,
   readStateFromEvents,
@@ -150,4 +152,18 @@ test('lightVerificationHint requires a lightweight check for direct tasks', () =
   const hint = lightVerificationHint()
   assert.match(hint, /test|syntax|check/i)
   assert.match(hint, /before declaring done/i)
+})
+
+test('gitWorkflowHint gives branch/commit/diff guidance for coding tasks', () => {
+  const hint = gitWorkflowHint('feature')
+  assert.match(hint, /branch|worktree/i)
+  assert.match(hint, /commit/i)
+  assert.match(hint, /diff|review/i)
+})
+
+test('needsLLMClassification only for uncertain tasks when enabled', () => {
+  const config = { useLLMClassification: true }
+  assert.equal(needsLLMClassification('帮我改一下登录逻辑', config), true)
+  assert.equal(needsLLMClassification('修复登录接口 500', config), false)
+  assert.equal(needsLLMClassification('今天天气怎么样', { useLLMClassification: false }), false)
 })

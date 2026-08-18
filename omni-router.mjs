@@ -14,7 +14,7 @@
 
 export const name = 'omni-router'
 
-export const inject = ['systemPrompt', 'tools', 'llm']
+export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
@@ -206,6 +206,28 @@ export function lightVerificationHint() {
 }
 
 /**
+ * Return Git workflow guidance for coding tasks.
+ */
+export function gitWorkflowHint(type) {
+  if (!['bugfix', 'feature', 'refactor', 'test'].includes(type)) return ''
+  return 'Use a clean Git workflow: create or switch to a focused feature branch (or worktree), keep the change scoped, write a conventional commit message (feat/fix/refactor/test), and review the diff before finishing.'
+}
+
+const STRONG_DIRECT_KEYWORDS = ['直接做', '直接执行', '马上做', '修复', '修一下', 'bug', 'fix', '删掉', '运行测试', '跑测试']
+const STRONG_PLAN_KEYWORDS = ['设计', '架构', '重构', '方案', '需求', '系统', '优化', 'design', 'architecture', 'refactor', 'plan', 'spec']
+
+/**
+ * Decide whether the heuristic classification is uncertain enough to ask an LLM.
+ */
+export function needsLLMClassification(text, config = {}) {
+  if (config.useLLMClassification !== true) return false
+  const normalized = normalize(String(text || ''))
+  if (STRONG_DIRECT_KEYWORDS.some((word) => normalized.includes(word))) return false
+  if (STRONG_PLAN_KEYWORDS.some((word) => normalized.includes(word))) return false
+  return true
+}
+
+/**
  * Cordis plugin entry.
  */
 export function apply(ctx, config = {}) {
@@ -294,6 +316,33 @@ export function apply(ctx, config = {}) {
     }
   }
 
+  async function classifyWithLLM(text) {
+    const agent = ctx.get('agent')
+    const llm = ctx.get('llm') || ctx.llm
+    if (!llm || !agent?.options?.provider || !agent?.options?.model) {
+      return classifyComplexity(text, config)
+    }
+    try {
+      const stream = llm.stream({
+        provider: agent.options.provider,
+        model: agent.options.model,
+        system: 'You are a task router. Reply with exactly "plan" or "direct".',
+        messages: [{ role: 'user', content: [{ type: 'text', text: `Task: ${text}\n\nReply with exactly plan or direct.` }] }],
+        maxTokens: 10,
+      })
+      let output = ''
+      for await (const chunk of stream) {
+        if (chunk.type === 'text-delta') output += chunk.text
+      }
+      const lower = output.trim().toLowerCase()
+      if (lower.includes('plan')) return 'plan'
+      if (lower.includes('direct')) return 'direct'
+      return classifyComplexity(text, config)
+    } catch {
+      return classifyComplexity(text, config)
+    }
+  }
+
   // Capture the first real user message before the first request assembles.
   ctx.on('session/event', (session, event) => {
     if (event.type !== 'user/message') return
@@ -332,10 +381,14 @@ export function apply(ctx, config = {}) {
 
     // First real message: classify once.
     if (state.kind === null) {
-      state.kind = classifyComplexity(text, config)
       state.taskType = classifyTaskType(text)
-      if (shouldEnterPlanMode(state.kind, config)) {
-        state.planRequested = setPlanMode(agent, true) || true
+      if (needsLLMClassification(text, config)) {
+        state.pendingText = text // resolved asynchronously during first assembly
+      } else {
+        state.kind = classifyComplexity(text, config)
+        if (shouldEnterPlanMode(state.kind, config)) {
+          state.planRequested = setPlanMode(agent, true) || true
+        }
       }
       persistState(session, state)
     }
@@ -352,6 +405,16 @@ export function apply(ctx, config = {}) {
     if (!agent) return result
     const state = states.get(agent.session.id)
     if (!state) return result
+
+    // Resolve an LLM-assisted classification before assembling guidance.
+    if (state.kind === null && state.pendingText && config.useLLMClassification) {
+      state.kind = await classifyWithLLM(state.pendingText)
+      delete state.pendingText
+      if (shouldEnterPlanMode(state.kind, config)) {
+        state.planRequested = setPlanMode(agent, true) || true
+      }
+      persistState(agent.session, state)
+    }
 
     const sections = Array.isArray(result.sections) ? [...result.sections] : []
     const taskType = state.taskType || 'other'
@@ -379,6 +442,10 @@ export function apply(ctx, config = {}) {
       const gate = deliveryGateHint(taskType)
       if (gate) {
         sections.push({ name: 'omni-router:delivery-gate', order: 43, text: gate })
+      }
+      const git = gitWorkflowHint(taskType)
+      if (git) {
+        sections.push({ name: 'omni-router:git-workflow', order: 44, text: git })
       }
 
       const pm = planMode()
@@ -466,6 +533,49 @@ export function apply(ctx, config = {}) {
       return 'Direct execution mode set.'
     },
   })
+
+  // ---- /omni command ------------------------------------------------------
+
+  if (ctx.commands) {
+    ctx.commands.register({
+      name: 'omni',
+      description: 'Omni Router controls: status | plan | direct | help',
+      input: { hint: 'status|plan|direct|help' },
+      handler: ({ agent, rawInput }) => {
+        const session = agent?.session
+        if (!session) return { kind: 'success', text: 'no agent session' }
+        const state = stateFor(session)
+        const cmd = (rawInput || '').trim().toLowerCase()
+        if (cmd === 'status') {
+          return {
+            kind: 'success',
+            text: [
+              `omni-router: ${state.kind || 'unclassified'}`,
+              `taskType=${state.taskType || 'unknown'}`,
+              `planRequested=${state.planRequested}`,
+              `directOverride=${state.directOverride}`,
+            ].join('\n'),
+          }
+        }
+        if (cmd === 'plan') {
+          state.kind = 'plan'
+          state.directOverride = false
+          state.planRequested = setPlanMode(agent, true) || true
+          persistState(session, state)
+          return { kind: 'success', text: state.planRequested ? 'Plan mode requested.' : 'Plan mode unavailable; plan-first prompt injected instead.' }
+        }
+        if (cmd === 'direct') {
+          state.kind = 'direct'
+          state.directOverride = true
+          state.planRequested = false
+          setPlanMode(agent, false)
+          persistState(session, state)
+          return { kind: 'success', text: 'Direct execution mode set.' }
+        }
+        return { kind: 'success', text: 'Usage: /omni status | plan | direct' }
+      },
+    })
+  }
 
   function currentSession() {
     const agent = ctx.get('agent')
