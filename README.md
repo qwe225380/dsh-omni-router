@@ -1,6 +1,7 @@
 # Omni Router (experimental)
 
 > GitHub: https://github.com/qwe225380/dsh-omni-router
+> [中文说明](./README.zh-CN.md)
 
 A minimal DeepSeek Harness agent preset that auto-routes tasks by complexity:
 
@@ -73,7 +74,7 @@ Configuration lives in `agent.cordis.yml` under the `omni-router` row:
 
 ```yaml
 - id: omni-router
-  name: ./omni-router.mjs
+  name: ./src/omni-router.mjs
   config:
     requireConfirmation: true
     useLLMClassification: false   # set true to let the model judge uncertain tasks
@@ -81,8 +82,26 @@ Configuration lives in `agent.cordis.yml` under the `omni-router` row:
     # directKeywords: [直接跑, 马上改]
 ```
 
+## Repository structure
+
+```
+omni-router/
+├── agent.cordis.yml
+├── preset.yml
+├── src/omni-router.mjs
+├── test/omni-router.test.mjs
+├── scripts/install-preset.mjs
+├── docs/
+├── .github/workflows/ci.yml
+├── README.md
+├── README.zh-CN.md
+└── LICENSE
+```
+
 ## Test
 
 ```sh
-node omni-router.test.mjs
+npm test
+# or
+node test/omni-router.test.mjs
 ```
