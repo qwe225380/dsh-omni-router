@@ -24,4 +24,5 @@ Omni Router 的配置集中在 `agent.cordis.yml` 的 `omni-router` 行：
 ## 手动控制
 
 - 对话中说 **“直接做”** / **“先出方案”** 可临时覆盖自动判断。
-- 使用 `/omni plan`、`/omni direct`、`/omni status` 控制。
+- 使用 `/omni plan`、`/omni direct`、`/omni status`、`/omni mode spec|react|balanced` 控制。
+- 模型也可调用 `omni_mode` 工具设置思维模式。
