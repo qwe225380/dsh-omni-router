@@ -39,14 +39,16 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 
 1. 第一条真实用户消息被分类为 `plan` 或 `direct`。
 2. 编码任务进一步识别为 `bugfix` / `feature` / `refactor` / `test` / `review` / `other`。
-3. `plan` 任务进入 DSH 内置 Plan Mode。
-4. 在 Plan Mode 中模型会收到：
+3. 自动选择思维模式：`spec`（方案优先）/ `react`（直接执行）/ `balanced`（自动）。
+4. `plan` 任务进入 DSH 内置 Plan Mode。
+5. 在 Plan Mode 中模型会收到：
    - 代码化方案模板（目标、范围、涉及文件、步骤、接口/数据变更、测试计划、风险、兼容性、回滚、验收标准）
    - 自动收集的项目上下文摘要（项目结构 + README/package.json 等关键文件）
    - 编码任务的 TDD 指引（先写失败测试）
    - 交付门提示（完成前用测试/doublecheck 验证）
-5. 用户通过 `exit_plan_mode` 批准后才会开始执行。
-6. 直接任务会收到轻量验证提示（改完至少跑相关测试或语法检查）。
+   - Git 工作流提示（分支/commit/diff 审查）
+6. 用户通过 `exit_plan_mode` 批准后才会开始执行。
+7. 直接任务会收到轻量验证提示（改完至少跑相关测试或语法检查）。
 
 ## 手动控制
 
@@ -56,7 +58,20 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
   - `/omni status` — 查看当前分类和门控状态。
   - `/omni plan` — 进入方案优先模式。
   - `/omni direct` — 进入直接执行模式。
-- 或调用模型工具：`omni_status` / `omni_plan` / `omni_direct`。
+  - `/omni mode spec|react|balanced` — 设置思维模式。
+- 或调用模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode`。
+
+## 推荐插件
+
+Omni Router 可以独立使用，但为了获得最佳体验，建议同时安装以下 profile bundle 插件：
+
+| 插件 | 提供能力 |
+|---|---|
+| [dsh-trio](https://github.com/huey1in/trio) | 浏览器自动化、MCP、GitHub/GitLab 集成 |
+| [dsh-doublecheck](https://github.com/PerryLink/dsh-doublecheck) | 交付质量门、验证、返工检测 |
+| [superpowers-dsh](https://github.com/LayneChai/superpowers-dsh) | TDD、调试、规划、协作技能 |
+
+安装后重启 DSH 即可。
 
 ## 兼容性
 
