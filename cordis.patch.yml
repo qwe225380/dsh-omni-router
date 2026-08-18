@@ -1,0 +1,7 @@
+# dsh-omni-router bundle patch.
+# The installer row copies the bundled agent preset into the user preset root
+# on first load, so `dsh plugin add dsh-omni-router` works as a one-command
+# install for the Omni Router mode.
+- insert:
+    - id: omni-router-installer
+      name: dsh-omni-router/installer
