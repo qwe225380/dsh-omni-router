@@ -100,6 +100,7 @@ export function readStateFromEvents(events) {
       return {
         kind: data.kind || null,
         taskType: data.taskType || null,
+        thinkingMode: data.thinkingMode || null,
         planRequested: !!data.planRequested,
         directOverride: !!data.directOverride,
       }
@@ -129,6 +130,32 @@ export function classifyTaskType(text) {
   if (/(测试|单测|test|补测试)/.test(normalized)) return 'test'
   if (/(review|审查|评审|code review|pr)/.test(normalized)) return 'review'
   return 'other'
+}
+
+/**
+ * Classify the preferred reasoning mode:
+ *   spec     - plan-first, deep thinking, design before acting
+ *   react    - direct doer, execute quickly
+ *   balanced - let the task decide (default)
+ */
+export function classifyThinkingMode(text) {
+  const normalized = normalize(String(text || ''))
+  if (/(设计|架构|方案|需求|规划|spec|design|architecture|plan)/.test(normalized)) return 'spec'
+  if (/(直接|马上|赶紧|快|do it|just do|react|execute)/.test(normalized)) return 'react'
+  return 'balanced'
+}
+
+/**
+ * Return a prompt hint for the selected thinking mode.
+ */
+export function thinkingModeHint(mode) {
+  if (mode === 'spec') {
+    return 'Thinking mode: spec — think deeply first, explore before acting, and prefer a plan/design before implementation.'
+  }
+  if (mode === 'react') {
+    return 'Thinking mode: react — act directly, keep ceremony low, and produce results efficiently.'
+  }
+  return 'Thinking mode: balanced — decide per task whether to plan first or act directly.'
 }
 
 /**
@@ -249,7 +276,7 @@ export function apply(ctx, config = {}) {
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = readPersistedState(session) || { kind: null, taskType: null, planRequested: false, directOverride: false }
+      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, planRequested: false, directOverride: false }
       states.set(session.id, state)
     }
     return state
@@ -261,6 +288,7 @@ export function apply(ctx, config = {}) {
       session.append(EVENT_TYPE, {
         kind: state.kind,
         taskType: state.taskType || null,
+        thinkingMode: state.thinkingMode || null,
         planRequested: !!state.planRequested,
         directOverride: !!state.directOverride,
       })
@@ -363,6 +391,7 @@ export function apply(ctx, config = {}) {
       state.kind = 'direct'
       state.directOverride = true
       if (state.taskType === null) state.taskType = classifyTaskType(text)
+      if (state.thinkingMode === null) state.thinkingMode = classifyThinkingMode(text)
       if (state.planRequested) setPlanMode(agent, false)
       state.planRequested = false
       persistState(session, state)
@@ -372,6 +401,7 @@ export function apply(ctx, config = {}) {
       state.kind = 'plan'
       state.directOverride = false
       if (state.taskType === null) state.taskType = classifyTaskType(text)
+      if (state.thinkingMode === null) state.thinkingMode = classifyThinkingMode(text)
       if (shouldEnterPlanMode('plan', config)) {
         state.planRequested = setPlanMode(agent, true) || true
       }
@@ -382,6 +412,7 @@ export function apply(ctx, config = {}) {
     // First real message: classify once.
     if (state.kind === null) {
       state.taskType = classifyTaskType(text)
+      state.thinkingMode = classifyThinkingMode(text)
       if (needsLLMClassification(text, config)) {
         state.pendingText = text // resolved asynchronously during first assembly
       } else {
@@ -418,6 +449,11 @@ export function apply(ctx, config = {}) {
 
     const sections = Array.isArray(result.sections) ? [...result.sections] : []
     const taskType = state.taskType || 'other'
+    sections.push({
+      name: 'omni-router:thinking-mode',
+      order: 38,
+      text: thinkingModeHint(state.thinkingMode || 'balanced'),
+    })
 
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
@@ -489,10 +525,11 @@ export function apply(ctx, config = {}) {
     execute() {
       const session = currentSession()
       if (!session) return 'no agent session'
-      const state = states.get(session.id) || { kind: null, taskType: null, planRequested: false, directOverride: false }
+      const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, planRequested: false, directOverride: false }
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
+        `thinkingMode=${state.thinkingMode || 'balanced'}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
       ].join('\n')
@@ -534,13 +571,40 @@ export function apply(ctx, config = {}) {
     },
   })
 
+  registerTool({
+    name: 'omni_mode',
+    description: 'Set the session thinking mode: spec (plan-first), react (direct doer), or balanced.',
+    parameters: {
+      type: 'object',
+      properties: {
+        mode: {
+          type: 'string',
+          enum: ['spec', 'react', 'balanced'],
+          description: 'spec | react | balanced',
+        },
+      },
+      required: ['mode'],
+    },
+    execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      if (!session || !agent) return 'no agent session'
+      const mode = String(args?.mode || '').toLowerCase()
+      if (!['spec', 'react', 'balanced'].includes(mode)) return 'Invalid mode. Use: spec | react | balanced'
+      const state = stateFor(session)
+      state.thinkingMode = mode
+      persistState(session, state)
+      return `Thinking mode set to ${mode}.`
+    },
+  })
+
   // ---- /omni command ------------------------------------------------------
 
   if (ctx.commands) {
     ctx.commands.register({
       name: 'omni',
-      description: 'Omni Router controls: status | plan | direct | help',
-      input: { hint: 'status|plan|direct|help' },
+      description: 'Omni Router controls: status | plan | direct | mode <spec|react|balanced> | help',
+      input: { hint: 'status|plan|direct|mode <spec|react|balanced>|help' },
       handler: ({ agent, rawInput }) => {
         const session = agent?.session
         if (!session) return { kind: 'success', text: 'no agent session' }
@@ -552,6 +616,7 @@ export function apply(ctx, config = {}) {
             text: [
               `omni-router: ${state.kind || 'unclassified'}`,
               `taskType=${state.taskType || 'unknown'}`,
+              `thinkingMode=${state.thinkingMode || 'balanced'}`,
               `planRequested=${state.planRequested}`,
               `directOverride=${state.directOverride}`,
             ].join('\n'),
@@ -572,7 +637,16 @@ export function apply(ctx, config = {}) {
           persistState(session, state)
           return { kind: 'success', text: 'Direct execution mode set.' }
         }
-        return { kind: 'success', text: 'Usage: /omni status | plan | direct' }
+        if (cmd.startsWith('mode ')) {
+          const mode = cmd.slice(5).trim()
+          if (!['spec', 'react', 'balanced'].includes(mode)) {
+            return { kind: 'success', text: 'Invalid mode. Use: /omni mode spec | react | balanced' }
+          }
+          state.thinkingMode = mode
+          persistState(session, state)
+          return { kind: 'success', text: `Thinking mode set to ${mode}.` }
+        }
+        return { kind: 'success', text: 'Usage: /omni status | plan | direct | mode <spec|react|balanced>' }
       },
     })
   }
