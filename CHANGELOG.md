@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0] - 2026-08-18
+
+- 集成思维模式路由：`spec` / `react` / `balanced`
+- 新增 `/omni mode` 命令和 `omni_mode` 工具
+- README 补充推荐插件说明（dsh-trio / dsh-doublecheck / superpowers-dsh）
+
 ## [0.4.0] - 2026-08-18
 
 - 全面标准化仓库结构：新增 `src/`、`test/`、`docs/`、`.github/workflows/ci.yml`
