@@ -23,14 +23,12 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 ## Behavior
 
 1. The first real user message is classified as `plan` or `direct`.
-2. `plan` tasks enter DSH's built-in plan mode.
-3. In plan mode the model must produce:
-   - Goal
-   - Scope
-   - Implementation steps
-   - Risks
-   - Acceptance criteria
-4. The user approves via `exit_plan_mode`; execution starts only after approval.
+2. Coding tasks are further classified as `bugfix` / `feature` / `refactor` / `test` / `review` / `other`.
+3. `plan` tasks enter DSH's built-in plan mode.
+4. In plan mode the model receives:
+   - A code-oriented plan template (goal, scope, involved files, steps, interface/data changes, test plan, risks, compatibility, rollback, acceptance criteria)
+   - An auto-collected project context summary (root structure + key files like README/package.json)
+5. The user approves via `exit_plan_mode`; execution starts only after approval.
 
 ## Manual overrides
 

@@ -2,9 +2,12 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  buildContextSummary,
   classifyComplexity,
+  classifyTaskType,
   filterReadOnlyTools,
   normalizeParameters,
+  planTemplateForType,
   readStateFromEvents,
   shouldEnterPlanMode,
 } from './omni-router.mjs'
@@ -65,6 +68,7 @@ test('readStateFromEvents restores the latest persisted omni-router state', () =
   ]
   assert.deepEqual(readStateFromEvents(events), {
     kind: 'direct',
+    taskType: null,
     planRequested: false,
     directOverride: true,
   })
@@ -88,4 +92,39 @@ test('filterReadOnlyTools removes mutating tools in degraded plan mode', () => {
     { name: 'glob' },
     { name: 'omni_status' },
   ])
+})
+
+test('classifyTaskType recognizes common coding task types', () => {
+  assert.equal(classifyTaskType('修复登录接口返回 500 的问题'), 'bugfix')
+  assert.equal(classifyTaskType('帮我新做一个用户注册功能'), 'feature')
+  assert.equal(classifyTaskType('重构一下订单模块的代码结构'), 'refactor')
+  assert.equal(classifyTaskType('给这个函数补单元测试'), 'test')
+  assert.equal(classifyTaskType('帮我 review 一下这个 PR'), 'review')
+  assert.equal(classifyTaskType('今天天气怎么样'), 'other')
+})
+
+test('buildContextSummary lists root entries and key file contents', () => {
+  const entries = [
+    { name: 'src', type: 'directory' },
+    { name: 'package.json', type: 'file' },
+    { name: 'README.md', type: 'file' },
+  ]
+  const files = {
+    'package.json': '{"name":"demo","scripts":{"test":"vitest"}}',
+    'README.md': '# Demo project',
+  }
+  const summary = buildContextSummary(entries, files)
+  assert.match(summary, /src/)
+  assert.match(summary, /package\.json/)
+  assert.match(summary, /README\.md/)
+  assert.match(summary, /"name":"demo"/)
+})
+
+test('planTemplateForType returns code-specific plan sections', () => {
+  const plan = planTemplateForType('bugfix')
+  assert.match(plan, /Goal/)
+  assert.match(plan, /Scope/)
+  assert.match(plan, /Involved files/)
+  assert.match(plan, /Test plan/)
+  assert.match(plan, /Rollback/)
 })

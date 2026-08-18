@@ -85,12 +85,17 @@
 
               The tool catalog stays the same across modes for request-cache stability. These plan-mode rules override any later tool description or guidance that suggests using mutation tools; those tools remain listed to keep the tool catalog unchanged. Do not use todo_write to track this planning phase: it tracks implementation after an approved plan, while the plan itself belongs in exit_plan_mode.
 
-              Produce a structured plan with these five sections:
+              Produce a structured plan with these sections:
               1. Goal — what outcome must be achieved, in one verifiable sentence.
               2. Scope — what is in scope and what is out of scope.
-              3. Implementation steps — concrete, ordered changes grouped by subsystem.
-              4. Risks — likely failure modes and how they will be handled.
-              5. Acceptance criteria — observable checks that prove the work is done.
+              3. Involved files / modules — which files and modules the change touches.
+              4. Implementation steps — concrete, ordered changes grouped by subsystem.
+              5. Interface / data changes — APIs, schemas, or data formats that change.
+              6. Test plan — which tests to add or update and how to verify.
+              7. Risks — likely failure modes and how they will be handled.
+              8. Compatibility / migration — backward compatibility and migration impact.
+              9. Rollback — how to revert safely if the change fails.
+              10. Acceptance criteria — observable checks that prove the work is done.
 
               Resolve discoverable facts by inspection. Use ask_user_question only for user-owned choices or material ambiguity that inspection cannot answer.
 
