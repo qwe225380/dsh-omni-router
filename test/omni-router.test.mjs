@@ -5,6 +5,7 @@ import {
   buildContextSummary,
   classifyComplexity,
   classifyTaskType,
+  classifyThinkingMode,
   deliveryGateHint,
   filterReadOnlyTools,
   gitWorkflowHint,
@@ -15,6 +16,7 @@ import {
   readStateFromEvents,
   shouldEnterPlanMode,
   tddHintForType,
+  thinkingModeHint,
 } from '../src/omni-router.mjs'
 
 const baseConfig = {
@@ -74,6 +76,7 @@ test('readStateFromEvents restores the latest persisted omni-router state', () =
   assert.deepEqual(readStateFromEvents(events), {
     kind: 'direct',
     taskType: null,
+    thinkingMode: null,
     planRequested: false,
     directOverride: true,
   })
@@ -166,4 +169,16 @@ test('needsLLMClassification only for uncertain tasks when enabled', () => {
   assert.equal(needsLLMClassification('帮我改一下登录逻辑', config), true)
   assert.equal(needsLLMClassification('修复登录接口 500', config), false)
   assert.equal(needsLLMClassification('今天天气怎么样', { useLLMClassification: false }), false)
+})
+
+test('classifyThinkingMode recognizes spec/react/balanced', () => {
+  assert.equal(classifyThinkingMode('帮我设计一个登录功能'), 'spec')
+  assert.equal(classifyThinkingMode('直接帮我改这个变量名'), 'react')
+  assert.equal(classifyThinkingMode('帮我处理一下这个任务'), 'balanced')
+})
+
+test('thinkingModeHint gives mode-specific guidance', () => {
+  assert.match(thinkingModeHint('spec'), /spec|deep|plan|think/i)
+  assert.match(thinkingModeHint('react'), /react|direct|do|execute/i)
+  assert.match(thinkingModeHint('balanced'), /balanced|auto/i)
 })
