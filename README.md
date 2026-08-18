@@ -67,6 +67,14 @@
 
 ## Install
 
+### Install via npm
+
+```bash
+npm i dsh-omni-router
+cd node_modules/dsh-omni-router
+node scripts/install-preset.mjs
+```
+
 ### One-command install
 
 ```bash
