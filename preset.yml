@@ -1,0 +1,3 @@
+name: Omni Router (experimental)
+description: Auto-routes tasks by complexity — simple tasks run directly, complex or ambiguous tasks enter plan mode and produce a structured plan (goal, scope, steps, risks, acceptance criteria) before execution. Reuses installed capabilities when available.
+order: 6
