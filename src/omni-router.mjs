@@ -159,18 +159,37 @@ export function thinkingModeHint(mode) {
 }
 
 /**
+ * Choose which root-level key files matter most for a task type.
+ */
+export function selectKeyFilesForTask(taskType, entries) {
+  const names = new Set((Array.isArray(entries) ? entries : []).map((entry) => entry.name))
+  const common = ['README.md', 'package.json', 'AGENTS.md', 'CLAUDE.md', 'tsconfig.json', 'pyproject.toml', 'Cargo.toml', 'go.mod']
+  const taskSpecific = {
+    test: ['test', 'tests', 'vitest.config.ts', 'jest.config.js'],
+    bugfix: ['src', 'lib', 'test', 'tests'],
+    feature: ['src', 'lib', 'api', 'README.md'],
+    refactor: ['src', 'lib', 'test', 'tests'],
+  }[taskType] || []
+  const selected = [...common, ...taskSpecific].filter((name) => names.has(name))
+  return [...new Set(selected)]
+}
+
+/**
  * Build a compact project-context summary from root entries and key file
  * contents. This is injected into plan mode so the model starts with context
- * instead of guessing.
+ * instead of guessing. `options.maxFileChars` and `options.maxTotalChars` keep
+ * the injected context bounded.
  */
-export function buildContextSummary(entries, files) {
+export function buildContextSummary(entries, files, options = {}) {
+  const maxFileChars = options.maxFileChars ?? 800
+  const maxTotalChars = options.maxTotalChars ?? 4000
   const entryLines = (Array.isArray(entries) ? entries : []).map((entry) => {
     const suffix = entry.type === 'directory' ? '/' : ''
     return `- ${entry.name}${suffix}`
   })
   const fileBlocks = Object.entries(files || {}).map(([name, content]) => {
     const text = String(content || '')
-    const clipped = text.length > 800 ? `${text.slice(0, 800)}\n…(truncated)` : text
+    const clipped = text.length > maxFileChars ? `${text.slice(0, maxFileChars)}\n…(truncated)` : text
     return `--- ${name} ---\n${clipped}`
   })
   const parts = ['Project context:']
@@ -178,7 +197,12 @@ export function buildContextSummary(entries, files) {
   if (fileBlocks.length) {
     parts.push('', 'Key files:', fileBlocks.join('\n\n'))
   }
-  return parts.join('\n')
+  let summary = parts.join('\n')
+  if (summary.length > maxTotalChars) {
+    const suffix = '\n…(truncated)'
+    summary = `${summary.slice(0, Math.max(0, maxTotalChars - suffix.length))}${suffix}`
+  }
+  return summary
 }
 
 /**
@@ -230,6 +254,13 @@ export function deliveryGateHint(type = 'other') {
  */
 export function lightVerificationHint() {
   return 'This is a direct task. After making changes, run a lightweight verification before declaring done: run the relevant tests or at least a syntax/type check. If a check fails, fix it before reporting completion.'
+}
+
+/**
+ * Return a hint that turns plan acceptance criteria into a trackable checklist.
+ */
+export function acceptanceChecklistHint() {
+  return 'After the plan is approved, use todo_write to create a checklist from the acceptance criteria. Track each item during execution and mark it done only when the corresponding verification passes.'
 }
 
 /**
@@ -318,7 +349,7 @@ export function apply(ctx, config = {}) {
     }
   }
 
-  async function getProjectContext(session) {
+  async function getProjectContext(session, taskType = 'other') {
     const fs = ctx.get('fs') || ctx.fs
     if (!fs) return ''
     const cwd = session.meta?.cwd || session.header?.cwd
@@ -326,9 +357,7 @@ export function apply(ctx, config = {}) {
     try {
       const root = await fs.resolve('.', { cwd })
       const entries = await fs.listDir(root)
-      const names = new Set((entries || []).map((entry) => entry.name))
-      const keyFiles = ['README.md', 'package.json', 'AGENTS.md', 'CLAUDE.md', 'tsconfig.json', 'pyproject.toml', 'Cargo.toml', 'go.mod']
-        .filter((name) => names.has(name))
+      const keyFiles = selectKeyFilesForTask(taskType, entries)
       const files = {}
       for (const name of keyFiles) {
         try {
@@ -338,7 +367,7 @@ export function apply(ctx, config = {}) {
           // Ignore unreadable files; context collection is best-effort.
         }
       }
-      return buildContextSummary(entries, files)
+      return buildContextSummary(entries, files, { maxTotalChars: 3000 })
     } catch {
       return ''
     }
@@ -457,7 +486,7 @@ export function apply(ctx, config = {}) {
 
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
-        state.context = await getProjectContext(agent.session)
+        state.context = await getProjectContext(agent.session, taskType)
       }
       sections.push({
         name: 'omni-router:plan-template',
@@ -483,6 +512,11 @@ export function apply(ctx, config = {}) {
       if (git) {
         sections.push({ name: 'omni-router:git-workflow', order: 44, text: git })
       }
+      sections.push({
+        name: 'omni-router:acceptance-checklist',
+        order: 45,
+        text: acceptanceChecklistHint(),
+      })
 
       const pm = planMode()
       if (pm) return { ...result, sections } // hard gate is active; no tool filtering
