@@ -67,6 +67,14 @@
 
 ## 安装
 
+### 通过 npm 安装
+
+```bash
+npm i dsh-omni-router
+cd node_modules/dsh-omni-router
+node scripts/install-preset.mjs
+```
+
 ### 一键安装
 
 ```bash
