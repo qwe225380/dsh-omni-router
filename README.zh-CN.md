@@ -43,10 +43,11 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 4. `plan` 任务进入 DSH 内置 Plan Mode。
 5. 在 Plan Mode 中模型会收到：
    - 代码化方案模板（目标、范围、涉及文件、步骤、接口/数据变更、测试计划、风险、兼容性、回滚、验收标准）
-   - 自动收集的项目上下文摘要（项目结构 + README/package.json 等关键文件）
+   - 自动收集的项目上下文摘要（按任务类型挑选关键文件，控制长度）
    - 编码任务的 TDD 指引（先写失败测试）
    - 交付门提示（完成前用测试/doublecheck 验证）
    - Git 工作流提示（分支/commit/diff 审查）
+   - 验收清单提示（把验收标准转成 todo 追踪）
 6. 用户通过 `exit_plan_mode` 批准后才会开始执行。
 7. 直接任务会收到轻量验证提示（改完至少跑相关测试或语法检查）。
 
