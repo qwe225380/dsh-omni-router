@@ -1,8 +1,14 @@
 {
   "name": "dsh-omni-router",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Omni Router - auto-routing DeepSeek Harness preset: simple tasks run directly, complex tasks plan first with approval gate, coding tasks get TDD/delivery-gate guidance.",
   "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./installer": "./lib/installer.js",
+    "./package.json": "./package.json"
+  },
   "license": "MIT",
   "keywords": [
     "dsh",
@@ -14,6 +20,8 @@
     "tdd"
   ],
   "files": [
+    "lib",
+    "cordis.patch.yml",
     "agent.cordis.yml",
     "preset.yml",
     "src",
@@ -26,6 +34,11 @@
     "install.sh",
     "scripts"
   ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "scripts": {
     "test": "node test/omni-router.test.mjs",
     "install:preset": "node scripts/install-preset.mjs"
