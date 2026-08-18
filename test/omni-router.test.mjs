@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  acceptanceChecklistHint,
   buildContextSummary,
   classifyComplexity,
   classifyTaskType,
@@ -14,6 +15,7 @@ import {
   normalizeParameters,
   planTemplateForType,
   readStateFromEvents,
+  selectKeyFilesForTask,
   shouldEnterPlanMode,
   tddHintForType,
   thinkingModeHint,
@@ -181,4 +183,29 @@ test('thinkingModeHint gives mode-specific guidance', () => {
   assert.match(thinkingModeHint('spec'), /spec|deep|plan|think/i)
   assert.match(thinkingModeHint('react'), /react|direct|do|execute/i)
   assert.match(thinkingModeHint('balanced'), /balanced|auto/i)
+})
+
+test('selectKeyFilesForTask prioritizes relevant files', () => {
+  const entries = [
+    { name: 'package.json', type: 'file' },
+    { name: 'README.md', type: 'file' },
+    { name: 'src', type: 'directory' },
+    { name: 'tests', type: 'directory' },
+  ]
+  const files = selectKeyFilesForTask('test', entries)
+  assert.ok(files.includes('package.json'))
+  assert.ok(files.includes('README.md'))
+})
+
+test('buildContextSummary respects a max total length', () => {
+  const entries = [{ name: 'package.json', type: 'file' }]
+  const files = { 'package.json': 'x'.repeat(2000) }
+  const summary = buildContextSummary(entries, files, { maxTotalChars: 500 })
+  assert.ok(summary.length <= 500)
+})
+
+test('acceptanceChecklistHint tells model to create todo from acceptance criteria', () => {
+  const hint = acceptanceChecklistHint()
+  assert.match(hint, /acceptance|验收/i)
+  assert.match(hint, /todo|checklist|清单/i)
 })
