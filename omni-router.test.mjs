@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   classifyComplexity,
+  normalizeParameters,
   shouldEnterPlanMode,
 } from './omni-router.mjs'
 
@@ -42,4 +43,13 @@ test('shouldEnterPlanMode only gates complex tasks when confirmation is required
   assert.equal(shouldEnterPlanMode('plan', { requireConfirmation: true }), true)
   assert.equal(shouldEnterPlanMode('direct', { requireConfirmation: true }), false)
   assert.equal(shouldEnterPlanMode('plan', { requireConfirmation: false }), false)
+})
+
+test('normalizeParameters always returns an object JSON schema', () => {
+  assert.deepEqual(normalizeParameters({}), { type: 'object', properties: {} })
+  assert.deepEqual(normalizeParameters(undefined), { type: 'object', properties: {} })
+  assert.deepEqual(
+    normalizeParameters({ type: 'object', properties: { mode: { type: 'string' } } }),
+    { type: 'object', properties: { mode: { type: 'string' } } },
+  )
 })

@@ -74,6 +74,20 @@ export function shouldEnterPlanMode(kind, config = {}) {
 }
 
 /**
+ * Normalize a tool parameters value into a valid JSON Schema object schema.
+ * DSH rejects `{}`; it requires `{ type: "object", properties: {} }`.
+ */
+export function normalizeParameters(parameters) {
+  if (parameters && parameters.type === 'object' && parameters.properties) {
+    return parameters
+  }
+  return {
+    type: 'object',
+    properties: (parameters && parameters.properties) || {},
+  }
+}
+
+/**
  * Cordis plugin entry.
  */
 export function apply(ctx, config = {}) {
@@ -176,7 +190,7 @@ export function apply(ctx, config = {}) {
   function registerTool(tool) {
     ctx.effect(() => ctx.tools.register({
       ...tool,
-      parameters: tool.parameters || {},
+      parameters: normalizeParameters(tool.parameters),
       output: tool.output || { schema: { type: 'string' }, render: (_a, v) => [{ type: 'text', text: v }] },
     }))
   }
