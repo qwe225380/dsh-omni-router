@@ -44,10 +44,11 @@ Copy-Item -Recurse -LiteralPath '.\omni-router' -Destination $target
 4. `plan` tasks enter DSH's built-in plan mode.
 5. In plan mode the model receives:
    - A code-oriented plan template (goal, scope, involved files, steps, interface/data changes, test plan, risks, compatibility, rollback, acceptance criteria)
-   - An auto-collected project context summary (root structure + key files like README/package.json)
+   - An auto-collected project context summary (task-aware key files, bounded size)
    - TDD guidance for coding tasks (write a failing test first)
    - A delivery-gate hint (verify with tests/doublecheck before declaring done)
    - Git workflow guidance (branch/commit/diff review)
+   - An acceptance-checklist hint (turn acceptance criteria into a todo list)
 6. The user approves via `exit_plan_mode`; execution starts only after approval.
 7. Direct tasks receive a lightweight verification hint (run relevant tests or a syntax check before declaring done).
 
