@@ -21,10 +21,16 @@ const target = path.join(os.homedir(), '.dsh', '.agent-presets', 'omni-router')
 const files = [
   'agent.cordis.yml',
   'preset.yml',
-  'omni-router.mjs',
-  'omni-router.test.mjs',
-  'README.md',
   'LICENSE',
+  'README.md',
+  'README.zh-CN.md',
+  'package.json',
+]
+
+const dirs = [
+  ['src', 'src'],
+  ['test', 'test'],
+  ['docs', 'docs'],
 ]
 
 const force = process.argv.includes('--force')
@@ -42,6 +48,20 @@ for (const name of files) {
   const src = path.join(repoRoot, name)
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, path.join(target, name))
+  }
+}
+
+for (const [from, to] of dirs) {
+  const srcDir = path.join(repoRoot, from)
+  const dstDir = path.join(target, to)
+  if (!fs.existsSync(srcDir)) continue
+  fs.mkdirSync(dstDir, { recursive: true })
+  for (const entry of fs.readdirSync(srcDir)) {
+    const srcFile = path.join(srcDir, entry)
+    const stat = fs.statSync(srcFile)
+    if (stat.isFile()) {
+      fs.copyFileSync(srcFile, path.join(dstDir, entry))
+    }
   }
 }
 
