@@ -88,19 +88,73 @@ export function normalizeParameters(parameters) {
 }
 
 /**
+ * Rebuild Omni Router state from persisted session events.
+ * Returns the latest `omni/router` event data or `null`.
+ */
+export function readStateFromEvents(events) {
+  const list = Array.isArray(events) ? events : []
+  for (let i = list.length - 1; i >= 0; i--) {
+    const event = list[i]
+    if (event && event.type === 'omni/router') {
+      const data = event.data || {}
+      return {
+        kind: data.kind || null,
+        planRequested: !!data.planRequested,
+        directOverride: !!data.directOverride,
+      }
+    }
+  }
+  return null
+}
+
+/**
+ * Keep only tools whose names are in the allowed set.
+ * Used by the degraded plan-first fallback.
+ */
+export function filterReadOnlyTools(tools, allowed) {
+  if (!Array.isArray(tools)) return tools
+  return tools.filter((tool) => tool && allowed.has(tool.name))
+}
+
+/**
  * Cordis plugin entry.
  */
 export function apply(ctx, config = {}) {
+  const EVENT_TYPE = 'omni/router'
+  // Fallback read-only surface used when plan mode is unavailable.
+  const READ_ONLY_TOOLS = new Set([
+    'read', 'glob', 'grep',
+    'ask_user_question', 'todo_write',
+    'omni_status', 'omni_plan', 'omni_direct',
+    'browser_snapshot', 'browser_elements', 'browser_status', 'browser_tabs', 'browser_cookies',
+  ])
   const states = new Map() // session.id -> { kind, planRequested, directOverride }
   const agents = new Map() // session.id -> Agent
+
+  function readPersistedState(session) {
+    return readStateFromEvents(session.events)
+  }
 
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = { kind: null, planRequested: false, directOverride: false }
+      state = readPersistedState(session) || { kind: null, planRequested: false, directOverride: false }
       states.set(session.id, state)
     }
     return state
+  }
+
+  function persistState(session, state) {
+    states.set(session.id, state)
+    try {
+      session.append(EVENT_TYPE, {
+        kind: state.kind,
+        planRequested: !!state.planRequested,
+        directOverride: !!state.directOverride,
+      })
+    } catch {
+      // Persistence is best-effort; the in-memory state still works.
+    }
   }
 
   function agentFor(session) {
@@ -145,6 +199,7 @@ export function apply(ctx, config = {}) {
       state.directOverride = true
       if (state.planRequested) setPlanMode(agent, false)
       state.planRequested = false
+      persistState(session, state)
       return
     }
     if (planWords.some((w) => lower.includes(w))) {
@@ -153,6 +208,7 @@ export function apply(ctx, config = {}) {
       if (shouldEnterPlanMode('plan', config)) {
         state.planRequested = setPlanMode(agent, true) || true
       }
+      persistState(session, state)
       return
     }
 
@@ -162,6 +218,7 @@ export function apply(ctx, config = {}) {
       if (shouldEnterPlanMode(state.kind, config)) {
         state.planRequested = setPlanMode(agent, true) || true
       }
+      persistState(session, state)
     }
   })
 
@@ -180,9 +237,10 @@ export function apply(ctx, config = {}) {
     sections.push({
       name: 'omni-router:plan-first',
       order: 40,
-      text: `The user's first task is complex or ambiguous. Before making any edits or running mutating commands, produce a structured plan covering: goal, scope, implementation steps, risks, and acceptance criteria. Then call ask_user_question to ask the user to confirm or adjust the plan. Do not proceed with implementation until the user explicitly confirms.`,
+      text: `The user's first task is complex or ambiguous. Plan mode is unavailable, so this session is restricted to read-only tools. Before any mutation, produce a structured plan covering: goal, scope, implementation steps, risks, and acceptance criteria. Then call ask_user_question to ask the user to confirm or adjust the plan. Do not proceed with implementation until the user explicitly confirms.`,
     })
-    return { ...result, sections }
+    const tools = filterReadOnlyTools(result.tools, READ_ONLY_TOOLS)
+    return { ...result, sections, tools }
   })
 
   // ---- model-facing manual controls -------------------------------------
@@ -223,6 +281,7 @@ export function apply(ctx, config = {}) {
       state.kind = 'plan'
       state.directOverride = false
       state.planRequested = setPlanMode(agent, true) || true
+      persistState(session, state)
       return state.planRequested ? 'Plan mode requested.' : 'Plan mode unavailable; plan-first prompt injected instead.'
     },
   })
@@ -240,6 +299,7 @@ export function apply(ctx, config = {}) {
       state.directOverride = true
       state.planRequested = false
       setPlanMode(agent, false)
+      persistState(session, state)
       return 'Direct execution mode set.'
     },
   })

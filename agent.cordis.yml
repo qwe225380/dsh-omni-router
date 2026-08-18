@@ -1,38 +1,18 @@
-# The `omni-router` experimental preset: task-aware auto-routing with a
-# plan-first gate for complex/ambiguous tasks.
+# Omni Router (experimental)
 #
-# One preset, one simple behavior:
+# Auto-routes the first real user task by complexity:
+#   - simple / concrete task  -> full tool catalog, direct execution
+#   - complex / ambiguous    -> built-in plan mode, structured plan, approval gate
 #
-#   simple/clear task  -> full tool catalog, direct execution.
-#   complex/ambiguous  -> enter built-in plan mode, produce a structured plan,
-#                         and wait for user approval before executing.
-#
-# The router classifies the session's first real user message before the first
-# model request. It reuses the host profile's installed capabilities (browser,
-# MCP, GitHub, quality gates, skills) when they are present, and degrades
-# gracefully when they are not. It does not replace or modify other presets.
-#
-# This file is an AGENT-PLANE composition. The roster mounts it ONCE under a
-# standing scope; every session naming it joins by scope parentage, so the
-# tools and prompt sections registered here cover each joined agent while a
-# session's own state stays keyed per Session/Agent inside the plugins. The
-# host composition (`base.cordis.yml` + `web.cordis.yml`) keeps everything a
-# preset must not own: the registries themselves, the sandbox and approval
-# stack, persistence, and the model route.
-#
-# A service row here MUST sit inside a group carrying an `isolate` realm.
-# Without one it publishes into the root realm, where it is process-global —
-# another preset publishing the same name collides, and a host reader would
-# resolve one preset's instance for every session; `dsh-agent-presets` rejects
-# that at mount. `true` means an entry-local realm: this standing mount's own
-# private instance, apart from every other preset's. (A shared label does NOT
-# pool instances — `provide()` throws on the second registration under the
-# same realm symbol; labels join REALMS, and are not what this file needs.)
+# This preset is intentionally minimal. It reuses the host profile's installed
+# capabilities (browser/MCP/GitHub, quality gates, skills) when present and
+# degrades gracefully when absent. It does not modify other presets.
+
+# This file is an AGENT-PLANE composition. It must not own registries, sandbox,
+# persistence, or model routes; those stay in the host composition.
 
 # ── identity ────────────────────────────────────────────────────────────────
 
-# Default persona; Omni Router keeps the standard persona and only adds the
-# plan gate for complex tasks.
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
@@ -45,13 +25,6 @@
 
 # ── shell ───────────────────────────────────────────────────────────────────
 
-# `shell-env` stays in the HOST composition: `apps/cli/src/web.ts` injects it to
-# publish `DSH_WEB_URL`/`DSH_WEB_MODE`, and a host row that injects a service is
-# the criterion for host-plane ownership — injection resolves before any session
-# exists, so there is no agent to key by. Behind a preset realm those variables
-# never reached the model's shell at all. Both shell tools consume the host
-# registry from here; their executors (`bash-sandbox`/`pwsh-sandbox`) are
-# host-plane too.
 - id: tool-bash
   name: '@deepseek-ai/dsh-tool-bash'
   disabled: !!js process.platform === 'win32'
@@ -62,8 +35,6 @@
 
 # ── filesystem ──────────────────────────────────────────────────────────────
 
-# Both register into the host `tools` registry and provide nothing, so
-# they need no realm. The `fs` service and its policy stay in the host.
 - id: tool-fs
   name: '@deepseek-ai/dsh-tool-fs'
 
@@ -72,37 +43,16 @@
   config:
     sampleOverCapGlobResults: false
 
-# ── RL-shape editor (v0.2.0 interface restoration) ─────────────────────────
-#
-# The RL training interface uses persistent bash + str_replace_editor (the
-# minimal preset's two-tool surface). The WEAK (Flash) band's first-turn core
-# tool set is shell + this editor — the RL shape — because the measured
-# interface-restoration result (2026-08-15, official API, n=2) is 100% tool
-# calls at 18–29K reasoning chars vs ~25% action / 73–101K under the
-# read/write/edit surface. The editor is only visible in the first turn of a
-# weak-band session; after the first durable tool/call the full catalog opens.
 - id: tool-str-replace-editor
   name: '@deepseek-ai/dsh-tool-str-replace-editor'
 
 # ── background jobs ────────────────────────────────────────────────────────
 
-# Only the model-facing controls. The task REGISTRY stays on the host plane:
-# its producers sit outside any realm this file could put it in — `tool-bash`
-# above resolves it with `ctx.get`, and an entry-local realm here is invisible
-# to every sibling row, so `run_in_background` would answer "background jobs
-# unavailable" while these controls sat in the catalog. The registry is keyed by
-# owning agent anyway, so one host instance serves every session. What a preset
-# chooses is whether its agent can collect and stop background work at all.
 - id: tool-jobs
   name: '@deepseek-ai/dsh-tool-jobs'
 
 # ── skills ──────────────────────────────────────────────────────────────────
 
-# The skill REGISTRY lives in the host composition and is layered per scope:
-# these rows register into THIS preset's layer of it, so they need no realm.
-# `skill-filesystem` contributes local-root discovery for agents on this preset, and
-# `tool-skill` gives them the catalog and loader; the merged catalog also
-# carries whatever the deployment registered globally (repository plugins).
 - id: skill-filesystem
   name: '@deepseek-ai/dsh-skill-filesystem'
 
@@ -111,19 +61,14 @@
 
 # ── goals ───────────────────────────────────────────────────────────────────
 
-# Only the model-facing tool. The goal SERVICE, its session driver, and the
-# `/goal` command stay on the host plane: the Gateway serves the goal domain as
-# Remote endpoints whose receiver comes from a generated descriptor, so it
-# resolves `goals` on the host and an entry-local realm here would hide it. The
-# registry is keyed by session anyway, so one host instance serves every
-# session. What a preset chooses is whether its agent can call the goal tool.
 - id: tool-goal
   name: '@deepseek-ai/dsh-tool-goal'
 
-# ── plan mode ───────────────────────────────────────────────────────────────
+# ── plan mode + omni-router ─────────────────────────────────────────────────
+#
+# Omni Router lives in the same isolated planMode realm so it can programmatically
+# enter/leave plan mode for complex tasks.
 
-# Plan state is per-agent by nature, so an entry-local realm is not a
-# workaround here — it is the correct lifetime.
 - id: planning
   name: cordis:group
   group: true
@@ -151,8 +96,6 @@
 
               When ready, call exit_plan_mode with the complete plan markdown, starting with a # title. Make exit_plan_mode the only and final tool call in that assistant response: it presents the plan for approval, and implementation begins only in a later step after approval. Do not paste the final plan as a plain reply or ask "should I proceed?" through prose or ask_user_question. If review rejects it, incorporate the feedback and present again. If the review channel is unavailable or aborted, stay in plan mode and ask the user to switch modes manually; do not proceed with implementation.
 
-    # Omni Router classifier lives in the same isolated planMode realm so it can
-    # programmatically enter/leave plan mode for complex tasks.
     - id: omni-router
       name: ./omni-router.mjs
       config:
@@ -162,15 +105,6 @@
 
 # ── compaction ──────────────────────────────────────────────────────────────
 
-# `compaction-basic` reads `toolResultPrune` through `ctx.get`, so the pruner must
-# share this realm rather than sit outside it.
-#
-# `tokenMeter` is deliberately NOT in this realm: the meter stays on the HOST
-# plane, and the rows here resolve that one instance. It takes no configuration,
-# keys every fold by Session, and owns the context-meter projection units the
-# browser reads for every session — behind a realm those units would come and go
-# with whichever presets happen to be mounted. What a preset chooses is whether
-# its agent compacts at all, which is `compaction-basic` below.
 - id: compaction
   name: cordis:group
   group: true
@@ -193,21 +127,6 @@
 
 # ── delegation and workflows ────────────────────────────────────────────────
 
-# The `subagents` registry and its spawn/fork backends live in the HOST
-# composition: the registry is a process singleton whose cross-session queries
-# the api-proxy serves to the browser, and a provider name may only be
-# registered once. This preset contributes the delegation TOOLS, which resolve
-# that host registry.
-#
-# `workflows` is different — nothing outside an agent reads it — so every row
-# that reaches it shares one entry-local realm here, and a consumer left
-# outside would resolve a host registry this preset does not populate.
-#
-# `tool-subagent-report` is host-plane for the same reason as the registry,
-# not because a preset may not want it: it registers a CONTINUABLE SETUP on
-# that singleton rather than a tool this agent calls, and the setup list is
-# not scope-aware — one copy per mounted preset means every child gets
-# `report` registered once per live session, which throws on the second.
 - id: delegation
   name: cordis:group
   group: true
@@ -234,27 +153,6 @@
         toolName: subagent_fork
         backgroundMode: continuable
 
-    # Product providers are host-plane singletons. Copy this preset, then
-    # remove `disabled` from either ordinary tool row to expose that product
-    # only to agents composed from the copy.
-    - id: tool-subagent-codex
-      name: '@deepseek-ai/dsh-tool-subagent'
-      disabled: true
-      config:
-        provider: codex
-        toolName: subagent_codex
-        enableRunInBackground: false
-        maxDepth: provider-managed
-
-    - id: tool-subagent-claude-code
-      name: '@deepseek-ai/dsh-tool-subagent'
-      disabled: true
-      config:
-        provider: claude-code
-        toolName: subagent_claude_code
-        enableRunInBackground: false
-        maxDepth: provider-managed
-
     - id: workflow-worker-thread
       name: '@deepseek-ai/dsh-workflow-worker-thread'
       config:
@@ -262,12 +160,6 @@
 
     - id: tool-workflow
       name: '@deepseek-ai/dsh-tool-workflow'
-
-    - id: tool-ralph
-      name: '@deepseek-ai/dsh-tool-ralph'
-      config:
-        subagentProvider: spawn
-        maxRounds: 64
 
 # ── remaining model-facing rows ─────────────────────────────────────────────
 
@@ -279,11 +171,8 @@
   config:
     allowParallelInProgress: true
 
-# The `web` service and its search provider stay in the host composition; only
-# the model-facing tool is per-session.
 - id: tool-web
   name: '@deepseek-ai/dsh-tool-web'
   config:
     fetch: false
     searchTimeoutMs: 60000
-
