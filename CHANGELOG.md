@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - 2026-08-19
+
+- 新增 `benchmark/llm-eval.mjs`（Heuristic vs LLM 对比评估）
+- 新增 `docs/MULTI_MODEL.md`
+- 新增 `npm run llm-eval`
+
 ## [1.1.0] - 2026-08-19
 
 - 新增 `benchmark/analyze.mjs`（混淆矩阵 + 高频误判词）
