@@ -8,9 +8,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20, 22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: ${{ matrix.node-version }}
       - run: node test/omni-router.test.mjs
+      - run: node test/bundle-installer.test.mjs
+      - run: node benchmark/run.mjs
