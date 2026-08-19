@@ -24,7 +24,7 @@ node scripts/install-preset.mjs  # 跨平台
 
 1. 完全重启 DSH。
 2. 新建空白会话。
-3. 选择 **Omni Router (experimental)**。
+3. 选择 **Omni Router**。
 4. 发送你的任务。
 
 ## 手动安装
