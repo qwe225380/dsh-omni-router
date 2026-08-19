@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0] - 2026-08-19
+
+- Agent/Toolchain 选择：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent
+- Policy/State Orchestration：`workflowPolicy` 生成状态机（planning/approval/testing/review/git）
+- 系统提示注入精简为单一 workflow policy + suggested agent
+- Benchmark 扩充到 39 个任务
+
 ## [0.9.0] - 2026-08-18
 
 - Risk Model：`estimateRisk` 将风险等级独立于复杂度，高风险强制 plan + approval
