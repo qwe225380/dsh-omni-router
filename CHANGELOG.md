@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-08-19
+
+- Policy Engine：`buildPolicyDecision` 统一输出完整决策对象
+- Project Brain 第一步：`buildRepositorySnapshot` 仓库快照
+- 系统提示注入统一 Policy Decision
+
 ## [1.2.0] - 2026-08-19
 
 - 新增 `benchmark/llm-eval.mjs`（Heuristic vs LLM 对比评估）
