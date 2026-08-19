@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0] - 2026-08-19
+
+- Fable 风格子代理链：`omni_delegate` 升级为 builder → qa-verifier → (repair → qa-verifier)* → code-reviewer
+- 新增 `src/agent-chain.mjs` 模块（Agent Runtime / Verifier 第一块切片）
+- 独立 QA Verifier：不信任 builder 口头报告，只接受命令输出/file:line 证据
+- 轻量 Repair Loop：qa FAIL 后先根因诊断再补丁，默认最多 1 次（可配，上限 3）
+- 对抗性 Code Reviewer：冷读审查，专查假进度/丢需求/弱化测试/越界改动
+
 ## [1.4.0] - 2026-08-19
 
 - Intent Engine：`buildIntent` 提取 desired outcome / constraints / acceptance criteria

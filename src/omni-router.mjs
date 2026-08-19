@@ -12,6 +12,8 @@
  * gates, skills) live in the host profile; this preset does not require them.
  */
 
+import { runAgentChain, formatChainReport } from './agent-chain.mjs'
+
 export const name = 'omni-router'
 
 export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
@@ -1154,11 +1156,15 @@ export function apply(ctx, config = {}) {
 
   registerTool({
     name: 'omni_delegate',
-    description: 'Suggest a specialized agent and print a delegation plan for the current task.',
+    description: 'Run the Fable-style agent chain: builder -> qa-verifier -> (repair -> qa-verifier)* -> code-reviewer. Use for non-trivial coding tasks to get independent verification and cold review.',
     parameters: {
       type: 'object',
       properties: {
         task: { type: 'string', description: 'Task description (optional; uses first task text by default)' },
+        criteria: { type: 'array', items: { type: 'string' }, description: 'Acceptance criteria (optional; auto-derived when absent)' },
+        scope: { type: 'string', description: 'Scope boundary, e.g. "only src/payment/**"' },
+        chain: { type: 'string', enum: ['full', 'auto', 'off'], description: 'full = builder+qa+reviewer with repair on fail (default); auto = direct/low skips reviewer; off = builder only' },
+        maxRepairs: { type: 'number', description: 'Max repair attempts after qa FAIL (default 1, cap 3)' },
       },
     },
     async execute(args) {
@@ -1166,25 +1172,30 @@ export function apply(ctx, config = {}) {
       if (!session) return 'no agent session'
       const state = stateFor(session)
       const taskText = args?.task || state.firstText || ''
-      const taskType = state.taskType || classifyTaskType(taskText)
-      const agentName = selectAgentForTask(taskType, taskText)
-      const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
+      if (!taskText.trim()) return 'No task text available. Pass a task or start a session with a task.'
+      const intent = buildIntent(taskText)
+      const criteria = Array.isArray(args?.criteria) && args.criteria.length
+        ? args.criteria
+        : intent.acceptanceCriteria
       const subagents = ctx.get('subagents') || ctx.subagents
       const agent = agentFor(session)
       if (subagents?.start && agent) {
         try {
-          const prompt = `You are the ${agentName}. Workflow policy: ${JSON.stringify(policy)}. Task: ${taskText}`
-          const run = await subagents.start('spawn', {
-            prompt,
-            parent: agent,
-            label: agentName,
-            maxDepth: 1,
+          const outcome = await runAgentChain({ subagents, parent: agent }, {
+            taskText,
+            criteria,
+            scope: args?.scope || '',
+            chain: args?.chain || 'full',
+            maxRepairs: typeof args?.maxRepairs === 'number' ? args.maxRepairs : undefined,
           })
-          return `Delegated to ${agentName}. Run: ${run?.id || 'started'}`
+          return outcome.report || formatChainReport({ status: outcome.status, task: taskText, criteria, stages: outcome.stages || [] })
         } catch (error) {
-          return `Delegation failed (${error?.message || error}); falling back to delegation plan.`
+          return `Delegation chain failed (${error?.message || error}); falling back to delegation plan.`
         }
       }
+      const taskType = state.taskType || classifyTaskType(taskText)
+      const agentName = selectAgentForTask(taskType, taskText)
+      const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
       return [
         `Suggested agent: ${agentName}`,
         `Subagent service available: ${subagents ? 'yes' : 'no'}`,
