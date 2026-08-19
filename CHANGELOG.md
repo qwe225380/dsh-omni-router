@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.16.0] - 2026-08-19
+
+- Benchmark 扩充到 151 个任务
+- 当前基线：complexity accuracy 70.2%，false-direct 12.9%，false-plan 15.8%
+
 ## [0.15.0] - 2026-08-19
 
 - 计划词库大幅扩充，针对 102 任务 benchmark 误判优化
