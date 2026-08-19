@@ -623,42 +623,44 @@ Task-type hint: ${typeHint}`
 }
 
 /**
- * Return a TDD hint for coding task types. Non-coding types get an empty string.
+ * Return a short TDD skill-routing hint for coding task types.
+ * Non-coding types get an empty string. Detailed TDD procedure is left to the skill.
  */
 export function tddHintForType(type) {
   if (!['bugfix', 'feature', 'refactor', 'test'].includes(type)) return ''
-  return 'Use TDD: write a failing test first (red), run it to confirm it fails, implement the change, then run it again to see it pass (green). If a red-green-tdd or test-driven-development skill is available, load and follow it.'
+  return 'Load the test-driven-development or red-green-tdd skill (if available) and follow it for this task.'
 }
 
 /**
- * Return a delivery-gate hint that prevents "claiming done without proof".
+ * Return a short delivery-gate skill-routing hint.
+ * The actual gate procedure is left to verification/delivery skills.
  */
 export function deliveryGateHint(type = 'other') {
   const coding = ['bugfix', 'feature', 'refactor', 'test'].includes(type)
   if (!coding) return ''
-  return 'Before declaring the task done, run the delivery/quality gate: verify requirements, test evidence, implementation consistency, and review conclusion. If dsh-doublecheck tools are available (doublecheck_report, doublecheck_spec, etc.), use them; otherwise perform the same checks manually. If any red item remains, report rework required instead of done.'
+  return 'Before declaring done, load the verification-before-completion or delivery-proof skill (if available) and follow its gate.'
 }
 
 /**
- * Return a lightweight verification hint for direct/simple tasks.
+ * Return a short verification skill-routing hint for direct/simple tasks.
  */
 export function lightVerificationHint() {
-  return 'This is a direct task. After making changes, run a lightweight verification before declaring done: run the relevant tests or at least a syntax/type check. If a check fails, fix it before reporting completion.'
+  return 'This is a direct task. Load the verification-loop or verification-before-completion skill (if available) before declaring done.'
 }
 
 /**
- * Return a hint that turns plan acceptance criteria into a trackable checklist.
+ * Return a short acceptance-checklist skill-routing hint.
  */
 export function acceptanceChecklistHint() {
-  return 'After the plan is approved, use todo_write to create a checklist from the acceptance criteria. Track each item during execution and mark it done only when the corresponding verification passes.'
+  return 'Load the executing-plans or writing-plans skill (if available) to turn acceptance criteria into a tracked checklist.'
 }
 
 /**
- * Return Git workflow guidance for coding tasks.
+ * Return a short Git skill-routing hint for coding tasks.
  */
 export function gitWorkflowHint(type) {
   if (!['bugfix', 'feature', 'refactor', 'test'].includes(type)) return ''
-  return 'Use a clean Git workflow: create or switch to a focused feature branch (or worktree), keep the change scoped, write a conventional commit message (feat/fix/refactor/test), and review the diff before finishing.'
+  return 'Load the using-git-worktrees or git-discipline skill (if available) before committing.'
 }
 
 /**

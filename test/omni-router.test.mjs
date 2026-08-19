@@ -156,31 +156,32 @@ test('planTemplateForType returns code-specific plan sections', () => {
   assert.match(plan, /Rollback/)
 })
 
-test('tddHintForType gives TDD guidance for coding tasks', () => {
+test('tddHintForType routes coding tasks to TDD skills instead of duplicating them', () => {
   for (const type of ['bugfix', 'feature', 'refactor', 'test']) {
     const hint = tddHintForType(type)
-    assert.match(hint, /TDD|failing test|red-green/i)
+    assert.match(hint, /test-driven-development|red-green-tdd/i)
+    assert.match(hint, /skill/i)
   }
-  assert.doesNotMatch(tddHintForType('review'), /red-green/i)
+  assert.doesNotMatch(tddHintForType('review'), /test-driven-development|red-green-tdd/i)
 })
 
-test('deliveryGateHint asks for doublecheck before declaring done', () => {
+test('deliveryGateHint routes to verification skills instead of duplicating the gate', () => {
   const hint = deliveryGateHint('feature')
-  assert.match(hint, /doublecheck|delivery gate|quality gate/i)
-  assert.match(hint, /rework|verify/i)
+  assert.match(hint, /verification-before-completion|delivery-proof/i)
+  assert.match(hint, /skill/i)
 })
 
-test('lightVerificationHint requires a lightweight check for direct tasks', () => {
+test('lightVerificationHint routes direct tasks to verification skills', () => {
   const hint = lightVerificationHint()
-  assert.match(hint, /test|syntax|check/i)
+  assert.match(hint, /verification-loop|verification-before-completion/i)
   assert.match(hint, /before declaring done/i)
 })
 
-test('gitWorkflowHint gives branch/commit/diff guidance for coding tasks', () => {
+test('gitWorkflowHint routes coding tasks to git skills', () => {
   const hint = gitWorkflowHint('feature')
-  assert.match(hint, /branch|worktree/i)
+  assert.match(hint, /using-git-worktrees|git-discipline/i)
   assert.match(hint, /commit/i)
-  assert.match(hint, /diff|review/i)
+  assert.match(hint, /skill/i)
 })
 
 test('needsLLMClassification only for uncertain tasks when enabled', () => {

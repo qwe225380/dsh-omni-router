@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.7.0] - 2026-08-19
+
+- 去冗余重构：TDD / Delivery Gate / Git / 验收清单 / 轻量验证提示全部改为“加载对应 skill”的短路由提示
+- 不再在 Omni 内重复实现 superpowers / dsh-doublecheck 等已有技能能力
+- 详细流程交给 `test-driven-development`、`red-green-tdd`、`verification-before-completion`、`delivery-proof`、`using-git-worktrees`、`writing-plans` 等技能
+
 ## [1.6.0] - 2026-08-19
 
 - 技能建议：根据任务类型/文本自动注入相关技能名，模型通过 `skill` 工具按需加载

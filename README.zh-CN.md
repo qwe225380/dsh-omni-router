@@ -47,11 +47,11 @@
 - **Risk Model**：独立评估风险等级，高风险（数据库/auth/生产配置）即使复杂度低也强制 plan + approval。
 - **Adaptive Rerouting**：执行中可通过 `omni_reroute` / `/omni reroute` 在 direct ↔ plan 间动态切换。
 - **代码化方案模板**：目标、范围、涉及文件、步骤、接口/数据变更、测试计划、风险、兼容性、回滚、验收标准。
-- **TDD 提示**：编码任务自动提示“先写失败测试 → 实现 → 通过”。
-- **交付门提示**：完成前提示运行测试/doublecheck，防止“假完成”。
-- **Git 工作流提示**：分支/worktree、规范 commit、diff 审查。
-- **验收清单提示**：方案批准后自动用 todo 追踪验收标准。
-- **轻量验证**：简单任务改完也要求跑测试或语法检查。
+- **TDD 技能路由**：编码任务提示加载 `test-driven-development` / `red-green-tdd`，不重复实现 TDD。
+- **交付门技能路由**：完成前提示加载 `verification-before-completion` / `delivery-proof`，不重复实现质量门。
+- **Git 技能路由**：编码任务提示加载 `using-git-worktrees` / `git-discipline`。
+- **验收清单技能路由**：方案批准后提示加载 `executing-plans` / `writing-plans`。
+- **轻量验证技能路由**：简单任务提示加载 `verification-loop` / `verification-before-completion`。
 - **状态持久化**：分类/思维模式/任务类型写入会话事件，resume 可恢复。
 - **降级保护**：Plan Mode 不可用时自动限制为只读工具。
 - **Hybrid 分类**：启发式置信度 + 低置信度时 LLM 结构化分类。
