@@ -159,10 +159,10 @@ npm run benchmark
 
 在 `benchmark/tasks.json` 上报告路由准确率、false-direct / false-plan 率。
 
-当前基线（247 个任务）：
-- 复杂度准确率：78.1%
-- false-direct 率：0.0%
-- false-plan 率：3.4%
+当前基线（298 个任务）：
+- 复杂度准确率：71.5%
+- false-direct 率：6.8%
+- false-plan 率：8.7%
 
 ## 许可证
 
