@@ -160,7 +160,7 @@ export function filterReadOnlyTools(tools, allowed) {
 export function classifyTaskType(text) {
   const normalized = normalize(String(text || ''))
   if (/(修复|修一下|bug|报错|错误|崩溃|500|fix)/.test(normalized)) return 'bugfix'
-  if (/(新增|新做|做一个|实现|feature|add|开发)/.test(normalized)) return 'feature'
+  if (/(新增|新做|做一个|增加|实现|feature|add|开发)/.test(normalized)) return 'feature'
   if (/(重构|refactor|重写|优化结构)/.test(normalized)) return 'refactor'
   if (/(测试|单测|test|补测试)/.test(normalized)) return 'test'
   if (/(review|审查|评审|code review|pr)/.test(normalized)) return 'review'
@@ -483,6 +483,81 @@ export function buildRepositorySnapshot(entries) {
     entryPoints,
     hasReadme: names.has('README.md'),
     hasPackageJson: names.has('package.json'),
+  }
+}
+
+/**
+ * Intent Engine: interpret what the user actually wants, beyond task type.
+ */
+export function buildIntent(taskText) {
+  const text = String(taskText || '')
+  const taskType = classifyTaskType(text)
+  const constraints = []
+  if (/(不要破坏|不能影响|保持|preserve|do not break|without breaking)/i.test(text)) {
+    constraints.push('preserve existing behavior')
+  }
+  if (/(支付|checkout|payment|order|订单)/i.test(text)) {
+    constraints.push('preserve existing checkout/payment flow')
+  }
+  const desiredOutcome = taskType === 'bugfix'
+    ? 'fix the reported bug without introducing regressions'
+    : taskType === 'feature'
+      ? 'implement the requested feature and make it verifiable'
+      : taskType === 'refactor'
+        ? 'refactor while preserving observable behavior'
+        : 'complete the requested task'
+  const acceptanceCriteria = taskType === 'bugfix'
+    ? ['bug is fixed', 'regression tests pass']
+    : taskType === 'feature'
+      ? ['feature API/UI exists', 'relevant tests pass']
+      : taskType === 'refactor'
+        ? ['behavior preserved', 'tests pass']
+        : ['task completed', 'no obvious regressions']
+  return {
+    intent: taskType === 'feature' ? 'implement_feature' : taskType === 'bugfix' ? 'fix_bug' : 'complete_task',
+    taskType,
+    desiredOutcome,
+    constraints,
+    acceptanceCriteria,
+    confidence: 0.8,
+  }
+}
+
+/**
+ * Context Budget: how much context to spend per task complexity/risk.
+ */
+export function buildContextBudget(complexity, risk) {
+  const base = complexity === 'plan' ? 100000 : complexity === 'balanced' ? 60000 : 20000
+  const riskBonus = ['high', 'critical'].includes(risk) ? 50000 : 0
+  const maxContextTokens = base + riskBonus
+  return {
+    maxContextTokens,
+    softLimit: Math.round(maxContextTokens * 0.75),
+    retrievalBudget: Math.round(maxContextTokens * 0.25),
+    historyBudget: Math.round(maxContextTokens * 0.1),
+  }
+}
+
+/**
+ * Agent Runtime core API: decide the next best action from state.
+ */
+export function decideNextAction(state = {}) {
+  const phase = state.phase || 'understand'
+  const taskType = state.taskType || 'other'
+  const risk = state.risk || 'low'
+  switch (phase) {
+    case 'understand':
+      return { action: 'inspect_repository', target: 'repository', reason: `understand ${taskType} task`, risk }
+    case 'design':
+      return { action: 'search_symbols', target: taskType, reason: 'find relevant symbols for design', risk }
+    case 'implement':
+      return { action: 'read_file', target: 'relevant source', reason: 'inspect current implementation before editing', risk }
+    case 'verify':
+      return { action: 'run_tests', target: 'relevant test suite', reason: 'verify implementation', risk }
+    case 'repair':
+      return { action: 'inspect_failure', target: 'failing test/output', reason: 'diagnose root cause before patching', risk }
+    default:
+      return { action: 'inspect_repository', target: 'repository', reason: 'start task', risk }
   }
 }
 
