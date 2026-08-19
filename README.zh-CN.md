@@ -55,7 +55,9 @@
 - **状态持久化**：分类/思维模式/任务类型写入会话事件，resume 可恢复。
 - **降级保护**：Plan Mode 不可用时自动限制为只读工具。
 - **Hybrid 分类**：启发式置信度 + 低置信度时 LLM 结构化分类。
-- **Router Benchmark**：内置 `benchmark/run.mjs`，可评估 accuracy / false-direct rate。
+- **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
+- **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
+- **Router Benchmark**：内置 `benchmark/run.mjs`（39 个任务），可评估 accuracy / false-direct rate。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。
 
 ### 编排复用（推荐安装）
