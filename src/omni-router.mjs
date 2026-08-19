@@ -27,18 +27,22 @@ const DEFAULT_DIRECT_KEYWORDS = [
   '直接做', '直接执行', '马上做', 'just do it', 'do it now',
 ]
 
+/** Strong signals that a task is a concrete direct action (medium-high confidence). */
+const STRONG_DIRECT_HINTS = ['修复', '修一下', 'bug', 'fix', '删掉', '运行测试', '跑测试']
+
 /** Normalize user text for classification. */
 function normalize(text) {
   return String(text || '').trim().toLowerCase()
 }
 
 /**
- * Classify a task text as `plan` or `direct`.
+ * Heuristic complexity classification with a confidence score.
  *
- * Explicit override words win first. Otherwise a task is plan-first when it
- * contains a plan-first keyword or is long enough to be ambiguous.
+ * Explicit override words produce high confidence. Strong plan/direct keywords
+ * produce medium-high confidence. Short keyword-less requests are treated as
+ * direct but with lower confidence so the LLM can override when enabled.
  */
-export function classifyComplexity(text, config = {}) {
+export function heuristicComplexity(text, config = {}) {
   const raw = String(text || '')
   const normalized = normalize(raw)
   const planFirst = [
@@ -52,17 +56,29 @@ export function classifyComplexity(text, config = {}) {
 
   // Explicit user overrides beat heuristics.
   for (const token of direct) {
-    if (normalized.includes(token.toLowerCase())) return 'direct'
+    if (normalized.includes(token.toLowerCase())) return { value: 'direct', confidence: 0.98 }
   }
   for (const token of planFirst) {
-    if (normalized.includes(token.toLowerCase())) return 'plan'
+    if (normalized.includes(token.toLowerCase())) return { value: 'plan', confidence: 0.92 }
+  }
+  for (const token of STRONG_DIRECT_HINTS) {
+    if (normalized.includes(token)) return { value: 'direct', confidence: 0.85 }
   }
 
-  // Very short, imperative, concrete requests are usually safe to run directly.
-  if (raw.length <= 40) return 'direct'
+  // Short keyword-less requests: likely direct, but ambiguous enough to let an
+  // LLM override when confidence-based fallback is enabled.
+  if (raw.length <= 20) return { value: 'direct', confidence: 0.6 }
+  if (raw.length <= 40) return { value: 'direct', confidence: 0.7 }
 
-  // Long, multi-sentence requests are more likely to hide ambiguity.
-  return 'plan'
+  // Long requests are more likely to hide ambiguity.
+  return { value: 'plan', confidence: 0.6 }
+}
+
+/**
+ * Classify a task text as `plan` or `direct` (heuristic value only).
+ */
+export function classifyComplexity(text, config = {}) {
+  return heuristicComplexity(text, config).value
 }
 
 /**
@@ -271,18 +287,36 @@ export function gitWorkflowHint(type) {
   return 'Use a clean Git workflow: create or switch to a focused feature branch (or worktree), keep the change scoped, write a conventional commit message (feat/fix/refactor/test), and review the diff before finishing.'
 }
 
-const STRONG_DIRECT_KEYWORDS = ['直接做', '直接执行', '马上做', '修复', '修一下', 'bug', 'fix', '删掉', '运行测试', '跑测试']
-const STRONG_PLAN_KEYWORDS = ['设计', '架构', '重构', '方案', '需求', '系统', '优化', 'design', 'architecture', 'refactor', 'plan', 'spec']
+/**
+ * Parse a structured LLM classification response.
+ * Accepts a JSON object embedded in the model output.
+ */
+export function parseLLMClassification(text) {
+  const source = String(text || '')
+  const start = source.indexOf('{')
+  const end = source.lastIndexOf('}')
+  if (start === -1 || end === -1 || end <= start) return null
+  try {
+    const obj = JSON.parse(source.slice(start, end + 1))
+    return {
+      taskType: obj.task_type || obj.taskType || null,
+      complexity: obj.complexity || null,
+      thinkingMode: obj.thinking_mode || obj.thinkingMode || null,
+      confidence: typeof obj.confidence === 'number' ? obj.confidence : null,
+      reasons: Array.isArray(obj.reasons) ? obj.reasons : [],
+    }
+  } catch {
+    return null
+  }
+}
 
 /**
  * Decide whether the heuristic classification is uncertain enough to ask an LLM.
  */
 export function needsLLMClassification(text, config = {}) {
   if (config.useLLMClassification !== true) return false
-  const normalized = normalize(String(text || ''))
-  if (STRONG_DIRECT_KEYWORDS.some((word) => normalized.includes(word))) return false
-  if (STRONG_PLAN_KEYWORDS.some((word) => normalized.includes(word))) return false
-  return true
+  const threshold = config.llmConfidenceThreshold ?? 0.7
+  return heuristicComplexity(text, config).confidence < threshold
 }
 
 /**
@@ -376,27 +410,39 @@ export function apply(ctx, config = {}) {
   async function classifyWithLLM(text) {
     const agent = ctx.get('agent')
     const llm = ctx.get('llm') || ctx.llm
+    const fallback = () => ({
+      complexity: classifyComplexity(text, config),
+      taskType: classifyTaskType(text),
+      thinkingMode: classifyThinkingMode(text),
+      confidence: heuristicComplexity(text, config).confidence,
+      reasons: [],
+    })
     if (!llm || !agent?.options?.provider || !agent?.options?.model) {
-      return classifyComplexity(text, config)
+      return fallback()
     }
     try {
       const stream = llm.stream({
         provider: agent.options.provider,
         model: agent.options.model,
-        system: 'You are a task router. Reply with exactly "plan" or "direct".',
-        messages: [{ role: 'user', content: [{ type: 'text', text: `Task: ${text}\n\nReply with exactly plan or direct.` }] }],
-        maxTokens: 10,
+        system: 'You are a task router. Return ONLY JSON: {"task_type":"bugfix|feature|refactor|test|review|other","complexity":"plan|direct","thinking_mode":"spec|react|balanced","confidence":0-1,"reasons":["..."]}',
+        messages: [{ role: 'user', content: [{ type: 'text', text: `Task: ${text}` }] }],
+        maxTokens: 300,
       })
       let output = ''
       for await (const chunk of stream) {
         if (chunk.type === 'text-delta') output += chunk.text
       }
-      const lower = output.trim().toLowerCase()
-      if (lower.includes('plan')) return 'plan'
-      if (lower.includes('direct')) return 'direct'
-      return classifyComplexity(text, config)
+      const parsed = parseLLMClassification(output)
+      if (!parsed || !parsed.complexity) return fallback()
+      return {
+        complexity: parsed.complexity === 'plan' || parsed.complexity === 'direct' ? parsed.complexity : classifyComplexity(text, config),
+        taskType: parsed.taskType || classifyTaskType(text),
+        thinkingMode: ['spec', 'react', 'balanced'].includes(parsed.thinkingMode) ? parsed.thinkingMode : classifyThinkingMode(text),
+        confidence: parsed.confidence ?? 0.5,
+        reasons: parsed.reasons || [],
+      }
     } catch {
-      return classifyComplexity(text, config)
+      return fallback()
     }
   }
 
@@ -468,7 +514,10 @@ export function apply(ctx, config = {}) {
 
     // Resolve an LLM-assisted classification before assembling guidance.
     if (state.kind === null && state.pendingText && config.useLLMClassification) {
-      state.kind = await classifyWithLLM(state.pendingText)
+      const llm = await classifyWithLLM(state.pendingText)
+      state.kind = llm.complexity
+      state.taskType = llm.taskType
+      state.thinkingMode = llm.thinkingMode
       delete state.pendingText
       if (shouldEnterPlanMode(state.kind, config)) {
         state.planRequested = setPlanMode(agent, true) || true
