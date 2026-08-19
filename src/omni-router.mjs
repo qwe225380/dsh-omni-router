@@ -61,6 +61,12 @@ export function heuristicComplexity(text, config = {}) {
   for (const token of planFirst) {
     if (normalized.includes(token.toLowerCase())) return { value: 'plan', confidence: 0.92 }
   }
+
+  // Risk overrides strong direct hints: even a small "fix/delete" can be
+  // high-risk (auth, database, production config), so it must go to plan.
+  const risk = estimateRisk(raw).level
+  if (['high', 'critical'].includes(risk)) return { value: 'plan', confidence: 0.95 }
+
   for (const token of STRONG_DIRECT_HINTS) {
     if (normalized.includes(token)) return { value: 'direct', confidence: 0.85 }
   }
