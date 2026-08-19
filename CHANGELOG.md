@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.19.0] - 2026-08-19
+
+- `omni_delegate` 支持真实子代理派发（subagents.start）
+- Benchmark 扩充到 247 个任务
+- 当前基线：complexity accuracy 72.5%，false-direct 7.4%，false-plan 10.2%
+
 ## [0.18.0] - 2026-08-19
 
 - 新增 Dependency Hints（依赖图第一版）
