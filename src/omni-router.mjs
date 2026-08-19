@@ -268,6 +268,47 @@ export function suggestSymbolsForTask(taskText) {
 }
 
 /**
+ * Build heuristic dependency hints: map each relevant file to other files it
+ * likely depends on, based on semantic domains. This is a stand-in for a real
+ * dependency graph.
+ */
+export function buildDependencyHints(entries, taskText) {
+  const list = Array.isArray(entries) ? entries : []
+  const names = new Set(list.map((entry) => entry.name))
+  const relevant = discoverRelevantFiles(list, taskText)
+  const domainMap = {
+    auth: ['user', 'session', 'token'],
+    login: ['auth', 'user', 'session'],
+    user: ['auth', 'profile'],
+    order: ['user', 'payment', 'product'],
+    payment: ['order', 'user'],
+    db: ['redis', 'cache', 'migration'],
+    database: ['redis', 'cache', 'migration'],
+    cache: ['redis', 'db'],
+    redis: ['cache', 'db'],
+  }
+  const deps = {}
+  for (const file of relevant) {
+    const base = String(file).replace(/\.[^.]+$/i, '').toLowerCase()
+    const related = []
+    for (const [key, targets] of Object.entries(domainMap)) {
+      if (base.includes(key)) {
+        for (const target of targets) {
+          const candidates = [...names].filter((name) => {
+            const b = String(name).replace(/\.[^.]+$/i, '').toLowerCase()
+            return b === target || b.startsWith(`${target}.`) || b.includes(target)
+          })
+          related.push(...candidates)
+        }
+      }
+    }
+    const unique = [...new Set(related.filter((name) => name !== file))]
+    if (unique.length) deps[file] = unique
+  }
+  return deps
+}
+
+/**
  * Build a lightweight context graph: relevant files, test mappings, and
  * suggested symbols. This is the first step toward symbol/dependency-aware
  * context discovery.
@@ -287,6 +328,7 @@ export function buildContextGraph(entries, taskText) {
     relevant: [...new Set(relevant)],
     tests: [...new Set(tests)],
     symbols: suggestSymbolsForTask(taskText),
+    dependencies: buildDependencyHints(entries, taskText),
   }
 }
 
@@ -580,6 +622,10 @@ export function apply(ctx, config = {}) {
       }
       if (graph.tests.length) {
         summary += `\nRelated tests: ${graph.tests.join(', ')}`
+      }
+      const depEntries = Object.entries(graph.dependencies || {})
+      if (depEntries.length) {
+        summary += `\nDependency hints: ${depEntries.map(([k, v]) => `${k} -> ${v.join(', ')}`).join('; ')}`
       }
       return summary
     } catch {
