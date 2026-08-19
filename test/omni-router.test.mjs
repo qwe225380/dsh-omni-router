@@ -8,6 +8,8 @@ import {
   classifyTaskType,
   classifyThinkingMode,
   deliveryGateHint,
+  discoverRelevantFiles,
+  estimateRisk,
   filterReadOnlyTools,
   gitWorkflowHint,
   heuristicComplexity,
@@ -17,6 +19,7 @@ import {
   parseLLMClassification,
   planTemplateForType,
   readStateFromEvents,
+  rerouteDecision,
   selectKeyFilesForTask,
   shouldEnterPlanMode,
   tddHintForType,
@@ -81,6 +84,7 @@ test('readStateFromEvents restores the latest persisted omni-router state', () =
     kind: 'direct',
     taskType: null,
     thinkingMode: null,
+    riskLevel: null,
     planRequested: false,
     directOverride: true,
   })
@@ -244,4 +248,33 @@ test('parseLLMClassification parses structured router output', () => {
 
 test('parseLLMClassification returns null for invalid output', () => {
   assert.equal(parseLLMClassification('not json'), null)
+})
+
+test('estimateRisk flags high-risk operations', () => {
+  const low = estimateRisk('修改 README 的 typo')
+  assert.equal(low.level, 'low')
+
+  const high = estimateRisk('修改数据库 schema，删除一个字段')
+  assert.ok(['high', 'critical'].includes(high.level))
+
+  const critical = estimateRisk('修改生产环境配置')
+  assert.equal(critical.level, 'critical')
+})
+
+test('rerouteDecision upgrades direct to plan on high blast radius', () => {
+  assert.equal(rerouteDecision('direct', { blastRadius: 0.9 }), 'plan')
+  assert.equal(rerouteDecision('plan', { blastRadius: 0.1 }), 'direct')
+  assert.equal(rerouteDecision('direct', { blastRadius: 0.3 }), null)
+})
+
+test('discoverRelevantFiles finds task-related files by keyword', () => {
+  const entries = [
+    { name: 'src', type: 'directory' },
+    { name: 'auth', type: 'directory' },
+    { name: 'README.md', type: 'file' },
+    { name: 'order.ts', type: 'file' },
+  ]
+  const files = discoverRelevantFiles(entries, '修复登录超时')
+  assert.ok(files.includes('auth'))
+  assert.ok(files.includes('README.md'))
 })
