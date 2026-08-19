@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.15.0] - 2026-08-19
+
+- 计划词库大幅扩充，针对 102 任务 benchmark 误判优化
+- false-direct rate 35.7% → 8.9%
+- complexity accuracy 58.8% → 72.5%
+
 ## [0.14.0] - 2026-08-19
 
 - Symbol 提示：`suggestSymbolsForTask` 根据任务推荐相关符号
