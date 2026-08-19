@@ -56,6 +56,9 @@
 - **降级保护**：Plan Mode 不可用时自动限制为只读工具。
 - **Hybrid 分类**：启发式置信度 + 低置信度时 LLM 结构化分类。
 - **Policy Engine**：`buildPolicyDecision` 统一输出完整决策对象（taskType/complexity/risk/executionMode/approval/verification/gitPolicy）。
+- **Intent Engine**：`buildIntent` 提取 desired outcome / constraints / acceptance criteria。
+- **Context Budget**：`buildContextBudget` 按复杂度/风险分配上下文预算。
+- **Next Best Action**：`decideNextAction` 作为 Agent Runtime 核心 API，根据状态返回下一步行动。
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
