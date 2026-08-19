@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0] - 2026-08-19
+
+- Symbol 提示：`suggestSymbolsForTask` 根据任务推荐相关符号
+- Context Graph 增加 `symbols` 字段，注入上下文
+- 新增 `omni_delegate` 工具：推荐专属 agent + 委派计划
+- Benchmark 扩充到 102 个任务
+
 ## [0.13.0] - 2026-08-19
 
 - 计划词库扩充：改造/迁移/升级/更换/替换/定时任务
