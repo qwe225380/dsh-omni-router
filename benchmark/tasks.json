@@ -1,0 +1,22 @@
+[
+  { "task": "修复登录接口返回 500 的问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
+  { "task": "帮我设计一个用户登录功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
+  { "task": "把这个变量名改成 foo", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
+  { "task": "重构一下订单模块的代码结构", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
+  { "task": "给这个函数补单元测试", "expected": { "complexity": "direct", "taskType": "test", "thinkingMode": "react" } },
+  { "task": "帮我 review 一下这个 PR", "expected": { "complexity": "direct", "taskType": "review", "thinkingMode": "react" } },
+  { "task": "优化一下数据库查询，现在订单接口很慢", "expected": { "complexity": "direct", "taskType": "refactor", "thinkingMode": "balanced" } },
+  { "task": "删掉这个没用的数据库字段", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
+  { "task": "把 monolith 改造成微服务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
+  { "task": "增加一个 API endpoint", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
+  { "task": "修改数据库 schema", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
+  { "task": "修改 auth 模块", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
+  { "task": "今天天气怎么样", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "balanced" } },
+  { "task": "运行测试", "expected": { "complexity": "direct", "taskType": "test", "thinkingMode": "react" } },
+  { "task": "写一个 README", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
+  { "task": "调研一下新的支付方案", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
+  { "task": "修复登录超时", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
+  { "task": "把这个函数拆成两个", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
+  { "task": "帮我生成项目架构文档", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
+  { "task": "删除一个无用文件", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } }
+]
