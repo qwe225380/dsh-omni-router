@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0] - 2026-08-19
+
+- 🎉 正式版发布
+- 预设名称从 `Omni Router (experimental)` 改为 `Omni Router`
+- 功能已稳定：Hybrid / Risk / Adaptive / Agent 选择 / Policy 状态机 / Context Graph / Agent 派发
+- Benchmark 399 任务，CI 多版本矩阵
+
 ## [0.24.0] - 2026-08-19
 
 - 新增 `docs/EXAMPLES.md`（使用示例）
