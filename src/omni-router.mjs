@@ -14,6 +14,7 @@
 
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
 import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
+import { buildMethodologyDirective } from './methodology.mjs'
 
 export const name = 'omni-router'
 
@@ -980,6 +981,13 @@ export function apply(ctx, config = {}) {
       const skillText = buildSkillSuggestionText(skillCandidates)
       if (skillText) {
         sections.push({ name: 'omni-router:skills', order: 34, text: skillText })
+      }
+    }
+
+    if (config.methodologyDirectives !== false) {
+      const methodologyText = buildMethodologyDirective(taskType)
+      if (methodologyText) {
+        sections.push({ name: 'omni-router:methodology', order: 33, text: methodologyText })
       }
     }
 

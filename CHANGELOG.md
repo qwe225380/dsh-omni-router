@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0] - 2026-08-19
+
+- 接入 fable5 核心原则：Prime Directives、Integrity Rules、独立 Verifier/Repair 证据链
+- 新增 `src/methodology.mjs`，以轻量编排层注入系统提示（可 `methodologyDirectives: false` 关闭）
+- 技能建议扩展：支持 `fable5-*` 前缀 skills，与 superpowers 共存不冲突
+- 已安装 26 个 `fable5-*` skills 到用户技能目录
+
 ## [1.7.0] - 2026-08-19
 
 - 去冗余重构：TDD / Delivery Gate / Git / 验收清单 / 轻量验证提示全部改为“加载对应 skill”的短路由提示
