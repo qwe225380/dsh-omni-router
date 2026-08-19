@@ -12,6 +12,7 @@ import {
   deliveryGateHint,
   discoverRelevantFiles,
   estimateRisk,
+  extractSymbolsFromText,
   filterReadOnlyTools,
   gitWorkflowHint,
   heuristicComplexity,
@@ -340,4 +341,18 @@ test('buildDependencyHints maps relevant files to related files', () => {
   const deps = buildDependencyHints(entries, '修复登录超时')
   assert.ok(deps['auth.ts'])
   assert.ok(deps['auth.ts'].includes('user.ts'))
+})
+
+test('extractSymbolsFromText finds function/class/const names', () => {
+  const code = `
+    export function login() {}
+    export class AuthService {}
+    const TOKEN_KEY = 'token'
+    async function refreshSession() {}
+  `
+  const symbols = extractSymbolsFromText(code)
+  assert.ok(symbols.includes('login'))
+  assert.ok(symbols.includes('AuthService'))
+  assert.ok(symbols.includes('TOKEN_KEY'))
+  assert.ok(symbols.includes('refreshSession'))
 })
