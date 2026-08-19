@@ -78,7 +78,7 @@
 dsh plugin --profile web add dsh-omni-router
 ```
 
-安装后会自动把 Omni Router 预设复制到 `~/.dsh/.agent-presets/omni-router`，重启 DSH 后选择 **Omni Router (experimental)**。
+安装后会自动把 Omni Router 预设复制到 `~/.dsh/.agent-presets/omni-router`，重启 DSH 后选择 **Omni Router**。
 
 ### 通过 npm 安装
 
@@ -101,7 +101,7 @@ node scripts/install-preset.mjs
 node scripts/install-preset.mjs
 ```
 
-安装后重启 DSH，新建会话选择 **Omni Router (experimental)**。
+安装后重启 DSH，新建会话选择 **Omni Router**。
 
 ## 手动控制
 
