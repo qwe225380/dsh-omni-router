@@ -368,7 +368,7 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(schema|migration|drop table|drop database|连接池|auth|权限|deploy|ci\/cd|配置|config|Webhook|验签|签名|对账|网关|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|连接池|auth|权限|deploy|ci\/cd|配置|config|Webhook|验签|签名|对账|网关|退款|扣款|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
   if (/(数据库|db|redis|登录|login|session|token|订单|order|支付|payment|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
@@ -423,6 +423,66 @@ export function workflowPolicy(taskType, complexity, risk) {
     testing: coding ? 'required' : 'optional',
     review: taskType === 'review' ? 'required' : coding ? 'recommended' : 'optional',
     git: coding ? 'recommended' : 'optional',
+  }
+}
+
+/**
+ * Policy Engine: unify all routing dimensions into one decision object.
+ * This is the "brain first layer" described in the Omni roadmap.
+ */
+export function buildPolicyDecision(taskText, config = {}) {
+  const complexity = classifyComplexity(taskText, config)
+  const taskType = classifyTaskType(taskText)
+  const risk = estimateRisk(taskText).level
+  const highRisk = ['high', 'critical'].includes(risk)
+  const executionMode = complexity === 'plan' || highRisk ? 'plan' : 'direct'
+  const coding = ['bugfix', 'feature', 'refactor', 'test'].includes(taskType)
+  return {
+    taskType,
+    complexity,
+    risk,
+    reasoningMode: complexity === 'plan' || highRisk ? 'max' : 'balanced',
+    contextStrategy: 'dependency-aware',
+    executionMode,
+    approvalRequired: executionMode === 'plan' || highRisk,
+    confidence: heuristicComplexity(taskText, config).confidence,
+    verification: coding ? ['unit', 'integration', 'regression'] : [],
+    gitPolicy: {
+      requireBranch: coding,
+    },
+  }
+}
+
+/**
+ * Project Brain first step: build a lightweight repository snapshot from root
+ * entries. Later this will be backed by git/ripgrep/tree-sitter.
+ */
+export function buildRepositorySnapshot(entries) {
+  const names = new Set((Array.isArray(entries) ? entries : []).map((entry) => entry.name))
+  const packageManager = names.has('pnpm-lock.yaml') ? 'pnpm'
+    : names.has('package-lock.json') ? 'npm'
+    : names.has('yarn.lock') ? 'yarn'
+    : names.has('bun.lockb') ? 'bun'
+    : null
+  const testFramework = names.has('vitest.config.ts') || names.has('vitest.config.js') ? 'vitest'
+    : names.has('jest.config.js') || names.has('jest.config.ts') ? 'jest'
+    : names.has('cypress.config.ts') || names.has('cypress.config.js') ? 'cypress'
+    : names.has('mocha.opts') ? 'mocha'
+    : null
+  const framework = names.has('next.config.js') || names.has('next.config.mjs') ? 'next'
+    : names.has('vite.config.ts') || names.has('vite.config.js') ? 'vite'
+    : names.has('angular.json') ? 'angular'
+    : names.has('nuxt.config.ts') ? 'nuxt'
+    : null
+  const entryPoints = ['src', 'lib', 'app', 'api', 'server', 'client', 'test', 'tests']
+    .filter((name) => names.has(name))
+  return {
+    packageManager,
+    testFramework,
+    framework,
+    entryPoints,
+    hasReadme: names.has('README.md'),
+    hasPackageJson: names.has('package.json'),
   }
 }
 
@@ -808,6 +868,12 @@ export function apply(ctx, config = {}) {
         text: `Risk level: ${state.riskLevel}. High or critical risk requires plan approval before mutation.`,
       })
     }
+    const policyDecision = buildPolicyDecision(state.firstText || '', config)
+    sections.push({
+      name: 'omni-router:policy-decision',
+      order: 37,
+      text: `Policy decision: ${JSON.stringify(policyDecision)}`,
+    })
     const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
     sections.push({
       name: 'omni-router:policy',
