@@ -78,7 +78,7 @@
 dsh plugin --profile web add dsh-omni-router
 ```
 
-This installs the bundle and automatically copies the Omni Router preset into `~/.dsh/.agent-presets/omni-router` on first load. Restart DSH, then select **Omni Router (experimental)**.
+This installs the bundle and automatically copies the Omni Router preset into `~/.dsh/.agent-presets/omni-router` on first load. Restart DSH, then select **Omni Router**.
 
 ### Install via npm
 
@@ -101,7 +101,7 @@ node scripts/install-preset.mjs
 node scripts/install-preset.mjs
 ```
 
-Then restart DSH and select **Omni Router (experimental)** in a new session.
+Then restart DSH and select **Omni Router** in a new session.
 
 ## Manual overrides
 
