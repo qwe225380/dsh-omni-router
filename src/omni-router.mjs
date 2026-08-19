@@ -250,6 +250,28 @@ export function discoverRelevantFiles(entries, taskText) {
 }
 
 /**
+ * Extract symbol names from source text (functions, classes, const/let).
+ * This is a lightweight real symbol search over file contents.
+ */
+export function extractSymbolsFromText(text) {
+  const source = String(text || '')
+  const symbols = new Set()
+  const patterns = [
+    /(?:export\s+)?(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/g,
+    /(?:export\s+)?class\s+([A-Za-z_$][\w$]*)/g,
+    /(?:export\s+)?const\s+([A-Za-z_$][\w$]*)\s*=/g,
+    /(?:export\s+)?let\s+([A-Za-z_$][\w$]*)\s*=/g,
+  ]
+  for (const pattern of patterns) {
+    let match
+    while ((match = pattern.exec(source)) !== null) {
+      symbols.add(match[1])
+    }
+  }
+  return [...symbols]
+}
+
+/**
  * Suggest likely symbols (functions/classes/modules) for a task.
  * This is a lightweight stand-in for real symbol search.
  */
@@ -611,15 +633,22 @@ export function apply(ctx, config = {}) {
       const fileNames = new Set((entries || []).filter((entry) => entry.type === 'file').map((entry) => entry.name))
       const keyFiles = graph.relevant.filter((name) => fileNames.has(name))
       const files = {}
+      const fileSymbols = {}
       for (const name of keyFiles) {
         try {
           const target = await fs.resolve(name, { cwd })
           files[name] = await fs.readText(target)
+          const symbols = extractSymbolsFromText(files[name])
+          if (symbols.length) fileSymbols[name] = symbols
         } catch {
           // Ignore unreadable files; context collection is best-effort.
         }
       }
       let summary = buildContextSummary(entries, files, { maxTotalChars: 3000 })
+      const fileSymbolEntries = Object.entries(fileSymbols)
+      if (fileSymbolEntries.length) {
+        summary += `\n\nFile symbols: ${fileSymbolEntries.map(([k, v]) => `${k} -> ${v.join(', ')}`).join('; ')}`
+      }
       if (graph.symbols.length) {
         summary += `\n\nSuggested symbols: ${graph.symbols.join(', ')}`
       }
