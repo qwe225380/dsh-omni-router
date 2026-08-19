@@ -39,7 +39,7 @@
 
 ### 核心能力（自带）
 
-- **复杂度自动路由**：简单任务直接做，复杂/模糊任务先方案。
+- **复杂度自动路由**：`direct` / `balanced` / `plan` 三态路由，简单任务直接做，复杂/模糊任务先方案。
 - **思维模式路由**：自动选择 `spec`（方案优先）/ `react`（直接执行）/ `balanced`（自动）。
 - **任务类型识别**：`bugfix` / `feature` / `refactor` / `test` / `review` / `other`。
 - **Plan Mode 集成**：复用 DSH 内置 Plan Mode，方案必须经你确认后才执行。
@@ -57,7 +57,8 @@
 - **Hybrid 分类**：启发式置信度 + 低置信度时 LLM 结构化分类。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
-- **Router Benchmark**：内置 `benchmark/run.mjs`（39 个任务），可评估 accuracy / false-direct rate。
+- **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
+- **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。
 
 ### 编排复用（推荐安装）
