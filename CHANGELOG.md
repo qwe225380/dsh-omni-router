@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.11.0] - 2026-08-19
+
+- False Direct Rate 专项优化：风险等级覆盖“修复/删除”等强直执行号
+- Benchmark：复杂度准确率 43.6% → 64.1%，false-direct rate 70% → 25%
+
 ## [0.10.0] - 2026-08-19
 
 - Agent/Toolchain 选择：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent
