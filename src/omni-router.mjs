@@ -987,7 +987,7 @@ export function apply(ctx, config = {}) {
         task: { type: 'string', description: 'Task description (optional; uses first task text by default)' },
       },
     },
-    execute(args) {
+    async execute(args) {
       const session = currentSession()
       if (!session) return 'no agent session'
       const state = stateFor(session)
@@ -996,10 +996,24 @@ export function apply(ctx, config = {}) {
       const agentName = selectAgentForTask(taskType, taskText)
       const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
       const subagents = ctx.get('subagents') || ctx.subagents
-      const available = subagents ? 'yes' : 'no'
+      const agent = agentFor(session)
+      if (subagents?.start && agent) {
+        try {
+          const prompt = `You are the ${agentName}. Workflow policy: ${JSON.stringify(policy)}. Task: ${taskText}`
+          const run = await subagents.start('spawn', {
+            prompt,
+            parent: agent,
+            label: agentName,
+            maxDepth: 1,
+          })
+          return `Delegated to ${agentName}. Run: ${run?.id || 'started'}`
+        } catch (error) {
+          return `Delegation failed (${error?.message || error}); falling back to delegation plan.`
+        }
+      }
       return [
         `Suggested agent: ${agentName}`,
-        `Subagent service available: ${available}`,
+        `Subagent service available: ${subagents ? 'yes' : 'no'}`,
         `Workflow policy: ${JSON.stringify(policy)}`,
         'Delegation plan: send the task to the suggested agent with the policy attached.',
       ].join('\n')
