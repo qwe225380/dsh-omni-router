@@ -19,6 +19,7 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
   '设计', '架构', '重构', '方案', '需求', '系统', '分析',
+  '改造', '迁移', '升级', '更换', '替换', '定时任务',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -267,7 +268,7 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(schema|migration|drop table|drop database|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|连接池|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
   if (/(数据库|db|redis|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
