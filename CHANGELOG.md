@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0] - 2026-08-19
+
+- 计划词库扩充：改造/迁移/升级/更换/替换/定时任务
+- 高风险词补充：连接池
+- Benchmark 扩充到 63 个任务
+- false-direct rate 30% → 21.9%，false-plan rate 8.3% → 6.3%
+
 ## [0.12.0] - 2026-08-19
 
 - False-Plan Rate 优化：移除“优化”强 plan 词、长文本默认 direct + 低置信度
