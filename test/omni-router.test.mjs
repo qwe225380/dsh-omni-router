@@ -10,9 +10,11 @@ import {
   deliveryGateHint,
   filterReadOnlyTools,
   gitWorkflowHint,
+  heuristicComplexity,
   lightVerificationHint,
   needsLLMClassification,
   normalizeParameters,
+  parseLLMClassification,
   planTemplateForType,
   readStateFromEvents,
   selectKeyFilesForTask,
@@ -208,4 +210,38 @@ test('acceptanceChecklistHint tells model to create todo from acceptance criteri
   const hint = acceptanceChecklistHint()
   assert.match(hint, /acceptance|验收/i)
   assert.match(hint, /todo|checklist|清单/i)
+})
+
+test('heuristicComplexity returns value plus confidence', () => {
+  const explicit = heuristicComplexity('直接做：设计一个登录功能', baseConfig)
+  assert.equal(explicit.value, 'direct')
+  assert.ok(explicit.confidence >= 0.9)
+
+  const plan = heuristicComplexity('帮我设计一个登录功能', baseConfig)
+  assert.equal(plan.value, 'plan')
+  assert.ok(plan.confidence >= 0.8)
+
+  const ambiguous = heuristicComplexity('帮我处理一下这个任务', baseConfig)
+  assert.equal(ambiguous.value, 'direct')
+  assert.ok(ambiguous.confidence < 0.8)
+})
+
+test('needsLLMClassification uses confidence threshold', () => {
+  const config = { useLLMClassification: true, llmConfidenceThreshold: 0.7 }
+  assert.equal(needsLLMClassification('直接做：设计一个登录功能', config), false)
+  assert.equal(needsLLMClassification('帮我处理一下这个任务', config), true)
+  assert.equal(needsLLMClassification('帮我处理一下这个任务', { useLLMClassification: false }), false)
+})
+
+test('parseLLMClassification parses structured router output', () => {
+  const parsed = parseLLMClassification('{"task_type":"refactor","complexity":"plan","thinking_mode":"spec","confidence":0.91,"reasons":["multiple modules"]}')
+  assert.equal(parsed.taskType, 'refactor')
+  assert.equal(parsed.complexity, 'plan')
+  assert.equal(parsed.thinkingMode, 'spec')
+  assert.equal(parsed.confidence, 0.91)
+  assert.deepEqual(parsed.reasons, ['multiple modules'])
+})
+
+test('parseLLMClassification returns null for invalid output', () => {
+  assert.equal(parseLLMClassification('not json'), null)
 })
