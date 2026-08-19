@@ -5,6 +5,7 @@ import {
   acceptanceChecklistHint,
   buildContextGraph,
   buildContextSummary,
+  buildDependencyHints,
   classifyComplexity,
   classifyTaskType,
   classifyThinkingMode,
@@ -327,4 +328,16 @@ test('suggestSymbolsForTask returns likely symbols for a task', () => {
   const symbols = suggestSymbolsForTask('修复登录超时')
   assert.ok(symbols.length > 0)
   assert.ok(symbols.some((s) => /auth|login|session/i.test(s)))
+})
+
+test('buildDependencyHints maps relevant files to related files', () => {
+  const entries = [
+    { name: 'auth.ts', type: 'file' },
+    { name: 'user.ts', type: 'file' },
+    { name: 'order.ts', type: 'file' },
+    { name: 'README.md', type: 'file' },
+  ]
+  const deps = buildDependencyHints(entries, '修复登录超时')
+  assert.ok(deps['auth.ts'])
+  assert.ok(deps['auth.ts'].includes('user.ts'))
 })
