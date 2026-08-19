@@ -63,6 +63,7 @@
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
 - **Fable 风格子代理链**：`omni_delegate` 可运行 builder → qa-verifier → (repair → qa-verifier)* → code-reviewer，独立验证 + 冷读对抗审查 + 证据交接。
+- **技能建议**：根据任务类型/文本自动提示加载相关技能（`skill` 工具），避免重复实现已有能力。
 - **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。

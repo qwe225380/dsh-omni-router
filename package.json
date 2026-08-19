@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "Omni Router - auto-routing DeepSeek Harness preset: simple tasks run directly, complex tasks plan first with approval gate, coding tasks get TDD/delivery-gate guidance.",
   "type": "module",
   "main": "./lib/index.js",
@@ -41,7 +41,7 @@
     }
   },
   "scripts": {
-    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/bundle-installer.test.mjs",
+    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/skill-suggest.test.mjs && node test/bundle-installer.test.mjs",
     "benchmark": "node benchmark/run.mjs",
     "analyze": "node benchmark/analyze.mjs",
     "llm-eval": "node benchmark/llm-eval.mjs",

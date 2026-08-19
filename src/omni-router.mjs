@@ -13,10 +13,11 @@
  */
 
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
+import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
 
 export const name = 'omni-router'
 
-export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
+export const inject = ['systemPrompt', 'tools', 'llm', 'commands', 'skills']
 
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
@@ -962,6 +963,23 @@ export function apply(ctx, config = {}) {
       order: 35,
       text: `Suggested agent: ${selectAgentForTask(taskType, state.firstText || '')}`,
     })
+
+    if (config.skillSuggestions !== false) {
+      const skillsService = ctx.get('skills') || ctx.skills
+      let skillCandidates = suggestSkillsForTask(taskType, state.firstText || '')
+      if (skillsService?.list) {
+        try {
+          const available = await skillsService.list({ cwd: agent.session.header.cwd, scope: agent })
+          skillCandidates = filterAvailableSkills(skillCandidates, available)
+        } catch {
+          // Keep static candidates if the skill service is temporarily unavailable.
+        }
+      }
+      const skillText = buildSkillSuggestionText(skillCandidates)
+      if (skillText) {
+        sections.push({ name: 'omni-router:skills', order: 34, text: skillText })
+      }
+    }
 
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
