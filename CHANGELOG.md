@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.17.0] - 2026-08-19
+
+- 151 任务 benchmark：false-direct 0%、false-plan 0%
+- complexity accuracy 81.5%
+- 风险/计划词库精准化
+
 ## [0.16.0] - 2026-08-19
 
 - Benchmark 扩充到 151 个任务
