@@ -176,7 +176,7 @@ test('gitWorkflowHint gives branch/commit/diff guidance for coding tasks', () =>
 
 test('needsLLMClassification only for uncertain tasks when enabled', () => {
   const config = { useLLMClassification: true }
-  assert.equal(needsLLMClassification('帮我改一下登录逻辑', config), true)
+  assert.equal(needsLLMClassification('帮我处理一下这个任务', config), true)
   assert.equal(needsLLMClassification('修复登录接口 500', config), false)
   assert.equal(needsLLMClassification('今天天气怎么样', { useLLMClassification: false }), false)
 })
@@ -300,4 +300,10 @@ test('workflowPolicy derives a state machine from task dimensions', () => {
   assert.equal(simple.planning, 'optional')
   assert.equal(simple.approval, 'optional')
   assert.equal(simple.testing, 'optional')
+})
+
+test('heuristicComplexity lets risk override strong direct hints', () => {
+  assert.equal(heuristicComplexity('修复登录超时', baseConfig).value, 'plan')
+  assert.equal(heuristicComplexity('删掉这个没用的数据库字段', baseConfig).value, 'plan')
+  assert.equal(heuristicComplexity('修复这个 typo', baseConfig).value, 'direct')
 })
