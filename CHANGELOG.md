@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0] - 2026-08-18
+
+- Hybrid Classification：启发式置信度 + 低置信度 LLM 结构化分类
+- 新增 `heuristicComplexity` / `parseLLMClassification`
+- 新增 Router Benchmark：`benchmark/run.mjs` + `benchmark/tasks.json`
+- 暴露 `npm run benchmark` 评估路由质量
+
 ## [0.7.0] - 2026-08-18
 
 - Bundle 插件化：支持 `dsh plugin add dsh-omni-router` 一键安装
