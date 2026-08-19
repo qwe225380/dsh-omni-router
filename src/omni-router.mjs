@@ -86,9 +86,9 @@ export function heuristicComplexity(text, config = {}) {
   if (raw.length <= 20) return { value: 'direct', confidence: 0.6 }
   if (raw.length <= 40) return { value: 'direct', confidence: 0.7 }
 
-  // Long requests without strong signals are ambiguous; default to direct with
-  // low confidence so the LLM can override when enabled.
-  return { value: 'direct', confidence: 0.55 }
+  // Long requests without strong signals are ambiguous; use balanced so the
+  // system can decide per task (or let the LLM override).
+  return { value: 'balanced', confidence: 0.6 }
 }
 
 /**
@@ -102,8 +102,9 @@ export function classifyComplexity(text, config = {}) {
  * Decide whether the session should enter plan mode.
  */
 export function shouldEnterPlanMode(kind, config = {}) {
-  if (kind !== 'plan') return false
-  return config.requireConfirmation !== false
+  if (kind === 'plan') return config.requireConfirmation !== false
+  if (kind === 'balanced') return config.balancedDefault === 'plan'
+  return false
 }
 
 /**
