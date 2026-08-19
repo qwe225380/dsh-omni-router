@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   acceptanceChecklistHint,
+  buildContextGraph,
   buildContextSummary,
   classifyComplexity,
   classifyTaskType,
@@ -306,4 +307,17 @@ test('heuristicComplexity lets risk override strong direct hints', () => {
   assert.equal(heuristicComplexity('修复登录超时', baseConfig).value, 'plan')
   assert.equal(heuristicComplexity('删掉这个没用的数据库字段', baseConfig).value, 'plan')
   assert.equal(heuristicComplexity('修复这个 typo', baseConfig).value, 'direct')
+})
+
+test('buildContextGraph maps relevant files to tests', () => {
+  const entries = [
+    { name: 'auth.ts', type: 'file' },
+    { name: 'auth.test.ts', type: 'file' },
+    { name: 'order.ts', type: 'file' },
+    { name: 'README.md', type: 'file' },
+  ]
+  const graph = buildContextGraph(entries, '修复登录超时')
+  assert.ok(graph.relevant.includes('auth.ts'))
+  assert.ok(graph.relevant.includes('README.md'))
+  assert.ok(graph.tests.includes('auth.test.ts'))
 })
