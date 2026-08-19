@@ -161,8 +161,8 @@ Reports router accuracy and the critical false-direct / false-plan rates on `ben
 
 Current baseline (39 tasks):
 - complexity accuracy: 64.1%
-- false-direct rate: 25.0%
-- false-plan rate: 16.7%
+- false-direct rate: 30.0%
+- false-plan rate: 8.3%
 
 ## License
 
