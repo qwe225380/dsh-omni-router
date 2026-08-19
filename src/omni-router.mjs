@@ -20,6 +20,9 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
   '设计', '架构', '重构', '方案', '需求', '系统', '分析',
   '改造', '迁移', '升级', '更换', '替换', '定时任务',
+  '时区', 'WebSocket', '重连', '分页', '限流', '状态机', '看板',
+  '重试', '核销', '注销', '改为', '多语言', '国际化', '通知',
+  '优惠券', '库存', '缓存', '签名', '报表', 'Webhook', 'OSS',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
