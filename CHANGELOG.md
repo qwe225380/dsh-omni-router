@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0] - 2026-08-18
+
+- Risk Model：`estimateRisk` 将风险等级独立于复杂度，高风险强制 plan + approval
+- Adaptive Rerouting：`omni_reroute` 工具 + `/omni reroute` 命令，支持 direct ↔ plan 动态切换
+- Context Discovery 第一版：`discoverRelevantFiles` 按任务语义发现相关文件/目录
+- 状态新增 `riskLevel`，持久化恢复
+
 ## [0.8.0] - 2026-08-18
 
 - Hybrid Classification：启发式置信度 + 低置信度 LLM 结构化分类
