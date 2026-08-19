@@ -43,7 +43,9 @@
 - **思维模式路由**：自动选择 `spec`（方案优先）/ `react`（直接执行）/ `balanced`（自动）。
 - **任务类型识别**：`bugfix` / `feature` / `refactor` / `test` / `review` / `other`。
 - **Plan Mode 集成**：复用 DSH 内置 Plan Mode，方案必须经你确认后才执行。
-- **项目上下文收集**：按任务类型挑选关键文件，生成有界上下文摘要。
+- **项目上下文收集**：按任务类型 + 语义关键词发现相关文件，生成有界上下文摘要。
+- **Risk Model**：独立评估风险等级，高风险（数据库/auth/生产配置）即使复杂度低也强制 plan + approval。
+- **Adaptive Rerouting**：执行中可通过 `omni_reroute` / `/omni reroute` 在 direct ↔ plan 间动态切换。
 - **代码化方案模板**：目标、范围、涉及文件、步骤、接口/数据变更、测试计划、风险、兼容性、回滚、验收标准。
 - **TDD 提示**：编码任务自动提示“先写失败测试 → 实现 → 通过”。
 - **交付门提示**：完成前提示运行测试/doublecheck，防止“假完成”。
@@ -107,7 +109,8 @@ Then restart DSH and select **Omni Router (experimental)** in a new session.
 - `/omni plan` — enter plan-first mode.
 - `/omni direct` — enter direct mode.
 - `/omni mode spec|react|balanced` — set thinking mode.
-- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`.
+- `/omni reroute plan|direct` — adaptively reroute current task.
+- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`.
 
 ## Configuration
 
