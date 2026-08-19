@@ -19,13 +19,16 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
   '设计', '架构', '重构', '方案', '需求', '系统', '分析',
-  '改造', '迁移', '升级', '更换', '替换', '定时任务',
+  '改造', '迁移', '升级', '更换', '替换', '定时',
   '时区', 'WebSocket', '重连', '限流', '状态机', '看板',
-  '重试', '核销', '注销', '改为', '多语言', '国际化', '通知',
-  '优惠券', '库存', '签名', '报表', 'Webhook', 'OSS', '超时',
+  '重试', '核销', '改为', '多语言', '国际化', '通知',
+  '库存', '签名', 'Webhook', 'OSS', '超时',
   '登录接口', '上传失败', '短信验证码', '分页丢失',
-  '金额精度', '不同步', '二维码登录', '幂等', '多仓库', '切换',
-  '黑名单', '批量导入', '会员等级', '状态管理', '虚拟滚动',
+  '金额精度', '不同步', '二维码登录', '幂等', '多仓库', '服务商',
+  '黑名单', '批量导入', '会员等级', '状态管理', '虚拟滚动', '批量发放', '注销功能',
+  '优惠券计算', '优惠券不可用', '优惠券转赠', '优惠券领取', '批量导出', '重复处理',
+  '售后', '日志检索', '签到', '打包', 'MinIO', '文件存储', '改价', '积分',
+  '统计', '实名认证', '退款', '不生效',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -342,10 +345,10 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(schema|migration|drop table|drop database|连接池|auth|权限|payment|支付|deploy|ci\/cd|配置|config|Webhook|签名|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|连接池|auth|权限|deploy|ci\/cd|配置|config|Webhook|验签|签名|对账|网关|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
-  if (/(数据库|db|redis|登录|login|session|token|订单|order|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
+  if (/(数据库|db|redis|登录|login|session|token|订单|order|支付|payment|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
     reasons.push('business-logic/api')
   }
   const score = reasons.includes('production/secret/destructive') ? 1.0
