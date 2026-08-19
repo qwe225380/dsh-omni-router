@@ -3,15 +3,18 @@ import assert from 'node:assert/strict'
 
 import {
   acceptanceChecklistHint,
+  buildContextBudget,
   buildContextGraph,
   buildContextSummary,
   buildDependencyHints,
+  buildIntent,
   buildPolicyDecision,
   buildRepositorySnapshot,
   classifyComplexity,
   classifyTaskType,
   classifyThinkingMode,
   deliveryGateHint,
+  decideNextAction,
   discoverRelevantFiles,
   estimateRisk,
   extractSymbolsFromText,
@@ -382,4 +385,26 @@ test('buildRepositorySnapshot detects project metadata from root entries', () =>
   assert.equal(snapshot.packageManager, 'pnpm')
   assert.equal(snapshot.testFramework, 'vitest')
   assert.ok(snapshot.entryPoints.includes('src'))
+})
+
+test('buildIntent extracts desired outcome and acceptance criteria', () => {
+  const intent = buildIntent('帮我给订单系统增加退款功能，不要破坏现有支付')
+  assert.equal(intent.taskType, 'feature')
+  assert.ok(intent.desiredOutcome.length > 0)
+  assert.ok(intent.acceptanceCriteria.length >= 1)
+  assert.ok(intent.constraints.some((c) => /支付|checkout|payment/i.test(c)))
+})
+
+test('buildContextBudget scales with complexity and risk', () => {
+  const hard = buildContextBudget('plan', 'high')
+  assert.ok(hard.maxContextTokens >= 100000)
+  const easy = buildContextBudget('direct', 'low')
+  assert.ok(easy.maxContextTokens < hard.maxContextTokens)
+})
+
+test('decideNextAction returns a concrete next action', () => {
+  const action = decideNextAction({ phase: 'understand', taskType: 'feature', risk: 'high' })
+  assert.ok(['inspect_repository', 'search_symbols', 'read_file'].includes(action.action))
+  assert.ok(action.target)
+  assert.ok(action.reason)
 })
