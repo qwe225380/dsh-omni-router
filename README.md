@@ -138,7 +138,7 @@ omni-router/
 ├── test/omni-router.test.mjs
 ├── benchmark/run.mjs
 ├── scripts/install-preset.mjs
-├── docs/
+├── docs/ (INSTALL/CONFIGURATION/ARCHITECTURE/COMPATIBILITY/EXAMPLES/ROADMAP)
 ├── .github/workflows/ci.yml
 ├── README.md
 ├── README.zh-CN.md
