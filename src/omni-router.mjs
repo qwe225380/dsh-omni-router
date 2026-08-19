@@ -117,6 +117,7 @@ export function readStateFromEvents(events) {
         kind: data.kind || null,
         taskType: data.taskType || null,
         thinkingMode: data.thinkingMode || null,
+        riskLevel: data.riskLevel || null,
         planRequested: !!data.planRequested,
         directOverride: !!data.directOverride,
       }
@@ -188,6 +189,75 @@ export function selectKeyFilesForTask(taskType, entries) {
   }[taskType] || []
   const selected = [...common, ...taskSpecific].filter((name) => names.has(name))
   return [...new Set(selected)]
+}
+
+/**
+ * Lightweight semantic context discovery: find root entries relevant to the
+ * task text by keyword/semantic hints, in addition to the common key files.
+ */
+export function discoverRelevantFiles(entries, taskText) {
+  const text = normalize(String(taskText || ''))
+  const names = new Set((Array.isArray(entries) ? entries : []).map((entry) => entry.name))
+  const selected = new Set()
+
+  const common = ['README.md', 'package.json', 'AGENTS.md', 'CLAUDE.md', 'tsconfig.json', 'pyproject.toml', 'Cargo.toml', 'go.mod']
+  for (const name of common) if (names.has(name)) selected.add(name)
+
+  const semantic = [
+    { pattern: /登录|auth|login|session|token|权限/, targets: ['auth', 'login', 'session', 'user'] },
+    { pattern: /订单|order|交易|payment|支付/, targets: ['order', 'payment', 'trade'] },
+    { pattern: /用户|user/, targets: ['user'] },
+    { pattern: /数据库|db|schema|migration|redis/, targets: ['db', 'database', 'migration', 'redis'] },
+    { pattern: /测试|test|单测/, targets: ['test', 'tests'] },
+    { pattern: /缓存|cache|redis/, targets: ['cache', 'redis'] },
+  ]
+  for (const { pattern, targets } of semantic) {
+    if (pattern.test(text)) {
+      for (const target of targets) if (names.has(target)) selected.add(target)
+    }
+  }
+
+  for (const entry of (Array.isArray(entries) ? entries : [])) {
+    const name = String(entry.name || '').toLowerCase()
+    if (name && text.includes(name)) selected.add(entry.name)
+  }
+
+  return [...selected]
+}
+
+/**
+ * Estimate task risk from text heuristics.
+ * Complexity and risk are intentionally separate dimensions.
+ */
+export function estimateRisk(text) {
+  const normalized = normalize(String(text || ''))
+  const reasons = []
+  if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
+    reasons.push('production/secret/destructive')
+  }
+  if (/(数据库|schema|migration|drop|delete|删除|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config)/.test(normalized)) {
+    reasons.push('schema/auth/delete/deploy')
+  }
+  if (/(业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
+    reasons.push('business-logic/api')
+  }
+  const score = reasons.includes('production/secret/destructive') ? 1.0
+    : reasons.includes('schema/auth/delete/deploy') ? 0.8
+    : reasons.includes('business-logic/api') ? 0.5
+    : 0.1
+  const level = score >= 0.95 ? 'critical' : score >= 0.7 ? 'high' : score >= 0.4 ? 'medium' : 'low'
+  return { level, score, reasons }
+}
+
+/**
+ * Decide whether to reroute based on execution signals.
+ * Returns 'plan', 'direct', or null (keep current).
+ */
+export function rerouteDecision(current, signals = {}) {
+  const blastRadius = signals.blastRadius ?? 0.5
+  if (current === 'direct' && blastRadius >= 0.7) return 'plan'
+  if (current === 'plan' && blastRadius <= 0.2) return 'direct'
+  return null
 }
 
 /**
@@ -341,7 +411,7 @@ export function apply(ctx, config = {}) {
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, planRequested: false, directOverride: false }
+      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
       states.set(session.id, state)
     }
     return state
@@ -354,6 +424,7 @@ export function apply(ctx, config = {}) {
         kind: state.kind,
         taskType: state.taskType || null,
         thinkingMode: state.thinkingMode || null,
+        riskLevel: state.riskLevel || null,
         planRequested: !!state.planRequested,
         directOverride: !!state.directOverride,
       })
@@ -383,7 +454,7 @@ export function apply(ctx, config = {}) {
     }
   }
 
-  async function getProjectContext(session, taskType = 'other') {
+  async function getProjectContext(session, taskType = 'other', taskText = '') {
     const fs = ctx.get('fs') || ctx.fs
     if (!fs) return ''
     const cwd = session.meta?.cwd || session.header?.cwd
@@ -391,7 +462,11 @@ export function apply(ctx, config = {}) {
     try {
       const root = await fs.resolve('.', { cwd })
       const entries = await fs.listDir(root)
-      const keyFiles = selectKeyFilesForTask(taskType, entries)
+      const relevant = taskText
+        ? discoverRelevantFiles(entries, taskText)
+        : selectKeyFilesForTask(taskType, entries)
+      const fileNames = new Set((entries || []).filter((entry) => entry.type === 'file').map((entry) => entry.name))
+      const keyFiles = relevant.filter((name) => fileNames.has(name))
       const files = {}
       for (const name of keyFiles) {
         try {
@@ -465,8 +540,10 @@ export function apply(ctx, config = {}) {
     if (directWords.some((w) => lower.includes(w))) {
       state.kind = 'direct'
       state.directOverride = true
+      if (state.firstText === null) state.firstText = text
       if (state.taskType === null) state.taskType = classifyTaskType(text)
       if (state.thinkingMode === null) state.thinkingMode = classifyThinkingMode(text)
+      if (state.riskLevel === null) state.riskLevel = estimateRisk(text).level
       if (state.planRequested) setPlanMode(agent, false)
       state.planRequested = false
       persistState(session, state)
@@ -475,8 +552,10 @@ export function apply(ctx, config = {}) {
     if (planWords.some((w) => lower.includes(w))) {
       state.kind = 'plan'
       state.directOverride = false
+      if (state.firstText === null) state.firstText = text
       if (state.taskType === null) state.taskType = classifyTaskType(text)
       if (state.thinkingMode === null) state.thinkingMode = classifyThinkingMode(text)
+      if (state.riskLevel === null) state.riskLevel = estimateRisk(text).level
       if (shouldEnterPlanMode('plan', config)) {
         state.planRequested = setPlanMode(agent, true) || true
       }
@@ -486,12 +565,16 @@ export function apply(ctx, config = {}) {
 
     // First real message: classify once.
     if (state.kind === null) {
+      state.firstText = text
       state.taskType = classifyTaskType(text)
       state.thinkingMode = classifyThinkingMode(text)
+      state.riskLevel = estimateRisk(text).level
       if (needsLLMClassification(text, config)) {
         state.pendingText = text // resolved asynchronously during first assembly
       } else {
         state.kind = classifyComplexity(text, config)
+        const highRisk = ['high', 'critical'].includes(state.riskLevel)
+        if (highRisk) state.kind = 'plan' // risk overrides complexity: plan + approval
         if (shouldEnterPlanMode(state.kind, config)) {
           state.planRequested = setPlanMode(agent, true) || true
         }
@@ -518,6 +601,8 @@ export function apply(ctx, config = {}) {
       state.kind = llm.complexity
       state.taskType = llm.taskType
       state.thinkingMode = llm.thinkingMode
+      if (state.riskLevel === null) state.riskLevel = estimateRisk(state.pendingText).level
+      if (['high', 'critical'].includes(state.riskLevel)) state.kind = 'plan'
       delete state.pendingText
       if (shouldEnterPlanMode(state.kind, config)) {
         state.planRequested = setPlanMode(agent, true) || true
@@ -532,10 +617,17 @@ export function apply(ctx, config = {}) {
       order: 38,
       text: thinkingModeHint(state.thinkingMode || 'balanced'),
     })
+    if (state.riskLevel) {
+      sections.push({
+        name: 'omni-router:risk',
+        order: 37,
+        text: `Risk level: ${state.riskLevel}. High or critical risk requires plan approval before mutation.`,
+      })
+    }
 
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
-        state.context = await getProjectContext(agent.session, taskType)
+        state.context = await getProjectContext(agent.session, taskType, state.firstText || '')
       }
       sections.push({
         name: 'omni-router:plan-template',
@@ -608,11 +700,12 @@ export function apply(ctx, config = {}) {
     execute() {
       const session = currentSession()
       if (!session) return 'no agent session'
-      const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, planRequested: false, directOverride: false }
+      const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
         `thinkingMode=${state.thinkingMode || 'balanced'}`,
+        `riskLevel=${state.riskLevel || 'unknown'}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
       ].join('\n')
@@ -681,6 +774,48 @@ export function apply(ctx, config = {}) {
     },
   })
 
+  registerTool({
+    name: 'omni_reroute',
+    description: 'Reroute the current task between plan and direct. Optionally pass blastRadius (0-1) for adaptive rerouting.',
+    parameters: {
+      type: 'object',
+      properties: {
+        mode: {
+          type: 'string',
+          enum: ['plan', 'direct'],
+          description: 'Target mode: plan or direct',
+        },
+        blastRadius: {
+          type: 'number',
+          description: '0-1 estimate of how many files/callers are affected',
+        },
+      },
+      required: ['mode'],
+    },
+    execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      if (!session || !agent) return 'no agent session'
+      const state = stateFor(session)
+      const current = state.kind || 'direct'
+      const target = typeof args?.blastRadius === 'number'
+        ? rerouteDecision(current, { blastRadius: args.blastRadius })
+        : args?.mode
+      if (!target || !['plan', 'direct'].includes(target)) {
+        return `No reroute needed (current=${current}).`
+      }
+      state.kind = target
+      if (target === 'plan') {
+        state.planRequested = setPlanMode(agent, true) || true
+      } else {
+        state.planRequested = false
+        setPlanMode(agent, false)
+      }
+      persistState(session, state)
+      return `Rerouted ${current} -> ${target}.`
+    },
+  })
+
   // ---- /omni command ------------------------------------------------------
 
   if (ctx.commands) {
@@ -700,6 +835,7 @@ export function apply(ctx, config = {}) {
               `omni-router: ${state.kind || 'unclassified'}`,
               `taskType=${state.taskType || 'unknown'}`,
               `thinkingMode=${state.thinkingMode || 'balanced'}`,
+              `riskLevel=${state.riskLevel || 'unknown'}`,
               `planRequested=${state.planRequested}`,
               `directOverride=${state.directOverride}`,
             ].join('\n'),
@@ -729,7 +865,22 @@ export function apply(ctx, config = {}) {
           persistState(session, state)
           return { kind: 'success', text: `Thinking mode set to ${mode}.` }
         }
-        return { kind: 'success', text: 'Usage: /omni status | plan | direct | mode <spec|react|balanced>' }
+        if (cmd.startsWith('reroute ')) {
+          const target = cmd.slice(8).trim()
+          if (!['plan', 'direct'].includes(target)) {
+            return { kind: 'success', text: 'Invalid reroute. Use: /omni reroute plan | direct' }
+          }
+          state.kind = target
+          if (target === 'plan') {
+            state.planRequested = setPlanMode(agent, true) || true
+          } else {
+            state.planRequested = false
+            setPlanMode(agent, false)
+          }
+          persistState(session, state)
+          return { kind: 'success', text: `Rerouted to ${target}.` }
+        }
+        return { kind: 'success', text: 'Usage: /omni status | plan | direct | mode <spec|react|balanced> | reroute <plan|direct>' }
       },
     })
   }
