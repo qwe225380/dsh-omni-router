@@ -261,6 +261,39 @@ export function rerouteDecision(current, signals = {}) {
 }
 
 /**
+ * Select a specialized agent/toolchain for the task.
+ * This is the first step toward Agent Orchestration.
+ */
+export function selectAgentForTask(taskType, taskText = '') {
+  const text = normalize(String(taskText || ''))
+  if (/(前端|frontend|ui|页面|component)/.test(text)) return 'frontend-agent'
+  if (/(数据库|db|schema|sql|migration|redis)/.test(text)) return 'db-agent'
+  if (/(浏览器|browser|playwright|网页)/.test(text)) return 'browser-agent'
+  if (/(安全|auth|登录|权限|security|token)/.test(text)) return 'security-agent'
+  if (taskType === 'review' || /(review|审查|评审)/.test(text)) return 'review-agent'
+  if (/(api|接口|backend|服务端)/.test(text)) return 'backend-agent'
+  return 'coding-agent'
+}
+
+/**
+ * Derive a compact workflow policy from task dimensions.
+ * This is the Policy/State Orchestration primitive: instead of many prompt
+ * hints, the router maintains a state machine.
+ */
+export function workflowPolicy(taskType, complexity, risk) {
+  const coding = ['bugfix', 'feature', 'refactor', 'test'].includes(taskType)
+  const highRisk = ['high', 'critical'].includes(risk)
+  const planRequired = complexity === 'plan' || highRisk
+  return {
+    planning: planRequired ? 'required' : 'optional',
+    approval: planRequired ? 'required' : 'optional',
+    testing: coding ? 'required' : 'optional',
+    review: taskType === 'review' ? 'required' : coding ? 'recommended' : 'optional',
+    git: coding ? 'recommended' : 'optional',
+  }
+}
+
+/**
  * Build a compact project-context summary from root entries and key file
  * contents. This is injected into plan mode so the model starts with context
  * instead of guessing. `options.maxFileChars` and `options.maxTotalChars` keep
@@ -624,6 +657,17 @@ export function apply(ctx, config = {}) {
         text: `Risk level: ${state.riskLevel}. High or critical risk requires plan approval before mutation.`,
       })
     }
+    const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
+    sections.push({
+      name: 'omni-router:policy',
+      order: 36,
+      text: `Workflow policy: ${JSON.stringify(policy)}`,
+    })
+    sections.push({
+      name: 'omni-router:agent',
+      order: 35,
+      text: `Suggested agent: ${selectAgentForTask(taskType, state.firstText || '')}`,
+    })
 
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
