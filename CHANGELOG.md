@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-08-19
+
+- 新增 `benchmark/analyze.mjs`（混淆矩阵 + 高频误判词）
+- Router 支持 `balanced` 三态复杂度（计划/直接/平衡）
+- 新增 `npm run analyze`
+
 ## [1.0.0] - 2026-08-19
 
 - 🎉 正式版发布
