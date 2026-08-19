@@ -6,6 +6,8 @@ import {
   buildContextGraph,
   buildContextSummary,
   buildDependencyHints,
+  buildPolicyDecision,
+  buildRepositorySnapshot,
   classifyComplexity,
   classifyTaskType,
   classifyThinkingMode,
@@ -355,4 +357,29 @@ test('extractSymbolsFromText finds function/class/const names', () => {
   assert.ok(symbols.includes('AuthService'))
   assert.ok(symbols.includes('TOKEN_KEY'))
   assert.ok(symbols.includes('refreshSession'))
+})
+
+test('buildPolicyDecision returns a unified policy object', () => {
+  const policy = buildPolicyDecision('修复退款偶发重复扣款', {})
+  assert.equal(policy.taskType, 'bugfix')
+  assert.equal(policy.complexity, 'plan')
+  assert.equal(policy.risk, 'high')
+  assert.equal(policy.executionMode, 'plan')
+  assert.equal(policy.approvalRequired, true)
+  assert.ok(Array.isArray(policy.verification))
+})
+
+test('buildRepositorySnapshot detects project metadata from root entries', () => {
+  const entries = [
+    { name: 'package.json', type: 'file' },
+    { name: 'pnpm-lock.yaml', type: 'file' },
+    { name: 'src', type: 'directory' },
+    { name: 'tests', type: 'directory' },
+    { name: 'vitest.config.ts', type: 'file' },
+    { name: 'README.md', type: 'file' },
+  ]
+  const snapshot = buildRepositorySnapshot(entries)
+  assert.equal(snapshot.packageManager, 'pnpm')
+  assert.equal(snapshot.testFramework, 'vitest')
+  assert.ok(snapshot.entryPoints.includes('src'))
 })
