@@ -246,7 +246,11 @@ export async function runAgentChain(deps, options = {}) {
     return finalize({ status: 'failed', taskText, plan, stages, error: 'builder failed or refused' })
   }
 
-  // 2. QA
+  // 2. QA (skipped entirely for `chain: off`)
+  if (!plan.stages.includes('qa-verifier')) {
+    return finalize({ status: 'ready', taskText, plan, stages })
+  }
+
   let qa = await runStage(subagents, parent, 'qa-verifier', buildQaPrompt(taskText, { ...plan, builderOutput: builder.output }))
   stages.push(qa)
   let qaPass = isQaPass(qa.output)

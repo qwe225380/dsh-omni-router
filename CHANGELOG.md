@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.5.1] - 2026-08-19
+
+- 修复 `chain: off` 仍会执行 QA/Repair 的问题：现在严格只跑 builder
+- `runAgentChain` 遵循 `buildAgentChain` 的 stages，不再多跑未启用阶段
+
 ## [1.5.0] - 2026-08-19
 
 - Fable 风格子代理链：`omni_delegate` 升级为 builder → qa-verifier → (repair → qa-verifier)* → code-reviewer

@@ -13,6 +13,7 @@ import {
   hasCriticalFindings,
   isQaPass,
   normalizeChain,
+  runAgentChain,
 } from '../src/agent-chain.mjs'
 
 test('buildAgentChain full returns builder->qa->reviewer', () => {
@@ -107,4 +108,48 @@ test('formatChainReport renders stages and final status', () => {
   assert.match(report, /修复 bug/)
   assert.match(report, /builder \[completed\]/)
   assert.match(report, /qa-verifier \[failed\]/)
+})
+
+function fakeSubagents(outputs) {
+  const calls = []
+  return {
+    subagents: {
+      start: async (_name, request) => {
+        calls.push(request.label)
+        const text = outputs[request.label] || 'no output'
+        return {
+          id: `run-${calls.length}`,
+          result: Promise.resolve({ stopReason: 'completed', output: [{ type: 'text', text }] }),
+          dispose: async () => {},
+        }
+      },
+    },
+    calls,
+  }
+}
+
+test('runAgentChain off does not spawn qa-verifier', async () => {
+  const { subagents, calls } = fakeSubagents({ builder: 'BUILDER OK' })
+  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'off' })
+  assert.deepEqual(calls, ['builder'])
+  assert.equal(outcome.status, 'ready')
+})
+
+test('runAgentChain auto direct low risk skips code-reviewer', async () => {
+  const { subagents, calls } = fakeSubagents({ builder: 'BUILDER OK', 'qa-verifier': 'QA: PASS' })
+  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'auto', complexity: 'direct', risk: 'low' })
+  assert.ok(calls.includes('qa-verifier'))
+  assert.ok(!calls.includes('code-reviewer'))
+  assert.equal(outcome.status, 'ready')
+})
+
+test('runAgentChain full runs builder, qa, and reviewer when green', async () => {
+  const { subagents, calls } = fakeSubagents({
+    builder: 'BUILDER OK',
+    'qa-verifier': 'QA: PASS\n- criterion 1: PASS',
+    'code-reviewer': 'REVIEW: PASS\nno critical findings',
+  })
+  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'full' })
+  assert.deepEqual(calls, ['builder', 'qa-verifier', 'code-reviewer'])
+  assert.equal(outcome.status, 'ready')
 })
