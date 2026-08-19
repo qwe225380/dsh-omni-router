@@ -52,7 +52,8 @@
 - **轻量验证**：简单任务改完也要求跑测试或语法检查。
 - **状态持久化**：分类/思维模式/任务类型写入会话事件，resume 可恢复。
 - **降级保护**：Plan Mode 不可用时自动限制为只读工具。
-- **可选 LLM 分类**：不确定的任务可交给模型二次判断。
+- **Hybrid 分类**：启发式置信度 + 低置信度时 LLM 结构化分类。
+- **Router Benchmark**：内置 `benchmark/run.mjs`，可评估 accuracy / false-direct rate。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。
 
 ### 编排复用（推荐安装）
@@ -130,6 +131,7 @@ omni-router/
 ├── preset.yml
 ├── src/omni-router.mjs
 ├── test/omni-router.test.mjs
+├── benchmark/run.mjs
 ├── scripts/install-preset.mjs
 ├── docs/
 ├── .github/workflows/ci.yml
@@ -143,6 +145,14 @@ omni-router/
 ```sh
 npm test
 ```
+
+## 路由评估
+
+```sh
+npm run benchmark
+```
+
+在 `benchmark/tasks.json` 上报告路由准确率、false-direct / false-plan 率。
 
 ## 许可证
 
