@@ -20,9 +20,12 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
   '设计', '架构', '重构', '方案', '需求', '系统', '分析',
   '改造', '迁移', '升级', '更换', '替换', '定时任务',
-  '时区', 'WebSocket', '重连', '分页', '限流', '状态机', '看板',
+  '时区', 'WebSocket', '重连', '限流', '状态机', '看板',
   '重试', '核销', '注销', '改为', '多语言', '国际化', '通知',
-  '优惠券', '库存', '缓存', '签名', '报表', 'Webhook', 'OSS',
+  '优惠券', '库存', '签名', '报表', 'Webhook', 'OSS', '超时',
+  '登录接口', '上传失败', '短信验证码', '分页丢失',
+  '金额精度', '不同步', '二维码登录', '幂等', '多仓库', '切换',
+  '黑名单', '批量导入', '会员等级', '状态管理', '虚拟滚动',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -297,10 +300,10 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(schema|migration|drop table|drop database|连接池|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|连接池|auth|权限|payment|支付|deploy|ci\/cd|配置|config|Webhook|签名|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
-  if (/(数据库|db|redis|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
+  if (/(数据库|db|redis|登录|login|session|token|订单|order|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
     reasons.push('business-logic/api')
   }
   const score = reasons.includes('production/secret/destructive') ? 1.0
