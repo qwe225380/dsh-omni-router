@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0] - 2026-08-19
+
+- CI 增加 Node 20/22/24 矩阵
+- 新增 `docs/COMPATIBILITY.md`
+- Benchmark 扩充到 298 个任务
+- 当前基线：complexity accuracy 71.5%，false-direct 6.8%，false-plan 8.7%
+
 ## [0.20.0] - 2026-08-19
 
 - 247 任务 benchmark：false-direct 0%、false-plan 3.4%
