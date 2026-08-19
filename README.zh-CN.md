@@ -59,6 +59,7 @@
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
 - **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
+- **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。
 
 ### 编排复用（推荐安装）
