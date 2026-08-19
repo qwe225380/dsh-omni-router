@@ -159,10 +159,10 @@ npm run benchmark
 
 Reports router accuracy and the critical false-direct / false-plan rates on `benchmark/tasks.json`.
 
-Current baseline (247 tasks):
-- complexity accuracy: 78.1%
-- false-direct rate: 0.0%
-- false-plan rate: 3.4%
+Current baseline (298 tasks):
+- complexity accuracy: 71.5%
+- false-direct rate: 6.8%
+- false-plan rate: 8.7%
 
 ## License
 
