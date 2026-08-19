@@ -20,10 +20,12 @@ import {
   planTemplateForType,
   readStateFromEvents,
   rerouteDecision,
+  selectAgentForTask,
   selectKeyFilesForTask,
   shouldEnterPlanMode,
   tddHintForType,
   thinkingModeHint,
+  workflowPolicy,
 } from '../src/omni-router.mjs'
 
 const baseConfig = {
@@ -277,4 +279,25 @@ test('discoverRelevantFiles finds task-related files by keyword', () => {
   const files = discoverRelevantFiles(entries, '修复登录超时')
   assert.ok(files.includes('auth'))
   assert.ok(files.includes('README.md'))
+})
+
+test('selectAgentForTask maps task text to a specialized agent', () => {
+  assert.equal(selectAgentForTask('feature', '做一个前端页面'), 'frontend-agent')
+  assert.equal(selectAgentForTask('bugfix', '登录接口报错'), 'security-agent')
+  assert.equal(selectAgentForTask('refactor', '优化数据库查询'), 'db-agent')
+  assert.equal(selectAgentForTask('review', 'review 这个 PR'), 'review-agent')
+  assert.equal(selectAgentForTask('feature', '新增一个 API'), 'backend-agent')
+})
+
+test('workflowPolicy derives a state machine from task dimensions', () => {
+  const policy = workflowPolicy('feature', 'plan', 'high')
+  assert.equal(policy.planning, 'required')
+  assert.equal(policy.approval, 'required')
+  assert.equal(policy.testing, 'required')
+  assert.equal(policy.git, 'recommended')
+
+  const simple = workflowPolicy('other', 'direct', 'low')
+  assert.equal(simple.planning, 'optional')
+  assert.equal(simple.approval, 'optional')
+  assert.equal(simple.testing, 'optional')
 })
