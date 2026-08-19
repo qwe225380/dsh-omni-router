@@ -241,8 +241,30 @@ export function discoverRelevantFiles(entries, taskText) {
 }
 
 /**
- * Build a lightweight context graph: relevant files plus their test mappings.
- * This is the first step toward symbol/dependency-aware context discovery.
+ * Suggest likely symbols (functions/classes/modules) for a task.
+ * This is a lightweight stand-in for real symbol search.
+ */
+export function suggestSymbolsForTask(taskText) {
+  const text = normalize(String(taskText || ''))
+  const symbols = []
+  const rules = [
+    { pattern: /登录|auth|login|session|token|权限/, names: ['login', 'auth', 'session', 'token'] },
+    { pattern: /订单|order|交易|payment|支付/, names: ['order', 'payment', 'checkout'] },
+    { pattern: /用户|user|profile/, names: ['user', 'profile'] },
+    { pattern: /数据库|db|schema|migration/, names: ['database', 'schema', 'migration'] },
+    { pattern: /缓存|cache|redis/, names: ['cache', 'redis'] },
+    { pattern: /测试|test|单测/, names: ['test', 'spec'] },
+  ]
+  for (const { pattern, names } of rules) {
+    if (pattern.test(text)) symbols.push(...names)
+  }
+  return [...new Set(symbols)]
+}
+
+/**
+ * Build a lightweight context graph: relevant files, test mappings, and
+ * suggested symbols. This is the first step toward symbol/dependency-aware
+ * context discovery.
  */
 export function buildContextGraph(entries, taskText) {
   const list = Array.isArray(entries) ? entries : []
@@ -255,7 +277,11 @@ export function buildContextGraph(entries, taskText) {
     .map((entry) => entry.name)
     .filter((name) => relevantBases.has(baseOf(name)) || /(test|spec)/i.test(name))
     .filter((name) => names.has(name))
-  return { relevant: [...new Set(relevant)], tests: [...new Set(tests)] }
+  return {
+    relevant: [...new Set(relevant)],
+    tests: [...new Set(tests)],
+    symbols: suggestSymbolsForTask(taskText),
+  }
 }
 
 /**
@@ -528,11 +554,11 @@ export function apply(ctx, config = {}) {
     try {
       const root = await fs.resolve('.', { cwd })
       const entries = await fs.listDir(root)
-      const relevant = taskText
-        ? discoverRelevantFiles(entries, taskText)
-        : selectKeyFilesForTask(taskType, entries)
+      const graph = taskText
+        ? buildContextGraph(entries, taskText)
+        : { relevant: selectKeyFilesForTask(taskType, entries), tests: [], symbols: [] }
       const fileNames = new Set((entries || []).filter((entry) => entry.type === 'file').map((entry) => entry.name))
-      const keyFiles = relevant.filter((name) => fileNames.has(name))
+      const keyFiles = graph.relevant.filter((name) => fileNames.has(name))
       const files = {}
       for (const name of keyFiles) {
         try {
@@ -542,7 +568,14 @@ export function apply(ctx, config = {}) {
           // Ignore unreadable files; context collection is best-effort.
         }
       }
-      return buildContextSummary(entries, files, { maxTotalChars: 3000 })
+      let summary = buildContextSummary(entries, files, { maxTotalChars: 3000 })
+      if (graph.symbols.length) {
+        summary += `\n\nSuggested symbols: ${graph.symbols.join(', ')}`
+      }
+      if (graph.tests.length) {
+        summary += `\nRelated tests: ${graph.tests.join(', ')}`
+      }
+      return summary
     } catch {
       return ''
     }
@@ -890,6 +923,34 @@ export function apply(ctx, config = {}) {
       }
       persistState(session, state)
       return `Rerouted ${current} -> ${target}.`
+    },
+  })
+
+  registerTool({
+    name: 'omni_delegate',
+    description: 'Suggest a specialized agent and print a delegation plan for the current task.',
+    parameters: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Task description (optional; uses first task text by default)' },
+      },
+    },
+    execute(args) {
+      const session = currentSession()
+      if (!session) return 'no agent session'
+      const state = stateFor(session)
+      const taskText = args?.task || state.firstText || ''
+      const taskType = state.taskType || classifyTaskType(taskText)
+      const agentName = selectAgentForTask(taskType, taskText)
+      const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
+      const subagents = ctx.get('subagents') || ctx.subagents
+      const available = subagents ? 'yes' : 'no'
+      return [
+        `Suggested agent: ${agentName}`,
+        `Subagent service available: ${available}`,
+        `Workflow policy: ${JSON.stringify(policy)}`,
+        'Delegation plan: send the task to the suggested agent with the policy attached.',
+      ].join('\n')
     },
   })
 
