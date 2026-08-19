@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0] - 2026-08-19
+
+- False-Plan Rate 优化：移除“优化”强 plan 词、长文本默认 direct + 低置信度
+- Context Graph 第一版：`buildContextGraph` 相关文件 + 测试映射
+- 风险模型细化：删除操作仅在涉及数据库/生产/auth 时才算高风险
+- Benchmark：false-plan rate 16.7% → 8.3%
+
 ## [0.11.0] - 2026-08-19
 
 - False Direct Rate 专项优化：风险等级覆盖“修复/删除”等强直执行号
