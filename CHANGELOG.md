@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.18.0] - 2026-08-19
+
+- 新增 Dependency Hints（依赖图第一版）
+- Benchmark 扩充到 199 个任务
+- 当前基线：complexity accuracy 75.9%，false-direct 4.5%，false-plan 10.0%
+
 ## [0.17.0] - 2026-08-19
 
 - 151 任务 benchmark：false-direct 0%、false-plan 0%
