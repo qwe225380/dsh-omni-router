@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.23.0] - 2026-08-19
+
+- Benchmark 扩充到 399 个任务
+- 当前基线：complexity accuracy 67.7%，false-direct 9.7%，false-plan 9.7%
+
 ## [0.22.0] - 2026-08-19
 
 - Context Graph 真实符号提取：`extractSymbolsFromText` 从文件内容中提取函数/类/常量
