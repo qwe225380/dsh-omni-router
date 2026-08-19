@@ -24,6 +24,7 @@ import {
   selectAgentForTask,
   selectKeyFilesForTask,
   shouldEnterPlanMode,
+  suggestSymbolsForTask,
   tddHintForType,
   thinkingModeHint,
   workflowPolicy,
@@ -320,4 +321,10 @@ test('buildContextGraph maps relevant files to tests', () => {
   assert.ok(graph.relevant.includes('auth.ts'))
   assert.ok(graph.relevant.includes('README.md'))
   assert.ok(graph.tests.includes('auth.test.ts'))
+})
+
+test('suggestSymbolsForTask returns likely symbols for a task', () => {
+  const symbols = suggestSymbolsForTask('修复登录超时')
+  assert.ok(symbols.length > 0)
+  assert.ok(symbols.some((s) => /auth|login|session/i.test(s)))
 })
