@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.20.0] - 2026-08-19
+
+- 247 任务 benchmark：false-direct 0%、false-plan 3.4%
+- complexity accuracy 78.1%
+- 计划/风险词库进一步精准化
+
 ## [0.19.0] - 2026-08-19
 
 - `omni_delegate` 支持真实子代理派发（subagents.start）
