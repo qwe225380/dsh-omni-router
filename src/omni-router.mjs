@@ -18,7 +18,7 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands']
 
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
-  '设计', '架构', '重构', '方案', '需求', '系统', '优化',
+  '设计', '架构', '重构', '方案', '需求', '系统', '分析',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -76,8 +76,9 @@ export function heuristicComplexity(text, config = {}) {
   if (raw.length <= 20) return { value: 'direct', confidence: 0.6 }
   if (raw.length <= 40) return { value: 'direct', confidence: 0.7 }
 
-  // Long requests are more likely to hide ambiguity.
-  return { value: 'plan', confidence: 0.6 }
+  // Long requests without strong signals are ambiguous; default to direct with
+  // low confidence so the LLM can override when enabled.
+  return { value: 'direct', confidence: 0.55 }
 }
 
 /**
@@ -219,7 +220,14 @@ export function discoverRelevantFiles(entries, taskText) {
   ]
   for (const { pattern, targets } of semantic) {
     if (pattern.test(text)) {
-      for (const target of targets) if (names.has(target)) selected.add(target)
+      for (const target of targets) {
+        for (const entry of (Array.isArray(entries) ? entries : [])) {
+          const name = String(entry.name || '')
+          if (name === target || name.startsWith(`${target}.`) || name.startsWith(`${target}-`) || name.includes(target)) {
+            selected.add(name)
+          }
+        }
+      }
     }
   }
 
@@ -232,6 +240,24 @@ export function discoverRelevantFiles(entries, taskText) {
 }
 
 /**
+ * Build a lightweight context graph: relevant files plus their test mappings.
+ * This is the first step toward symbol/dependency-aware context discovery.
+ */
+export function buildContextGraph(entries, taskText) {
+  const list = Array.isArray(entries) ? entries : []
+  const relevant = discoverRelevantFiles(list, taskText)
+  const names = new Set(list.map((entry) => entry.name))
+  const baseOf = (name) => String(name).replace(/\.(test|spec)\.[^.]+$/i, '').replace(/\.[^.]+$/i, '')
+  const relevantBases = new Set(relevant.map(baseOf))
+  const tests = list
+    .filter((entry) => /\.(test|spec)\.[^.]+$/i.test(entry.name))
+    .map((entry) => entry.name)
+    .filter((name) => relevantBases.has(baseOf(name)) || /(test|spec)/i.test(name))
+    .filter((name) => names.has(name))
+  return { relevant: [...new Set(relevant)], tests: [...new Set(tests)] }
+}
+
+/**
  * Estimate task risk from text heuristics.
  * Complexity and risk are intentionally separate dimensions.
  */
@@ -241,10 +267,10 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(数据库|schema|migration|drop|delete|删除|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config)/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|auth|登录|权限|payment|支付|订单|order|deploy|ci\/cd|配置|config|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
-  if (/(业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
+  if (/(数据库|db|redis|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {
     reasons.push('business-logic/api')
   }
   const score = reasons.includes('production/secret/destructive') ? 1.0
