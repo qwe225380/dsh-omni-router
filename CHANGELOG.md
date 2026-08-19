@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.24.0] - 2026-08-19
+
+- 新增 `docs/EXAMPLES.md`（使用示例）
+- 新增 `docs/ROADMAP.md`（路线图）
+
 ## [0.23.0] - 2026-08-19
 
 - Benchmark 扩充到 399 个任务
