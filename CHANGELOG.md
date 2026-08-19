@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0] - 2026-08-19
+
+- dsh-routing-suite 兼容让位模式：检测到 router-standard（`dev_router_status` / `dev_router_mode`）时，Omni 不再抢 reasoning-mode 路由
+- 新增 `src/compat.mjs`：router-standard 检测 + 让位提示
+- `omni_mode` / `/omni mode` / thinking-mode 提示在 router-standard 存在时自动让位
+- Omni 专注 Intent / Policy / Context / Skill 路由 / Methodology / Agent Chain / Verifier / Repair
+
 ## [1.8.0] - 2026-08-19
 
 - 接入 fable5 核心原则：Prime Directives、Integrity Rules、独立 Verifier/Repair 证据链

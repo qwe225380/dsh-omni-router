@@ -15,6 +15,7 @@
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
 import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
 import { buildMethodologyDirective } from './methodology.mjs'
+import { isRouterStandardAvailable, routerStandardNotice } from './compat.mjs'
 
 export const name = 'omni-router'
 
@@ -937,11 +938,21 @@ export function apply(ctx, config = {}) {
 
     const sections = Array.isArray(result.sections) ? [...result.sections] : []
     const taskType = state.taskType || 'other'
-    sections.push({
-      name: 'omni-router:thinking-mode',
-      order: 38,
-      text: thinkingModeHint(state.thinkingMode || 'balanced'),
-    })
+    const toolsService = ctx.get('tools') || ctx.tools
+    const routerStandard = isRouterStandardAvailable(toolsService, agent)
+    if (routerStandard) {
+      sections.push({
+        name: 'omni-router:compat',
+        order: 38,
+        text: routerStandardNotice(),
+      })
+    } else {
+      sections.push({
+        name: 'omni-router:thinking-mode',
+        order: 38,
+        text: thinkingModeHint(state.thinkingMode || 'balanced'),
+      })
+    }
     if (state.riskLevel) {
       sections.push({
         name: 'omni-router:risk',
@@ -1066,7 +1077,9 @@ export function apply(ctx, config = {}) {
     execute() {
       const session = currentSession()
       if (!session) return 'no agent session'
+      const agent = agentFor(session)
       const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
+      const routerStandard = agent ? isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent) : false
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
@@ -1074,6 +1087,7 @@ export function apply(ctx, config = {}) {
         `riskLevel=${state.riskLevel || 'unknown'}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
+        `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
       ].join('\n')
     },
   })
@@ -1131,6 +1145,10 @@ export function apply(ctx, config = {}) {
       const session = currentSession()
       const agent = session && agentFor(session)
       if (!session || !agent) return 'no agent session'
+      const toolsService = ctx.get('tools') || ctx.tools
+      if (isRouterStandardAvailable(toolsService, agent)) {
+        return 'router-standard owns reasoning-mode routing. Use dev_router_mode <spec|weak|react|...> instead.'
+      }
       const mode = String(args?.mode || '').toLowerCase()
       if (!['spec', 'react', 'balanced'].includes(mode)) return 'Invalid mode. Use: spec | react | balanced'
       const state = stateFor(session)
@@ -1246,6 +1264,7 @@ export function apply(ctx, config = {}) {
         const state = stateFor(session)
         const cmd = (rawInput || '').trim().toLowerCase()
         if (cmd === 'status') {
+          const routerStandard = isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent)
           return {
             kind: 'success',
             text: [
@@ -1255,6 +1274,7 @@ export function apply(ctx, config = {}) {
               `riskLevel=${state.riskLevel || 'unknown'}`,
               `planRequested=${state.planRequested}`,
               `directOverride=${state.directOverride}`,
+              `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
             ].join('\n'),
           }
         }
@@ -1274,6 +1294,10 @@ export function apply(ctx, config = {}) {
           return { kind: 'success', text: 'Direct execution mode set.' }
         }
         if (cmd.startsWith('mode ')) {
+          const toolsService = ctx.get('tools') || ctx.tools
+          if (isRouterStandardAvailable(toolsService, agent)) {
+            return { kind: 'success', text: 'router-standard owns reasoning-mode routing. Use /dev_router_mode or dev_router_mode <spec|weak|react|...> instead.' }
+          }
           const mode = cmd.slice(5).trim()
           if (!['spec', 'react', 'balanced'].includes(mode)) {
             return { kind: 'success', text: 'Invalid mode. Use: /omni mode spec | react | balanced' }
