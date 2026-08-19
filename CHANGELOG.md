@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0] - 2026-08-19
+
+- Intent Engine：`buildIntent` 提取 desired outcome / constraints / acceptance criteria
+- Context Budget：`buildContextBudget` 按复杂度/风险分配上下文预算
+- Agent Runtime 核心 API：`decideNextAction` 返回下一步最佳行动
+- `classifyTaskType` 补充“增加”识别
+
 ## [1.3.0] - 2026-08-19
 
 - Policy Engine：`buildPolicyDecision` 统一输出完整决策对象
