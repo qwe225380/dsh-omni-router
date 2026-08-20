@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.16.0] - 2026-08-19
+
+- 真实 agent-run benchmark runner：
+  - 新增 `src/benchmark-runner.mjs`：归一化 run、OES 评分、raw vs omni 对比
+  - 新增 `benchmark/real-tasks.json`（真实任务集）
+  - 新增 `benchmark/compare.mjs`：读取 `benchmark/results/{raw,omni}/*.json` 输出对比
+  - 新增 `omni_benchmark` 工具：在 DSH 会话内收集真实 raw/omni 单任务结果
+  - 新增 `npm run benchmark:compare`
+
 ## [1.15.0] - 2026-08-19
 
 - 许可证清理：

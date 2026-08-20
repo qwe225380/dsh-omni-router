@@ -12,6 +12,8 @@
  * gates, skills) live in the host profile; this preset does not require them.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
 import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
 import { buildMethodologyDirective } from './methodology.mjs'
@@ -921,6 +923,90 @@ export function apply(ctx, config = {}) {
         return `Memory ${type} added.`
       }
       return formatMemory(state.memory)
+    },
+  })
+
+  registerTool({
+    name: 'omni_benchmark',
+    description: 'Collect a real agent-run benchmark result for one task and arm (raw or omni). Writes JSON to benchmark/results/<arm>/<taskId>.json.',
+    parameters: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'Stable task id, e.g. real-001' },
+        arm: { type: 'string', enum: ['raw', 'omni'], description: 'raw = no Omni guidance; omni = with Omni control-plane guidance' },
+        task: { type: 'string', description: 'Task description' },
+        criteria: { type: 'array', items: { type: 'string' }, description: 'Acceptance criteria' },
+        level: { type: 'string', description: 'Optional benchmark level, e.g. L3 Small feature' },
+      },
+      required: ['taskId', 'arm', 'task'],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      const subagents = ctx.get('subagents') || ctx.subagents
+      if (!session || !agent || !subagents?.start) return 'Benchmark collection requires an active session with subagents.'
+      const taskId = String(args?.taskId || '').trim()
+      const arm = String(args?.arm || '').toLowerCase()
+      const task = String(args?.task || '').trim()
+      const criteria = Array.isArray(args?.criteria) ? args.criteria.filter(Boolean) : ['task completed', 'relevant checks pass']
+      const level = String(args?.level || 'L1 Single-file')
+      if (!taskId || !['raw', 'omni'].includes(arm) || !task) return 'Usage: taskId, arm (raw|omni), task are required.'
+
+      const taskType = classifyTaskType(task)
+      const prompt = arm === 'raw'
+        ? `Task:\n${task}\n\nAcceptance criteria:\n${criteria.map((c) => `- ${c}`).join('\n')}\n\nWork on the task. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
+        : `Task:\n${task}\n\nAcceptance criteria:\n${criteria.map((c) => `- ${c}`).join('\n')}\n\n${buildMethodologyDirective(taskType)}\n\nMission skeleton:\n${formatMissionPlan(buildMission(task, { taskType }))}\n\nVerification: run the relevant checks and report evidence before replying. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
+
+      const start = Date.now()
+      try {
+        const run = await subagents.start('spawn', {
+          label: `benchmark-${taskId}-${arm}`,
+          prompt: [{ type: 'text', text: prompt }],
+          parent: agent,
+          maxDepth: 1,
+        })
+        const result = await run.result
+        const output = (Array.isArray(result.output) ? result.output : [])
+          .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+          .map((block) => block.text)
+          .join('')
+        try { await run.dispose() } catch { /* best-effort */ }
+        const success = /BENCHMARK:\s*PASS/i.test(output)
+        const record = {
+          id: taskId,
+          arm,
+          task,
+          level,
+          success,
+          firstPass: success ? 1 : 0,
+          finalPass: success ? 1 : 0,
+          regressionRate: 0,
+          humanInterventions: 0,
+          toolCalls: 0,
+          repairCount: 0,
+          failureRecoveryRate: success ? 1 : 0,
+          tokens: 0,
+          cost: 0,
+          durationMs: Date.now() - start,
+          output: output.slice(0, 2000),
+        }
+        const cwd = session.meta?.cwd || session.header?.cwd
+        let saved = ''
+        if (cwd) {
+          try {
+            const dir = path.join(cwd, 'benchmark', 'results', arm)
+            fs.mkdirSync(dir, { recursive: true })
+            const file = path.join(dir, `${taskId}.json`)
+            fs.writeFileSync(file, JSON.stringify(record, null, 2), 'utf8')
+            saved = file
+          } catch (error) {
+            saved = `save-failed: ${error?.message || error}`
+          }
+        }
+        return `Collected ${arm} result for ${taskId}: ${success ? 'PASS' : 'FAIL'} (${Date.now() - start}ms)\nSaved: ${saved || '(no cwd)'}`
+      } catch (error) {
+        return `Benchmark run failed: ${error?.message || error}`
+      }
     },
   })
 

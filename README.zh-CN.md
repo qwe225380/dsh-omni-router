@@ -71,6 +71,7 @@
 - **dsh-routing-suite 兼容**：检测到 router-standard 时自动让出 reasoning-mode 路由，避免重复开发；未检测到时保留 Omni 自身轻量路由。
 - **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
 - **Engineering Benchmark v1**：`npm run benchmark:engineering` 用 OES 评分评估端到端工程交付质量（L1-L10）。
+- **Real agent-run comparison**：`omni_benchmark` 工具收集 raw/omni 真实运行结果，`npm run benchmark:compare` 输出 OES 对比。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。

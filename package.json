@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "Omni Router - auto-routing DeepSeek Harness preset: simple tasks run directly, complex tasks plan first with approval gate, coding tasks get TDD/delivery-gate guidance.",
   "type": "module",
   "main": "./lib/index.js",
@@ -41,9 +41,10 @@
     }
   },
   "scripts": {
-    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/skill-suggest.test.mjs && node test/methodology.test.mjs && node test/compat.test.mjs && node test/project-brain.test.mjs && node test/mission-planner.test.mjs && node test/judge.test.mjs && node test/memory.test.mjs && node test/engineering-benchmark.test.mjs && node test/bundle-installer.test.mjs",
+    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/skill-suggest.test.mjs && node test/methodology.test.mjs && node test/compat.test.mjs && node test/project-brain.test.mjs && node test/mission-planner.test.mjs && node test/judge.test.mjs && node test/memory.test.mjs && node test/engineering-benchmark.test.mjs && node test/benchmark-runner.test.mjs && node test/bundle-installer.test.mjs",
     "benchmark": "node benchmark/run.mjs",
     "benchmark:engineering": "node benchmark/engineering-run.mjs",
+    "benchmark:compare": "node benchmark/compare.mjs",
     "analyze": "node benchmark/analyze.mjs",
     "llm-eval": "node benchmark/llm-eval.mjs",
     "install:preset": "node scripts/install-preset.mjs"

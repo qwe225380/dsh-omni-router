@@ -1,0 +1,32 @@
+[
+  {
+    "id": "real-001",
+    "level": "L1 Single-file",
+    "task": "Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.",
+    "criteria": ["pagination returns correct last page", "existing tests pass"]
+  },
+  {
+    "id": "real-002",
+    "level": "L3 Small feature",
+    "task": "Add a refund endpoint that accepts an order id and amount, rejects duplicate refunds, and returns 201 on success.",
+    "criteria": ["refund endpoint exists", "duplicate refund is rejected", "happy path returns 201"]
+  },
+  {
+    "id": "real-003",
+    "level": "L5 Refactor",
+    "task": "Refactor the payment service to use a repository interface without changing observable behavior.",
+    "criteria": ["behavior preserved", "existing tests pass", "no public API change"]
+  },
+  {
+    "id": "real-004",
+    "level": "L8 Debugging",
+    "task": "Reproduce and fix the intermittent login timeout caused by a missing session refresh under concurrent requests.",
+    "criteria": ["bug reproduced", "root cause identified", "regression test added", "tests pass"]
+  },
+  {
+    "id": "real-005",
+    "level": "L7 Migration",
+    "task": "Migrate the orders table to add an idempotency key column with a rollback path.",
+    "criteria": ["migration applies", "rollback works", "existing queries pass"]
+  }
+]
