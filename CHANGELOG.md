@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.21.0] - 2026-08-19
+
+- Visual QA 硬编排：
+  - `omni_mission_run` 在前端/UI 任务的 `validate` 阶段强制要求 `browser_screenshot` + `omni_visual_check`
+  - 未出现 `VISUAL_QA: PASS` 视为失败并触发 Replan
+  - 新增 `isFrontendTask` / `buildVisualQaStepRequirement`
+  - 可通过 `autoVisualQA: false` 关闭
+
 ## [1.20.0] - 2026-08-19
 
 - Visual QA 闭环：

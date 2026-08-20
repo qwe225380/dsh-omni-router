@@ -26,7 +26,7 @@ import {
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
-import { buildVisualQaPrompt, callVisionApi, parseVisualQaResponse } from './visual-qa.mjs'
+import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -1088,12 +1088,16 @@ export function apply(ctx, config = {}) {
       if (!task) return 'Task is required.'
       const taskType = args?.taskType || classifyTaskType(task)
       const maxSteps = Number(args?.maxSteps) || 20
+      const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
       const state = createRuntimeState(mission)
 
       const finalState = await runMissionLoop(state, {
         act: async (action) => {
-          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.`
+          const visualQa = frontend && action.phase === 'validate' && config.autoVisualQA !== false
+            ? `\n\n${buildVisualQaStepRequirement()}`
+            : ''
+          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.${visualQa}`
           const run = await subagents.start('spawn', {
             label: `mission-${action.phase}-${action.index}`,
             prompt: [{ type: 'text', text: prompt }],
@@ -1108,7 +1112,11 @@ export function apply(ctx, config = {}) {
           try { await run.dispose() } catch { /* best-effort */ }
           return { output }
         },
-        observe: async (result) => /FAIL|error|失败|not ok/i.test(result.output || '') ? { type: 'test_failure' } : { type: 'step_done' },
+        observe: async (result, current) => {
+          const needsVisual = frontend && current.phase === 'validate' && config.autoVisualQA !== false
+          if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure' }
+          return /FAIL|error|失败|not ok/i.test(result.output || '') ? { type: 'test_failure' } : { type: 'step_done' }
+        },
         maxSteps,
       })
 

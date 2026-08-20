@@ -6,6 +6,14 @@
  * and sends them to a configured OpenAI-compatible vision endpoint.
  */
 
+export function isFrontendTask(taskText = '') {
+  return /(前端|frontend|ui|页面|component|网页|html|css|react|vue|web)/i.test(String(taskText || ''))
+}
+
+export function buildVisualQaStepRequirement() {
+  return 'MANDATORY VISUAL QA: This is a frontend/UI task and you are in the validate phase. You MUST: (1) use browser_screenshot to capture the current page, (2) call omni_visual_check with the screenshot path and the task requirement, (3) only finish when the visual QA returns "VISUAL_QA: PASS". If it returns FAIL, fix the issues and re-run screenshot + visual check. Do not report step completion without a PASS.'
+}
+
 export function buildVisualQaPrompt(requirement = '') {
   return `You are a strict visual QA reviewer. Look at the screenshot and evaluate it against the requirement.
 

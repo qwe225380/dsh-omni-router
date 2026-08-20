@@ -73,7 +73,7 @@
 - **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
 - **Engineering Benchmark v1**：`npm run benchmark:engineering` 用 OES 评分评估端到端工程交付质量（L1-L10）。
 - **Real agent-run comparison**：`omni_benchmark` 工具收集 raw/omni 真实运行结果，`npm run benchmark:compare` 输出 OES 对比。
-- **Visual QA 闭环**：`omni_visual_check` 接收浏览器截图 → 调视觉模型 API → 返回 PASS/FAIL + findings，配合 `browser_screenshot` 实现“生成 → 截图 → 视觉检查 → 修复”。
+- **Visual QA 硬编排**：前端/UI 任务在 `omni_mission_run` 的 validate 阶段强制 `browser_screenshot` + `omni_visual_check`，未 PASS 则 Replan；可 `autoVisualQA: false` 关闭。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。

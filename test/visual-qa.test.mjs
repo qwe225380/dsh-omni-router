@@ -4,6 +4,8 @@ import assert from 'node:assert/strict'
 import {
   buildVisualQaPrompt,
   buildVisualQaRequest,
+  buildVisualQaStepRequirement,
+  isFrontendTask,
   parseVisualQaResponse,
 } from '../src/visual-qa.mjs'
 
@@ -33,4 +35,17 @@ test('parseVisualQaResponse extracts findings by severity', () => {
   const parsed = parseVisualQaResponse('VISUAL_QA: FAIL\nhigh: HUD overlaps canvas\nmedium: color contrast low')
   assert.ok(parsed.findings.some((f) => /HUD overlaps/i.test(f)))
   assert.ok(parsed.findings.some((f) => /color contrast/i.test(f)))
+})
+
+test('isFrontendTask detects frontend/UI/web tasks', () => {
+  assert.equal(isFrontendTask('做一个前端页面'), true)
+  assert.equal(isFrontendTask('fix the login UI'), true)
+  assert.equal(isFrontendTask('修复后端接口'), false)
+})
+
+test('buildVisualQaStepRequirement mandates screenshot and visual check', () => {
+  const req = buildVisualQaStepRequirement()
+  assert.match(req, /browser_screenshot/)
+  assert.match(req, /omni_visual_check/)
+  assert.match(req, /VISUAL_QA: PASS/)
 })
