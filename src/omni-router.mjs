@@ -23,6 +23,7 @@ import {
   selectKeyFilesForTask,
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
+import { createMemory, formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
 
 export {
   buildContextGraph,
@@ -164,6 +165,7 @@ export function readStateFromEvents(events) {
         riskLevel: data.riskLevel || null,
         planRequested: !!data.planRequested,
         directOverride: !!data.directOverride,
+        memory: data.memory || null,
       }
     }
   }
@@ -511,7 +513,7 @@ export function apply(ctx, config = {}) {
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
+      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: createMemory() }
       states.set(session.id, state)
     }
     return state
@@ -527,6 +529,7 @@ export function apply(ctx, config = {}) {
         riskLevel: state.riskLevel || null,
         planRequested: !!state.planRequested,
         directOverride: !!state.directOverride,
+        memory: state.memory || null,
       })
     } catch {
       // Persistence is best-effort; the in-memory state still works.
@@ -779,6 +782,13 @@ export function apply(ctx, config = {}) {
       }
     }
 
+    if (state.memory) {
+      const memoryText = summarizeMemory(state.memory)
+      if (memoryText) {
+        sections.push({ name: 'omni-router:memory', order: 32, text: `Session memory:\n${memoryText}` })
+      }
+    }
+
     if (state.kind === 'plan' && state.planRequested) {
       if (state.context === undefined) {
         state.context = await getProjectContext(agent.session, taskType, state.firstText || '')
@@ -872,6 +882,45 @@ export function apply(ctx, config = {}) {
         `directOverride=${state.directOverride}`,
         `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
       ].join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_memory',
+    description: 'View or update Omni session memory. Actions: status, add (with type=project|decision|failure|trajectory and text), clear.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['status', 'add', 'clear'], description: 'status | add | clear' },
+        type: { type: 'string', enum: ['project', 'decision', 'failure', 'trajectory'], description: 'Memory section for add' },
+        text: { type: 'string', description: 'Memory entry text for add' },
+      },
+      required: ['action'],
+    },
+    execute(args) {
+      const session = currentSession()
+      if (!session) return 'no agent session'
+      const state = stateFor(session)
+      const action = String(args?.action || 'status').toLowerCase()
+      if (action === 'clear') {
+        state.memory = createMemory()
+        persistState(session, state)
+        return 'Memory cleared.'
+      }
+      if (action === 'add') {
+        const type = String(args?.type || '').toLowerCase()
+        const text = String(args?.text || '').trim()
+        if (!['project', 'decision', 'failure', 'trajectory'].includes(type) || !text) {
+          return 'Usage: omni_memory action=add type=project|decision|failure|trajectory text=<entry>'
+        }
+        if (type === 'project') state.memory = recordProject(state.memory, text)
+        else if (type === 'decision') state.memory = recordDecision(state.memory, text)
+        else if (type === 'failure') state.memory = recordFailure(state.memory, text)
+        else state.memory = recordTrajectory(state.memory, text)
+        persistState(session, state)
+        return `Memory ${type} added.`
+      }
+      return formatMemory(state.memory)
     },
   })
 

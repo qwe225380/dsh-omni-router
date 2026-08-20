@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.13.0] - 2026-08-19
+
+- Memory v1：新增 `src/memory.mjs`
+  - 结构化记忆：project / decisions / failures / trajectory
+  - `omni_memory` 工具：status / add / clear
+  - 会话事件持久化 memory，resume 可恢复
+  - 系统提示注入最近记忆摘要（配合 `fable5-session-state-management`，不重复）
+
 ## [1.12.0] - 2026-08-19
 
 - Verifier / Judge / Repair 强化：

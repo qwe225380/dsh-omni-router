@@ -98,6 +98,7 @@ test('readStateFromEvents restores the latest persisted omni-router state', () =
     riskLevel: null,
     planRequested: false,
     directOverride: true,
+    memory: null,
   })
 })
 
