@@ -1,0 +1,41 @@
+[
+  {
+    "id": "eng-001",
+    "level": "L1 Single-file",
+    "task": "Fix an off-by-one error in a pagination helper.",
+    "success": true,
+    "firstPass": 1,
+    "finalPass": 1,
+    "regressionRate": 0,
+    "humanInterventions": 0,
+    "toolCalls": 12,
+    "repairCount": 0,
+    "failureRecoveryRate": 1
+  },
+  {
+    "id": "eng-002",
+    "level": "L3 Small feature",
+    "task": "Add a user-facing refund endpoint with idempotency.",
+    "success": true,
+    "firstPass": 0,
+    "finalPass": 1,
+    "regressionRate": 0,
+    "humanInterventions": 1,
+    "toolCalls": 45,
+    "repairCount": 1,
+    "failureRecoveryRate": 0.8
+  },
+  {
+    "id": "eng-003",
+    "level": "L7 Migration",
+    "task": "Migrate a payment table schema with rollback.",
+    "success": false,
+    "firstPass": 0,
+    "finalPass": 0,
+    "regressionRate": 0.2,
+    "humanInterventions": 4,
+    "toolCalls": 120,
+    "repairCount": 3,
+    "failureRecoveryRate": 0.5
+  }
+]

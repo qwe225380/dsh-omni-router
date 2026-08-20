@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.14.0] - 2026-08-19
+
+- Omni Engineering Benchmark v1：
+  - 新增 `src/engineering-benchmark.mjs`：OES 评分（六维加权）、L1-L10 分级、批量汇总
+  - 新增 `benchmark/engineering-run.mjs` + `benchmark/engineering-tasks.json`
+  - 新增 `npm run benchmark:engineering`
+  - 从“路由准确率”升级为“端到端工程交付质量”评估框架
+
 ## [1.13.0] - 2026-08-19
 
 - Memory v1：新增 `src/memory.mjs`
