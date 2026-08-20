@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.19.0] - 2026-08-19
+
+- Project Brain v2：SQLite + 轻量 AST + git graph
+  - 新增 `src/project-brain-v2.mjs`，使用 `node:sqlite` 持久化到 `.omni/project-brain.db`
+  - 表：files / symbols / edges / git_state
+  - `indexSource` 解析符号与 import 边
+  - `buildGitGraph` / `readGitGraph` 记录 branch/head/changed/staged
+  - `queryRelevant` 按任务文本检索符号与文件
+
 ## [1.18.0] - 2026-08-19
 
 - Agent Runtime 真执行循环：
