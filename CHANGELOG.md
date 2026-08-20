@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0] - 2026-08-19
+
+- Mission Planner v1：新增 `src/mission-planner.mjs`
+  - Mission → Phase → Task 骨架（understand/design/implement/validate/deliver）
+  - bugfix / refactor 专属阶段
+  - `decideReplan` 根据验证失败/新信息/范围变化触发动态 Replan
+- Plan Mode 注入 `omni-router:mission` 任务骨架，详细计划仍路由到 `writing-plans` / `fable5-task-planning`
+
 ## [1.10.0] - 2026-08-19
 
 - Project Brain v1：新增 `src/project-brain.mjs`

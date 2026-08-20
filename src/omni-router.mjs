@@ -22,6 +22,7 @@ import {
   buildTaskContext,
   selectKeyFilesForTask,
 } from './project-brain.mjs'
+import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 
 export {
   buildContextGraph,
@@ -786,6 +787,12 @@ export function apply(ctx, config = {}) {
         name: 'omni-router:plan-template',
         order: 40,
         text: `Produce a structured plan with these sections:\n\n${planTemplateForType(taskType)}`,
+      })
+      const mission = buildMission(state.firstText || '', { taskType })
+      sections.push({
+        name: 'omni-router:mission',
+        order: 41,
+        text: `Mission skeleton (use it to organize phases; detailed planning belongs to writing-plans / fable5-task-planning):\n\n${formatMissionPlan(mission)}`,
       })
       if (state.context) {
         sections.push({
