@@ -8,6 +8,8 @@
  * never see the builder's reasoning trace (cold review).
  */
 
+import { buildJudgePrompt, isJudgePass } from './judge.mjs'
+
 const DEFAULT_MAX_REPAIRS = 1
 const MAX_REPAIR_CAP = 3
 
@@ -58,10 +60,10 @@ export function buildAgentChain(taskText, options = {}) {
 
   let stages = ['builder']
   if (chain === 'full') {
-    stages = ['builder', 'qa-verifier', 'code-reviewer']
+    stages = ['builder', 'qa-verifier', 'code-reviewer', 'judge']
   } else if (chain === 'auto') {
     const direct = options.complexity === 'direct' && ['low', undefined].includes(options.risk)
-    stages = direct ? ['builder', 'qa-verifier'] : ['builder', 'qa-verifier', 'code-reviewer']
+    stages = direct ? ['builder', 'qa-verifier'] : ['builder', 'qa-verifier', 'code-reviewer', 'judge']
   }
   // 'off' keeps stages = ['builder']
 
@@ -279,8 +281,9 @@ export async function runAgentChain(deps, options = {}) {
   }
 
   // 4. Code reviewer (full chains only)
+  let review = null
   if (plan.stages.includes('code-reviewer')) {
-    const review = await runStage(subagents, parent, 'code-reviewer', buildReviewerPrompt(taskText, {
+    review = await runStage(subagents, parent, 'code-reviewer', buildReviewerPrompt(taskText, {
       ...plan,
       builderOutput: builder.output,
       qaReport: qa.output,
@@ -288,6 +291,20 @@ export async function runAgentChain(deps, options = {}) {
     stages.push(review)
     if (review.status !== 'completed' || hasCriticalFindings(review.output)) {
       return finalize({ status: 'needs_rework', taskText, plan, stages, error: review.status !== 'completed' ? 'reviewer failed' : 'reviewer found critical/high findings' })
+    }
+  }
+
+  // 5. Judge (full chains only)
+  if (plan.stages.includes('judge')) {
+    const judge = await runStage(subagents, parent, 'judge', buildJudgePrompt(taskText, {
+      ...plan,
+      builderOutput: builder.output,
+      qaReport: qa.output,
+      reviewReport: review?.output || '(none)',
+    }))
+    stages.push(judge)
+    if (judge.status !== 'completed' || !isJudgePass(judge.output)) {
+      return finalize({ status: 'needs_rework', taskText, plan, stages, error: judge.status !== 'completed' ? 'judge failed' : 'judge did not pass the delivery' })
     }
   }
 

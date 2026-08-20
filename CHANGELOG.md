@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0] - 2026-08-19
+
+- Verifier / Judge / Repair 强化：
+  - 子代理链新增最终 `judge` 阶段：builder → qa → (repair → qa)* → code-reviewer → judge
+  - 新增 `src/judge.mjs`：六维评分（correctness/completeness/robustness/clarity/scope/honesty）、JUDGE PASS/FAIL、Repair Budget
+  - `scoreDelivery` 按最低维度判定 pass/rework，防止“平均分掩盖短板”
+
 ## [1.11.0] - 2026-08-19
 
 - Mission Planner v1：新增 `src/mission-planner.mjs`

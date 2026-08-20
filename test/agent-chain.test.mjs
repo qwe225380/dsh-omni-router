@@ -16,9 +16,9 @@ import {
   runAgentChain,
 } from '../src/agent-chain.mjs'
 
-test('buildAgentChain full returns builder->qa->reviewer', () => {
+test('buildAgentChain full returns builder->qa->reviewer->judge', () => {
   const plan = buildAgentChain('实现退款功能', { chain: 'full', criteria: ['refund API exists'], maxRepairs: 2 })
-  assert.deepEqual(plan.stages, ['builder', 'qa-verifier', 'code-reviewer'])
+  assert.deepEqual(plan.stages, ['builder', 'qa-verifier', 'code-reviewer', 'judge'])
   assert.equal(plan.maxRepairs, 2)
   assert.equal(plan.chain, 'full')
 })
@@ -30,7 +30,7 @@ test('buildAgentChain auto shortens direct+low risk', () => {
 
 test('buildAgentChain auto keeps full for plan/high risk', () => {
   const plan = buildAgentChain('迁移数据库', { chain: 'auto', complexity: 'plan', risk: 'high' })
-  assert.deepEqual(plan.stages, ['builder', 'qa-verifier', 'code-reviewer'])
+  assert.deepEqual(plan.stages, ['builder', 'qa-verifier', 'code-reviewer', 'judge'])
 })
 
 test('buildAgentChain off returns builder only', () => {
@@ -143,13 +143,14 @@ test('runAgentChain auto direct low risk skips code-reviewer', async () => {
   assert.equal(outcome.status, 'ready')
 })
 
-test('runAgentChain full runs builder, qa, and reviewer when green', async () => {
+test('runAgentChain full runs builder, qa, reviewer, and judge when green', async () => {
   const { subagents, calls } = fakeSubagents({
     builder: 'BUILDER OK',
     'qa-verifier': 'QA: PASS\n- criterion 1: PASS',
     'code-reviewer': 'REVIEW: PASS\nno critical findings',
+    judge: 'JUDGE: PASS\noverall 0.95',
   })
   const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'full' })
-  assert.deepEqual(calls, ['builder', 'qa-verifier', 'code-reviewer'])
+  assert.deepEqual(calls, ['builder', 'qa-verifier', 'code-reviewer', 'judge'])
   assert.equal(outcome.status, 'ready')
 })
