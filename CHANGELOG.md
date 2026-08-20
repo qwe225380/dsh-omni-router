@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.10.0] - 2026-08-19
+
+- Project Brain v1：新增 `src/project-brain.mjs`
+  - 仓库快照、符号索引、依赖/测试映射、工程约定检测
+  - `buildTaskContext` 把 Project Brain 压缩成有界任务上下文
+- 将仓库智能函数从 `omni-router.mjs` 迁移到 `project-brain.mjs`，保持向后兼容 re-export
+- `getProjectContext` 现在使用 Project Brain 生成更精准的任务上下文
+
 ## [1.9.0] - 2026-08-19
 
 - dsh-routing-suite 兼容让位模式：检测到 router-standard（`dev_router_status` / `dev_router_mode`）时，Omni 不再抢 reasoning-mode 路由
