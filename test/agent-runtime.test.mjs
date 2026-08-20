@@ -48,3 +48,28 @@ test('runMissionLoop completes a mission with fake act/observe', async () => {
   assert.equal(final.status, 'completed')
   assert.ok(final.actions.length > 0)
 })
+
+test('applyObservation real replan switches to nextPhase', () => {
+  let state = createRuntimeState(buildMission('修复 bug', { taskType: 'bugfix' }))
+  state = applyObservation(state, { type: 'test_failure' })
+  assert.equal(state.phase, 'repair')
+  assert.equal(state.phaseStep, 0)
+})
+
+test('applyObservation blocks after maxReplans', () => {
+  let state = createRuntimeState(buildMission('修复 bug', { taskType: 'bugfix' }), { maxReplans: 1 })
+  state = applyObservation(state, { type: 'test_failure' })
+  assert.equal(state.replanCount, 1)
+  state = applyObservation(state, { type: 'test_failure' })
+  assert.equal(state.status, 'blocked')
+})
+
+test('runMissionLoop respects maxGlobalSteps', async () => {
+  const state = createRuntimeState(buildMission('实现退款', { taskType: 'feature' }))
+  const final = await runMissionLoop(state, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'step_done' }),
+    maxSteps: 0,
+  })
+  assert.equal(final.status, 'max_steps')
+})

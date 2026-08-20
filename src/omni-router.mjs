@@ -27,6 +27,7 @@ import {
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
+import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -297,27 +298,15 @@ export function workflowPolicy(taskType, complexity, risk) {
  * Policy Engine: unify all routing dimensions into one decision object.
  * This is the "brain first layer" described in the Omni roadmap.
  */
-export function buildPolicyDecision(taskText, config = {}) {
-  const complexity = classifyComplexity(taskText, config)
-  const taskType = classifyTaskType(taskText)
-  const risk = estimateRisk(taskText).level
-  const highRisk = ['high', 'critical'].includes(risk)
-  const executionMode = complexity === 'plan' || highRisk ? 'plan' : 'direct'
-  const coding = ['bugfix', 'feature', 'refactor', 'test'].includes(taskType)
-  return {
-    taskType,
-    complexity,
-    risk,
-    reasoningMode: complexity === 'plan' || highRisk ? 'max' : 'balanced',
-    contextStrategy: 'dependency-aware',
-    executionMode,
-    approvalRequired: executionMode === 'plan' || highRisk,
-    confidence: heuristicComplexity(taskText, config).confidence,
-    verification: coding ? ['unit', 'integration', 'regression'] : [],
-    gitPolicy: {
-      requireBranch: coding,
-    },
-  }
+export function buildPolicyDecision(taskText, config = {}, decision = null) {
+  const d = decision || createTaskDecision({
+    taskText,
+    taskType: classifyTaskType(taskText),
+    complexity: classifyComplexity(taskText, config),
+    risk: estimateRisk(taskText).level,
+    thinkingMode: classifyThinkingMode(taskText),
+  })
+  return buildPolicyFromTaskDecision(d)
 }
 
 /**
@@ -517,7 +506,7 @@ export function apply(ctx, config = {}) {
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: null }
+      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: null, taskDecision: null }
       if (!state.memory) {
         const cwd = session.meta?.cwd || session.header?.cwd
         state.memory = cwd ? loadMemoryFile(cwd) : createMemory()
@@ -695,6 +684,13 @@ export function apply(ctx, config = {}) {
         state.kind = classifyComplexity(text, config)
         const highRisk = ['high', 'critical'].includes(state.riskLevel)
         if (highRisk) state.kind = 'plan' // risk overrides complexity: plan + approval
+        state.taskDecision = createTaskDecision({
+          taskText: text,
+          taskType: state.taskType,
+          complexity: state.kind,
+          risk: state.riskLevel,
+          thinkingMode: state.thinkingMode,
+        })
         if (shouldEnterPlanMode(state.kind, config)) {
           state.planRequested = setPlanMode(agent, true) || true
         }
@@ -723,6 +719,13 @@ export function apply(ctx, config = {}) {
       state.thinkingMode = llm.thinkingMode
       if (state.riskLevel === null) state.riskLevel = estimateRisk(state.pendingText).level
       if (['high', 'critical'].includes(state.riskLevel)) state.kind = 'plan'
+      state.taskDecision = createTaskDecision({
+        taskText: state.pendingText,
+        taskType: state.taskType,
+        complexity: state.kind,
+        risk: state.riskLevel,
+        thinkingMode: state.thinkingMode,
+      })
       delete state.pendingText
       if (shouldEnterPlanMode(state.kind, config)) {
         state.planRequested = setPlanMode(agent, true) || true
@@ -754,7 +757,7 @@ export function apply(ctx, config = {}) {
         text: `Risk level: ${state.riskLevel}. High or critical risk requires plan approval before mutation.`,
       })
     }
-    const policyDecision = buildPolicyDecision(state.firstText || '', config)
+    const policyDecision = buildPolicyDecision(state.firstText || '', config, state.taskDecision || undefined)
     sections.push({
       name: 'omni-router:policy-decision',
       order: 37,

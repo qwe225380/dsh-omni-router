@@ -62,7 +62,9 @@
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
 - **Project Brain v1/v2**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；`buildTaskContext` 生成有界任务上下文；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`。
 - **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
-- **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环。
+- **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` 预算。
+- **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
+- **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL，不再只信文本。
 - **Memory v1**：`omni_memory` 维护 project/decision/failure/trajectory 结构化记忆，支持长任务 resume；自动持久化到 `.omni/memory.json`。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。

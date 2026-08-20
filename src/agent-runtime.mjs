@@ -3,47 +3,78 @@
  *
  * Drives a Mission Planner mission through phases with a bounded loop. The
  * actual action execution is provided by the caller (e.g. subagents or tools).
+ *
+ * v2: real replan — failures switch phase via decideReplan.nextPhase, and the
+ * loop enforces global budgets (maxGlobalSteps, maxReplans,
+ * maxSameActionRetries, maxTokens, maxCost).
  */
 
 import { buildPhaseTasks, decideReplan } from './mission-planner.mjs'
 
-export function createRuntimeState(mission) {
+export function createRuntimeState(mission, options = {}) {
   const phases = mission?.phases || []
   return {
     mission,
     phaseIndex: 0,
     phase: phases[0]?.id || null,
-    step: 0,
-    status: 'active',
+    phaseStep: 0,
+    globalStep: 0,
     replanCount: 0,
+    repairCount: 0,
+    sameActionCount: 0,
+    tokenUsage: 0,
+    cost: 0,
+    status: 'active',
     observations: [],
     actions: [],
+    budgets: {
+      maxGlobalSteps: Number(options.maxGlobalSteps) || 50,
+      maxReplans: Number(options.maxReplans) || 5,
+      maxSameActionRetries: Number(options.maxSameActionRetries) || 3,
+      maxRepairs: Number(options.maxRepairs) || 5,
+      maxTokens: Number(options.maxTokens) || 200000,
+      maxCost: Number(options.maxCost) || 2,
+    },
   }
 }
 
 export function nextRuntimeAction(state) {
   const phase = state.phase
   const tasks = buildPhaseTasks(phase, state.mission?.taskType)
-  const task = tasks[Math.min(state.step, tasks.length - 1)] || 'Continue current phase'
-  return { phase, task, index: state.step }
+  const task = tasks[Math.min(state.phaseStep, tasks.length - 1)] || 'Continue current phase'
+  return { phase, task, index: state.phaseStep }
 }
 
 export function applyObservation(state, observation = {}) {
   const replan = decideReplan({ phase: state.phase }, observation)
+
   if (replan.replan) {
+    const sameAction = replan.nextPhase === state.phase
+    const nextReplanCount = state.replanCount + 1
+    const nextSameActionCount = sameAction ? state.sameActionCount + 1 : 0
+
+    if (nextReplanCount > state.budgets.maxReplans) {
+      return { ...state, status: 'blocked', observations: [...state.observations, { type: 'max_replans' }] }
+    }
+    if (nextSameActionCount > state.budgets.maxSameActionRetries) {
+      return { ...state, status: 'blocked', observations: [...state.observations, { type: 'max_same_action_retries' }] }
+    }
+
     return {
       ...state,
-      status: 'active',
-      replanCount: state.replanCount + 1,
-      observations: [...state.observations, { type: observation.type || 'unknown', reason: replan.reason }],
+      replanCount: nextReplanCount,
+      sameActionCount: nextSameActionCount,
+      phase: replan.nextPhase || state.phase,
+      phaseStep: 0,
+      observations: [...state.observations, { type: observation.type || 'unknown', reason: replan.reason, nextPhase: replan.nextPhase }],
     }
   }
 
   const phases = state.mission?.phases || []
   const tasks = buildPhaseTasks(state.phase, state.mission?.taskType)
-  const nextStep = state.step + 1
+  const nextStep = state.phaseStep + 1
   if (nextStep < tasks.length) {
-    return { ...state, step: nextStep, observations: [...state.observations, { type: observation.type || 'step_done' }] }
+    return { ...state, phaseStep: nextStep, sameActionCount: 0, observations: [...state.observations, { type: observation.type || 'step_done' }] }
   }
 
   const nextPhaseIndex = state.phaseIndex + 1
@@ -55,19 +86,42 @@ export function applyObservation(state, observation = {}) {
     ...state,
     phaseIndex: nextPhaseIndex,
     phase: phases[nextPhaseIndex].id,
-    step: 0,
+    phaseStep: 0,
+    sameActionCount: 0,
     observations: [...state.observations, { type: 'phase_complete', phase: state.phase }],
   }
 }
 
-export async function runMissionLoop(state, { act, observe, maxSteps = 50 } = {}) {
+export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
   let current = state
-  while (current.status === 'active' && current.step < maxSteps) {
+  const budget = current.budgets || {}
+  const maxGlobalSteps = maxSteps ?? budget.maxGlobalSteps ?? 50
+
+  while (current.status === 'active') {
+    if (current.globalStep >= maxGlobalSteps) {
+      current = { ...current, status: 'max_steps' }
+      break
+    }
+    if (current.tokenUsage >= budget.maxTokens) {
+      current = { ...current, status: 'max_tokens' }
+      break
+    }
+    if (current.cost >= budget.maxCost) {
+      current = { ...current, status: 'max_cost' }
+      break
+    }
+
     const action = nextRuntimeAction(current)
     const result = await act(action, current)
     const observation = await observe(result, current)
     current = applyObservation(current, observation)
-    current = { ...current, actions: [...current.actions, { action, observation }] }
+    current = {
+      ...current,
+      globalStep: current.globalStep + 1,
+      actions: [...current.actions, { action, observation }],
+      tokenUsage: current.tokenUsage + (result.tokenUsage || 0),
+      cost: current.cost + (result.cost || 0),
+    }
   }
   return current
 }

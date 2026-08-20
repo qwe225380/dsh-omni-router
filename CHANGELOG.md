@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.22.0] - 2026-08-19
+
+- P0 优化（依据 优化3/4.md）：
+  - 真实 Replan：`applyObservation` 真正切换到 `nextPhase`，不再只加计数器
+  - Runtime budgets：`maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost`
+  - Evidence Protocol：新增 `src/evidence.mjs`，结构化 command/file/test/finding 证据，`evidencePass` 不再只信文本
+  - 统一 TaskDecision：新增 `src/task-decision.mjs`，Policy Engine 消费同一决策对象，避免重复 classify 分叉
+
 ## [1.21.0] - 2026-08-19
 
 - Visual QA 硬编排：
