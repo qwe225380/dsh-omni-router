@@ -26,6 +26,7 @@ import {
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
+import { buildVisualQaPrompt, callVisionApi, parseVisualQaResponse } from './visual-qa.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -934,6 +935,51 @@ export function apply(ctx, config = {}) {
         return `Memory ${type} added.`
       }
       return formatMemory(state.memory)
+    },
+  })
+
+  registerTool({
+    name: 'omni_visual_check',
+    description: 'Run visual QA on a screenshot using a vision model API. Pass a local screenshot path (from browser_screenshot) and optional requirement. Configure visionApiUrl/visionApiKey/visionModel in Omni config or pass them as arguments.',
+    parameters: {
+      type: 'object',
+      properties: {
+        screenshotPath: { type: 'string', description: 'Absolute path to a PNG screenshot produced by browser_screenshot' },
+        requirement: { type: 'string', description: 'What the UI should look like / what to verify' },
+        apiUrl: { type: 'string', description: 'OpenAI-compatible vision endpoint (optional)' },
+        apiKey: { type: 'string', description: 'Vision API key (optional)' },
+        model: { type: 'string', description: 'Vision model id (optional)' },
+      },
+      required: ['screenshotPath'],
+    },
+    async execute(args) {
+      const screenshotPath = String(args?.screenshotPath || '').trim()
+      if (!screenshotPath) return 'screenshotPath is required.'
+      if (!fs.existsSync(screenshotPath)) return `Screenshot not found: ${screenshotPath}`
+      const apiUrl = args?.apiUrl || config.visionApiUrl || process.env.VISION_API_URL
+      const apiKey = args?.apiKey || config.visionApiKey || process.env.VISION_API_KEY
+      const model = args?.model || config.visionModel || process.env.VISION_MODEL
+      if (!apiUrl || !apiKey || !model) {
+        return 'Vision API not configured. Set visionApiUrl/visionApiKey/visionModel in Omni config, or pass apiUrl/apiKey/model args.'
+      }
+      try {
+        const imageBase64 = fs.readFileSync(screenshotPath).toString('base64')
+        const prompt = buildVisualQaPrompt(args?.requirement || '')
+        const output = await callVisionApi({ apiUrl, apiKey, model, imageBase64, prompt })
+        const parsed = parseVisualQaResponse(output)
+        const lines = [
+          `Visual QA verdict: ${parsed.verdict}`,
+          `Screenshot: ${screenshotPath}`,
+          `Model: ${model}`,
+        ]
+        if (parsed.findings.length) {
+          lines.push('', 'Findings:', ...parsed.findings.map((f) => `- ${f}`))
+        }
+        lines.push('', 'Raw response:', parsed.raw)
+        return lines.join('\n')
+      } catch (error) {
+        return `Visual QA failed: ${error?.message || error}`
+      }
     },
   })
 

@@ -73,6 +73,7 @@
 - **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
 - **Engineering Benchmark v1**：`npm run benchmark:engineering` 用 OES 评分评估端到端工程交付质量（L1-L10）。
 - **Real agent-run comparison**：`omni_benchmark` 工具收集 raw/omni 真实运行结果，`npm run benchmark:compare` 输出 OES 对比。
+- **Visual QA 闭环**：`omni_visual_check` 接收浏览器截图 → 调视觉模型 API → 返回 PASS/FAIL + findings，配合 `browser_screenshot` 实现“生成 → 截图 → 视觉检查 → 修复”。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。
 - **手动控制**：`/omni` 命令 + `omni_*` 工具。
@@ -141,6 +142,10 @@ Then restart DSH and select **Omni Router** in a new session.
     useLLMClassification: false
     # planFirstKeywords: [自定义, 关键词]
     # directKeywords: [直接跑, 马上改]
+    # Visual QA (OpenAI-compatible vision endpoint)
+    # visionApiUrl: https://api.openai.com/v1/chat/completions
+    # visionApiKey: sk-...
+    # visionModel: gpt-4o-mini
 ```
 
 See [docs/CONFIGURATION.md](./docs/CONFIGURATION.md) for details.

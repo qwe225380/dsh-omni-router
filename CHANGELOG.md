@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.20.0] - 2026-08-19
+
+- Visual QA 闭环：
+  - 新增 `src/visual-qa.mjs`：视觉模型 API 调用、提示词、结果解析
+  - 新增 `omni_visual_check` 工具：接收浏览器截图路径 → 调视觉模型 → 返回 PASS/FAIL + findings
+  - 支持 OpenAI-compatible 视觉端点（`visionApiUrl` / `visionApiKey` / `visionModel` 或环境变量）
+  - 配合 DSH 已装的 `browser_screenshot` 使用，形成“生成 → 截图 → 视觉检查 → 修复”闭环
+
 ## [1.19.0] - 2026-08-19
 
 - Project Brain v2：SQLite + 轻量 AST + git graph
