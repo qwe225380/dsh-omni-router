@@ -25,6 +25,7 @@ import {
   selectKeyFilesForTask,
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
+import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -1017,6 +1018,61 @@ export function apply(ctx, config = {}) {
       } catch (error) {
         return `Benchmark run failed: ${error?.message || error}`
       }
+    },
+  })
+
+  registerTool({
+    name: 'omni_mission_run',
+    description: 'Run a Mission Planner loop with real subagents: Observe → Think → Act → Replan until completed or maxSteps.',
+    parameters: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Mission task description' },
+        taskType: { type: 'string', enum: ['bugfix', 'feature', 'refactor', 'test', 'review', 'other'], description: 'Optional task type' },
+        maxSteps: { type: 'number', description: 'Max loop steps (default 20)' },
+      },
+      required: ['task'],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      const subagents = ctx.get('subagents') || ctx.subagents
+      if (!session || !agent || !subagents?.start) return 'Mission run requires an active session with subagents.'
+      const task = String(args?.task || '').trim()
+      if (!task) return 'Task is required.'
+      const taskType = args?.taskType || classifyTaskType(task)
+      const maxSteps = Number(args?.maxSteps) || 20
+      const mission = buildMission(task, { taskType })
+      const state = createRuntimeState(mission)
+
+      const finalState = await runMissionLoop(state, {
+        act: async (action) => {
+          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.`
+          const run = await subagents.start('spawn', {
+            label: `mission-${action.phase}-${action.index}`,
+            prompt: [{ type: 'text', text: prompt }],
+            parent: agent,
+            maxDepth: 1,
+          })
+          const result = await run.result
+          const output = (Array.isArray(result.output) ? result.output : [])
+            .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+            .map((block) => block.text)
+            .join('')
+          try { await run.dispose() } catch { /* best-effort */ }
+          return { output }
+        },
+        observe: async (result) => /FAIL|error|失败|not ok/i.test(result.output || '') ? { type: 'test_failure' } : { type: 'step_done' },
+        maxSteps,
+      })
+
+      return [
+        `Mission run: ${finalState.status}`,
+        `Phase: ${finalState.phase || '(none)'}`,
+        `Steps: ${finalState.actions.length}`,
+        `Replans: ${finalState.replanCount}`,
+        `Mission: ${task}`,
+      ].join('\n')
     },
   })
 

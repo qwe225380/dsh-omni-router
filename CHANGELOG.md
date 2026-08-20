@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0] - 2026-08-19
+
+- Agent Runtime 真执行循环：
+  - 新增 `src/agent-runtime.mjs`：Observe → Think → Act → Replan 状态机
+  - `createRuntimeState` / `nextRuntimeAction` / `applyObservation` / `runMissionLoop`
+  - 新增 `omni_mission_run` 工具：用真实 subagents 按 Mission 阶段逐步执行，失败自动 Replan
+
 ## [1.17.0] - 2026-08-19
 
 - Memory 磁盘持久化：
