@@ -61,7 +61,8 @@
 - **Next Best Action**：`decideNextAction` 作为 Agent Runtime 核心 API，根据状态返回下一步行动。
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
 - **Project Brain v1/v2**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；`buildTaskContext` 生成有界任务上下文；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`。
-- **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan；`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环。
+- **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
+- **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环。
 - **Memory v1**：`omni_memory` 维护 project/decision/failure/trajectory 结构化记忆，支持长任务 resume；自动持久化到 `.omni/memory.json`。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
@@ -128,7 +129,7 @@ Then restart DSH and select **Omni Router** in a new session.
 - `/omni direct` — enter direct mode.
 - `/omni mode spec|react|balanced` — set thinking mode.
 - `/omni reroute plan|direct` — adaptively reroute current task.
-- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`.
+- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`.
 
 ## Configuration
 
@@ -150,11 +151,29 @@ See [docs/CONFIGURATION.md](./docs/CONFIGURATION.md) for details.
 omni-router/
 ├── agent.cordis.yml
 ├── preset.yml
-├── src/omni-router.mjs
-├── test/omni-router.test.mjs
-├── benchmark/run.mjs
+├── src/
+│   ├── omni-router.mjs
+│   ├── agent-chain.mjs
+│   ├── agent-runtime.mjs
+│   ├── benchmark-runner.mjs
+│   ├── compat.mjs
+│   ├── engineering-benchmark.mjs
+│   ├── judge.mjs
+│   ├── memory.mjs
+│   ├── methodology.mjs
+│   ├── mission-planner.mjs
+│   ├── project-brain.mjs
+│   ├── project-brain-v2.mjs
+│   └── skill-suggest.mjs
+├── test/
+├── benchmark/
+│   ├── run.mjs
+│   ├── engineering-run.mjs
+│   ├── real-tasks.json
+│   ├── compare.mjs
+│   └── tasks.json
 ├── scripts/install-preset.mjs
-├── docs/ (INSTALL/CONFIGURATION/ARCHITECTURE/COMPATIBILITY/EXAMPLES/ROADMAP)
+├── docs/
 ├── .github/workflows/ci.yml
 ├── README.md
 ├── README.zh-CN.md
@@ -170,12 +189,22 @@ npm test
 ## Benchmark
 
 ```sh
+# Router accuracy (399 tasks)
 npm run benchmark
+
+# Engineering OES demo (sample data)
+npm run benchmark:engineering
+
+# Real agent-run OES comparison: Omni vs raw Flash
+npm run benchmark:compare
 ```
 
-Reports router accuracy and the critical false-direct / false-plan rates on `benchmark/tasks.json`.
+- `benchmark/run.mjs` — router accuracy / false-direct / false-plan on `benchmark/tasks.json`.
+- `benchmark/engineering-run.mjs` — OES framework on `benchmark/engineering-tasks.json`.
+- `benchmark/compare.mjs` — reads `benchmark/results/{raw,omni}/*.json` and prints OES comparison.
+- Collect real runs with the `omni_benchmark` tool inside a DSH session.
 
-Current baseline (399 tasks):
+Current router baseline (399 tasks):
 - complexity accuracy: 67.7%
 - false-direct rate: 9.7%
 - false-plan rate: 9.7%
