@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0] - 2026-08-19
+
+- Memory 磁盘持久化：
+  - 新增 `loadMemoryFile` / `saveMemoryFile`，写入 `.omni/memory.json`
+  - 会话启动时自动加载磁盘记忆，`persistState` 自动保存
+  - `omni_memory` 增删改都会落盘，长任务可跨会话 resume
+
 ## [1.16.0] - 2026-08-19
 
 - 真实 agent-run benchmark runner：

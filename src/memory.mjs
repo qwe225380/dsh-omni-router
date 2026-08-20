@@ -5,6 +5,9 @@
  * session-state-management skills that focus on working notes and continuity.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+
 export function createMemory() {
   return {
     project: [],
@@ -71,4 +74,35 @@ export function formatMemory(memory = {}) {
     }
   }
   return lines.length ? lines.join('\n') : '(empty memory)'
+}
+
+export function memoryFilePath(cwd) {
+  return path.join(cwd, '.omni', 'memory.json')
+}
+
+export function loadMemoryFile(cwd) {
+  try {
+    const file = memoryFilePath(cwd)
+    if (!fs.existsSync(file)) return createMemory()
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'))
+    return {
+      project: Array.isArray(raw.project) ? raw.project : [],
+      decisions: Array.isArray(raw.decisions) ? raw.decisions : [],
+      failures: Array.isArray(raw.failures) ? raw.failures : [],
+      trajectory: Array.isArray(raw.trajectory) ? raw.trajectory : [],
+    }
+  } catch {
+    return createMemory()
+  }
+}
+
+export function saveMemoryFile(cwd, memory) {
+  try {
+    const file = memoryFilePath(cwd)
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, JSON.stringify(memory, null, 2), 'utf8')
+    return file
+  } catch {
+    return null
+  }
 }

@@ -25,7 +25,7 @@ import {
   selectKeyFilesForTask,
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
-import { createMemory, formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
+import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
   buildContextGraph,
@@ -515,7 +515,11 @@ export function apply(ctx, config = {}) {
   function stateFor(session) {
     let state = states.get(session.id)
     if (!state) {
-      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: createMemory() }
+      state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: null }
+      if (!state.memory) {
+        const cwd = session.meta?.cwd || session.header?.cwd
+        state.memory = cwd ? loadMemoryFile(cwd) : createMemory()
+      }
       states.set(session.id, state)
     }
     return state
@@ -535,6 +539,12 @@ export function apply(ctx, config = {}) {
       })
     } catch {
       // Persistence is best-effort; the in-memory state still works.
+    }
+    try {
+      const cwd = session.meta?.cwd || session.header?.cwd
+      if (cwd && state.memory) saveMemoryFile(cwd, state.memory)
+    } catch {
+      // Disk persistence is best-effort.
     }
   }
 

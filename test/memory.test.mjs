@@ -1,13 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
 import {
   createMemory,
   formatMemory,
+  loadMemoryFile,
   recordDecision,
   recordFailure,
   recordProject,
   recordTrajectory,
+  saveMemoryFile,
   summarizeMemory,
 } from '../src/memory.mjs'
 
@@ -52,4 +57,30 @@ test('formatMemory renders all sections or empty placeholder', () => {
   const text = formatMemory(memory)
   assert.match(text, /## Failures/)
   assert.match(text, /flaky test/)
+})
+
+test('saveMemoryFile and loadMemoryFile persist memory to .omni/memory.json', () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-memory-'))
+  try {
+    let memory = createMemory()
+    memory = recordDecision(memory, 'use LRU')
+    const saved = saveMemoryFile(base, memory)
+    assert.ok(saved.endsWith(path.join('.omni', 'memory.json')))
+    assert.ok(fs.existsSync(saved))
+
+    const loaded = loadMemoryFile(base)
+    assert.equal(loaded.decisions.length, 1)
+    assert.equal(loaded.decisions[0].text, 'use LRU')
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true })
+  }
+})
+
+test('loadMemoryFile returns empty memory when missing', () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-memory-missing-'))
+  try {
+    assert.deepEqual(loadMemoryFile(base), createMemory())
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true })
+  }
 })
