@@ -65,6 +65,9 @@
 - **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` 预算。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL，不再只信文本。
+- **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts。
+- **Capability Brain**：`src/capability-brain.mjs` 以 provider-agnostic 方式注册/解析/选择能力，缺失时优雅降级。
+- **Role capability sandbox**：QA / Reviewer / Judge 通过 `toolFilter` 禁止 edit/write/shell，权限来自 Runtime 而非模型自觉。
 - **Memory v1**：`omni_memory` 维护 project/decision/failure/trajectory 结构化记忆，支持长任务 resume；自动持久化到 `.omni/memory.json`。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。

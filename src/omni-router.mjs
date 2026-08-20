@@ -28,6 +28,7 @@ import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
+import { compileTask } from './task-compiler.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -1093,6 +1094,7 @@ export function apply(ctx, config = {}) {
       const maxSteps = Number(args?.maxSteps) || 20
       const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
+      const brief = compileTask(task, { taskType })
       const state = createRuntimeState(mission)
 
       const finalState = await runMissionLoop(state, {
@@ -1100,7 +1102,8 @@ export function apply(ctx, config = {}) {
           const visualQa = frontend && action.phase === 'validate' && config.autoVisualQA !== false
             ? `\n\n${buildVisualQaStepRequirement()}`
             : ''
-          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.${visualQa}`
+          const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
+          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
           const run = await subagents.start('spawn', {
             label: `mission-${action.phase}-${action.index}`,
             prompt: [{ type: 'text', text: prompt }],

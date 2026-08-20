@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.23.0] - 2026-08-19
+
+- P1 优化（依据 优化3/4.md）：
+  - Task Compiler：新增 `src/task-compiler.mjs`，生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts
+  - Capability Brain：新增 `src/capability-brain.mjs`，provider-agnostic 能力注册、解析、选择、缺失降级
+  - Role capability sandbox：`agent-chain` 的 QA / Reviewer / Judge 通过 `toolFilter` 禁止 edit/write/shell，权限来自 Runtime
+  - `omni_mission_run` 注入 Task Compiler 生成的 Task Brief
+
 ## [1.22.0] - 2026-08-19
 
 - P0 优化（依据 优化3/4.md）：

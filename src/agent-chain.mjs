@@ -198,12 +198,27 @@ export function formatChainReport(results = {}) {
 /**
  * Run one one-shot subagent and return its stage record.
  */
+export function roleToolFilter(role) {
+  switch (role) {
+    case 'qa-verifier':
+      return { deny: ['edit', 'write', 'str_replace_editor', 'browser_click', 'browser_type'] }
+    case 'code-reviewer':
+      return { deny: ['edit', 'write', 'str_replace_editor'] }
+    case 'judge':
+      return { deny: ['edit', 'write', 'str_replace_editor', 'pwsh', 'bash'] }
+    default:
+      return null
+  }
+}
+
 export async function runStage(subagents, parent, role, prompt, attempt) {
+  const filter = roleToolFilter(role)
   const run = await subagents.start('spawn', {
     label: role,
     prompt: [{ type: 'text', text: prompt }],
     parent,
     maxDepth: 1,
+    ...(filter ? { toolFilter: filter } : {}),
   })
   try {
     const result = await run.result

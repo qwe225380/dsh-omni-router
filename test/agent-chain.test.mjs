@@ -13,6 +13,7 @@ import {
   hasCriticalFindings,
   isQaPass,
   normalizeChain,
+  roleToolFilter,
   runAgentChain,
 } from '../src/agent-chain.mjs'
 
@@ -153,4 +154,14 @@ test('runAgentChain full runs builder, qa, reviewer, and judge when green', asyn
   const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'full' })
   assert.deepEqual(calls, ['builder', 'qa-verifier', 'code-reviewer', 'judge'])
   assert.equal(outcome.status, 'ready')
+})
+
+test('roleToolFilter denies edit/write for verifier/reviewer/judge', () => {
+  const qa = roleToolFilter('qa-verifier')
+  const review = roleToolFilter('code-reviewer')
+  const judge = roleToolFilter('judge')
+  assert.ok(qa.deny.includes('edit'))
+  assert.ok(review.deny.includes('write'))
+  assert.ok(judge.deny.includes('pwsh'))
+  assert.equal(roleToolFilter('builder'), null)
 })
