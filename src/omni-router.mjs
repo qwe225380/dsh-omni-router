@@ -802,7 +802,7 @@ export function apply(ctx, config = {}) {
       sections.push({
         name: 'omni-router:mission',
         order: 41,
-        text: `Mission skeleton (use it to organize phases; detailed planning belongs to writing-plans / fable5-task-planning):\n\n${formatMissionPlan(mission)}`,
+        text: `Mission skeleton (use it to organize phases; detailed planning belongs to writing-plans):\n\n${formatMissionPlan(mission)}`,
       })
       if (state.context) {
         sections.push({

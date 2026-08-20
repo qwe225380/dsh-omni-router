@@ -30,17 +30,6 @@ test('suggestSkillsForTask adds text-based specialist skills', () => {
   assert.ok(db.includes('dependency-changes'))
 })
 
-test('suggestSkillsForTask includes fable5-* skill alternatives', () => {
-  const bugfix = suggestSkillsForTask('bugfix')
-  assert.ok(bugfix.includes('fable5-debugging-methodology'))
-  assert.ok(bugfix.includes('fable5-verification-loop'))
-  const feature = suggestSkillsForTask('feature')
-  assert.ok(feature.includes('fable5-task-planning'))
-  assert.ok(feature.includes('fable5-implementation-standards'))
-  const review = suggestSkillsForTask('review')
-  assert.ok(review.includes('fable5-code-review'))
-})
-
 test('filterAvailableSkills keeps only skills present in the session', () => {
   const candidates = ['task-planning', 'security-review', 'missing-skill']
   const available = [{ name: 'task-planning' }, 'security-review']

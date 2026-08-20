@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.15.0] - 2026-08-19
+
+- 许可证清理：
+  - 卸载全部 `fable5-*` skills（原仓库无许可证，避免再分发）
+  - `methodology.mjs` 重写为 Omni 原创表达，移除 fable5 衍生文本
+  - `skill-suggest` 移除 `fable5-*` 候选
+  - README 不再标注 “Fable5 方法论”，改为 “工程原则”
+- 功能不受影响：Project Brain / Mission Planner / Judge / Memory / Agent Chain / Engineering Benchmark 全部保留
+
 ## [1.14.0] - 2026-08-19
 
 - Omni Engineering Benchmark v1：

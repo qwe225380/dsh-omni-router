@@ -2,8 +2,7 @@
  * Memory v1: structured project/decision/failure/trajectory memory.
  *
  * This is Omni-owned memory for long-horizon engineering work. It complements
- * (not replaces) fable5-session-state-management, which focuses on working
- * notes and session continuity.
+ * session-state-management skills that focus on working notes and continuity.
  */
 
 export function createMemory() {

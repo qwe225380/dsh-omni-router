@@ -9,7 +9,7 @@ import {
   scoreDelivery,
 } from '../src/judge.mjs'
 
-test('GRADING_DIMENSIONS covers the six fable5 dimensions', () => {
+test('GRADING_DIMENSIONS covers the six engineering dimensions', () => {
   assert.deepEqual(GRADING_DIMENSIONS, ['correctness', 'completeness', 'robustness', 'clarity', 'scope', 'honesty'])
 })
 

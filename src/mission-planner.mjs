@@ -2,7 +2,7 @@
  * Mission Planner v1: turn a task into a Mission → Phase → Task skeleton.
  *
  * This is an orchestration layer, not a detailed planning skill. Detailed
- * planning procedure is delegated to writing-plans / fable5-task-planning.
+ * planning procedure is delegated to writing-plans.
  */
 
 export function missionPhasesForType(taskType = 'other') {
