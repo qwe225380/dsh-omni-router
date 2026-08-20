@@ -130,7 +130,7 @@ Then restart DSH and select **Omni Router** in a new session.
 - `/omni direct` — enter direct mode.
 - `/omni mode spec|react|balanced` — set thinking mode.
 - `/omni reroute plan|direct` — adaptively reroute current task.
-- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`.
+- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`, `omni_visual_check`.
 
 ## Configuration
 
@@ -143,6 +143,7 @@ Then restart DSH and select **Omni Router** in a new session.
     # planFirstKeywords: [自定义, 关键词]
     # directKeywords: [直接跑, 马上改]
     # Visual QA (OpenAI-compatible vision endpoint)
+    # autoVisualQA: true
     # visionApiUrl: https://api.openai.com/v1/chat/completions
     # visionApiKey: sk-...
     # visionModel: gpt-4o-mini

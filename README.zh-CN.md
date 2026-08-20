@@ -130,7 +130,7 @@ node scripts/install-preset.mjs
 - `/omni direct` — 进入直接执行模式。
 - `/omni mode spec|react|balanced` — 设置思维模式。
 - `/omni reroute plan|direct` — 动态切换当前任务路由。
-- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run`。
+- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_visual_check`。
 
 ## 配置
 
@@ -143,6 +143,7 @@ node scripts/install-preset.mjs
     # planFirstKeywords: [自定义, 关键词]
     # directKeywords: [直接跑, 马上改]
     # Visual QA（OpenAI 兼容视觉端点）
+    # autoVisualQA: true
     # visionApiUrl: https://api.openai.com/v1/chat/completions
     # visionApiKey: sk-...
     # visionModel: gpt-4o-mini
