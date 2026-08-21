@@ -93,6 +93,25 @@ export function resolveCapability(brain, requiredCapability) {
   return candidates
 }
 
+export function resolveCapabilityV2(brain, requiredCapability, options = {}) {
+  const candidates = resolveCapability(brain, requiredCapability)
+  const now = Date.now()
+  return candidates
+    .map((c) => {
+      let score = c.score
+      if (c.risk === 'high') score -= 0.1
+      if (c.risk === 'critical') score -= 0.2
+      if (c.lastUsed) {
+        const days = Math.max(0, (now - Date.parse(c.lastUsed)) / 86400000)
+        score += Math.max(0, 0.05 - days * 0.001)
+      }
+      if (options.requireLowRisk && ['high', 'critical'].includes(c.risk)) score = 0
+      return { ...c, score: Math.max(0, Math.round(score * 1000) / 1000) }
+    })
+    .filter((c) => c.score > 0)
+    .sort((a, b) => b.score - a.score)
+}
+
 export function selectCapabilities(brain, requirements = [], limit = 4) {
   const selected = []
   const seen = new Set()

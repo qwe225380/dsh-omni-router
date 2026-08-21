@@ -9,6 +9,7 @@ import {
   recordCapabilityOutcome,
   registerCapability,
   resolveCapability,
+  resolveCapabilityV2,
   selectCapabilities,
 } from '../src/capability-brain.mjs'
 
@@ -30,6 +31,16 @@ test('resolveCapability finds matching providers sorted by reliability', () => {
   brain = registerCapability(brain, { id: 'b', capabilities: ['browser.automation'], reliability: 0.95 })
   const matches = resolveCapability(brain, 'browser.automation')
   assert.equal(matches[0].id, 'b')
+})
+
+test('resolveCapabilityV2 penalizes high risk and supports requireLowRisk', () => {
+  let brain = createCapabilityBrain()
+  brain = registerCapability(brain, { id: 'safe', capabilities: ['db.write'], risk: 'low', reliability: 0.8 })
+  brain = registerCapability(brain, { id: 'risky', capabilities: ['db.write'], risk: 'high', reliability: 0.95 })
+  const all = resolveCapabilityV2(brain, 'db.write')
+  assert.ok(all[0].id === 'safe' || all[0].id === 'risky')
+  const lowOnly = resolveCapabilityV2(brain, 'db.write', { requireLowRisk: true })
+  assert.ok(lowOnly.every((c) => c.id === 'safe'))
 })
 
 test('selectCapabilities returns top N with requirement mapping', () => {

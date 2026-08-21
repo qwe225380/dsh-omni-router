@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.51.0] - 2026-08-21
+
+- Capability Resolver v2：
+  - 新增 `resolveCapabilityV2`：综合 reliability / risk / lastUsed 打分，支持 `requireLowRisk`
+  - 为 Capability Brain 提供更真实的 provider 选择
+
 ## [1.50.0] - 2026-08-21
 
 - Real capability sandbox 接入 Mission Runtime：
