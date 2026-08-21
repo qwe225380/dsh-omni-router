@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.47.0] - 2026-08-21
+
+- 按优化5.md 完成 P1 第一批：
+  - Planner-generated DAG：feature/refactor 任务生成可并行分支，`maxParallel` 真正生效
+  - Dynamic Context Expansion：`buildDynamicContext` 按 uncertainty 自动提升 Context level
+  - Capability Manifest：`capability-manifest.mjs` 支持插件/skill 声明 capabilities（JSON / YAML-ish）
+  - Failure-aware DAG mutation：repair 任务按 `classifyFailure` 分类生成针对性修复目标
+  - `omni_mission_run` 使用 Planner DAG + Capability Manifest + Dynamic Context
+
 ## [1.46.0] - 2026-08-21
 
 - 按优化5.md 完成 Integration Phase 第一批 P0：

@@ -6,6 +6,7 @@
 
 import { buildPhaseTasks } from './mission-planner.mjs'
 import { resolveCapability } from './capability-brain.mjs'
+import { classifyFailure } from './failure-taxonomy.mjs'
 
 export function createTask({ id, goal, dependencies = [], allowedTools = [], writeScope = '', acceptance = [], verification = [], rollback = '', requiredCapabilities = [], preferredCapabilities = [], forbiddenCapabilities = [] } = {}) {
   return {
@@ -85,9 +86,10 @@ export function applyObservationToDag(dag, observation = {}, failedTaskId = null
 
     const tasks = (dag.tasks || []).map((t) => t.id === taskId ? { ...t, status: 'failed', attempt, failure: observation } : t)
     const doneIds = tasks.filter((t) => t.status === 'done').map((t) => t.id)
+    const failure = classifyFailure(observation)
     const repair = createTask({
       id: repairId,
-      goal: 'Diagnose and repair the failing verification',
+      goal: `Diagnose and repair: ${failure.category} — ${failure.recovery}`,
       dependencies: doneIds,
       acceptance: ['verification passes after repair'],
       verification: ['run failing checks again'],

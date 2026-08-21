@@ -31,8 +31,11 @@ import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFro
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTaskWithLLM } from './task-compiler.mjs'
 import { bindCapabilitiesToDag, createMissionDag, formatMissionDag } from './mission-dag.mjs'
+import { generateMissionDag } from './planner-dag.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain } from './capability-brain.mjs'
+import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
+import { buildDynamicContext } from './dynamic-context.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
@@ -666,12 +669,14 @@ export function apply(ctx, config = {}) {
         await buildGraphAdj()
 
         if (config.progressiveContext !== false) {
-          return buildProgressiveContext(taskText, entries, files, {
-            level: Number(config.contextExpansionLevel) || 3,
+          const dynamic = buildDynamicContext(taskText, entries, files, {
+            level: Number(config.contextExpansionLevel) || 2,
+            uncertainty: Number(config.contextUncertainty) || 0.6,
             maxFiles: 8,
             maxFileChars: 2000,
             graph: graphAdj,
           })
+          return dynamic.context
         }
         return buildTaskContext(taskText, entries, files, { maxTotalChars: 8000 })
       }
@@ -1367,8 +1372,9 @@ export function apply(ctx, config = {}) {
 
       const toolsService = ctx.get('tools') || ctx.tools
       const toolNames = await collectToolNames(toolsService)
-      const capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
-      const dag = bindCapabilitiesToDag(createMissionDag(mission), capabilityBrain)
+      let capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
+      const dag = bindCapabilitiesToDag(generateMissionDag(mission, brief, { taskType }), capabilityBrain)
 
       const finalDag = await runDagLoop(dag, {
         act: async (action) => {
