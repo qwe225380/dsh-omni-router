@@ -14,6 +14,7 @@
 - [x] Benchmark 扩到 500+（当前 556 个路由任务）
 - [x] Context Graph 完整版（真实依赖图解析：import/call/extends/implements）
 - [x] 降低 false-direct / false-plan（556 任务上均为 0.0%）
+- [x] OmniBench 真实双臂数据（10 个 L1-L10 任务，raw/omni 各 10 次，2026-08-21）
 - [x] CI 多版本矩阵（Node 20/22/24）
 - [x] 兼容性文档
 

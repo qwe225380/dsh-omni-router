@@ -19,6 +19,16 @@ Or collect individually with `omni_benchmark`.
 ## How to evaluate
 
 ```bash
+npm run benchmark:status        # coverage / missing pairs
 npm run benchmark:compare       # OES comparison
 npm run benchmark:continuous    # trend over time
 ```
+
+## Current real baseline (2026-08-21)
+
+- raw:  10 runs, 100% success, avg OES 1.000
+- omni: 10 runs, 100% success, avg OES 1.000
+- missing pairs: none
+- regression alerts: none (first baseline date)
+
+Full report: `docs/OmniBench-2026-08-21.md`

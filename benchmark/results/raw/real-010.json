@@ -1,0 +1,25 @@
+{
+  "id": "real-010",
+  "arm": "raw",
+  "task": "Refactor a monolith checkout module into a checkout service with API, persistence, and integration tests, preserving behavior.",
+  "criteria": [
+    "service extracted",
+    "behavior preserved",
+    "integration tests pass",
+    "rollback path documented"
+  ],
+  "level": "L10 Autonomous",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Task real-010 (checkout monolith → checkout service) COMPLETE, all 4 acceptance criteria verified with fresh evidence.\n\n## What was built (files changed by me)\n- `src/checkout-service.js` (new) — `CheckoutService`: business logic (cart validation, total, orchestration), identical to the old monolith's behavior, but storage writes go through the repository.\n- `src/checkout-repository.js` (new) — `CheckoutRepository` persistence layer wrapping `OrdersRepository` + `PaymentService` (same order/payment row shapes as before).\n- `src/checkout-api.js` (new) — `CheckoutAPI` HTTP layer: `checkoutRequest(body)` → `{status, body}`, 201 on success, 400 on invalid JSON body / missing cart+customer / cart validation errors.\n- `src/checkout.js` (rewritten) — compat facade: `CheckoutModule` is now an identity alias of `CheckoutService` (`c.CheckoutModule === s.CheckoutService` verified true); existing callers/tests unchanged.\n- `src/server.js` — wired `POST /checkout` route via `CheckoutAPI` (route list comment updated).\n- `test/checkout.integration.test.js` (new) — 3 integration tests: full HTTP flow → 201 with `{order, payment, email, total}`, rows persisted in the JSON store (verified with a fresh `Store`), exactly one confirmation email; empty cart → 400 `/cart must not be empty/`; missing cart/customer → 400.\n- `README.md` — layout updated + \"Rollback: checkout refactor\" section.\n\n## Verification evidence (all runs after final edits)\n- Checkout-scoped suite (`test/checkout.test.js` + `checkout.integration.test.js` + `server.test.js`): **10/10 pass**.\n- Wider scoped suite (+ orders/payment/migrate tests): **20/20 pass**.\n- Full suite snapshot: **40/43 pass, 3 fail** — the 3 failures (`negative amounts…`, `last page…`, `concurrent refreshes…`) are PRE-EXISTING at HEAD (verified via `git stash` baseline re-run: 35 tests, 32 pass, same 3 failures) and belong to other benchmark tasks (real-008/real-001/real-004). My change introduced zero new failures; original `test/checkout.test.",
+  "at": "2026-08-21T15:09:18+08:00"
+}

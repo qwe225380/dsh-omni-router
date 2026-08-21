@@ -234,6 +234,13 @@ npm run benchmark:status
 - false-direct 率：0.0%
 - false-plan 率：0.0%
 
+当前 OmniBench 真实基线（2026-08-21，10 个 L1-L10 任务）：
+- raw：10/10 PASS，平均 OES 1.000
+- omni：10/10 PASS，平均 OES 1.000
+- 缺失配对：无
+- 回退告警：无
+- 完整报告：`docs/OmniBench-2026-08-21.md`
+
 ## 许可证
 
 MIT

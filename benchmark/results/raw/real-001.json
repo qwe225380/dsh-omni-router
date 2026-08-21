@@ -1,0 +1,23 @@
+{
+  "id": "real-001",
+  "arm": "raw",
+  "task": "Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.",
+  "criteria": [
+    "pagination returns correct last page",
+    "existing tests pass"
+  ],
+  "level": "L1 Single-file",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "**Green gate satisfied.** Fresh full-suite run after all edits:\n\n```\nnode --experimental-test-isolation=none --test \"test/*.test.js\"\n# tests 35\n# pass 35\n# fail 0\n```\n\nWhat changed since the gate was raised:\n- `src/session.js` — the full suite could not pass without fixing its sole pre-existing failure: `refreshSession` returned a stale snapshot to the second concurrent caller. Fixed per the file's own documented spec (\"concurrent refreshes must share the in-flight refresh\"): the in-flight refresh is now stored as a promise, concurrent callers await the same promise, and `finally` only clears the flag when it still owns that promise.\n- `src/pagination.js` — the original task fix (unchanged since last run): partial last page now returns remaining items via `items.slice(start, Math.min(end, total))`.\n\nBoth acceptance criteria verified on record: pagination returns the correct last page (`['g']` for 7 items, page 3, pageSize 3), and all existing tests pass (35/35).\n\nBENCHMARK: PASS\n",
+  "at": "2026-08-21T14:49:53.6571266+08:00"
+}

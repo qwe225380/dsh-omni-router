@@ -1,0 +1,24 @@
+{
+  "id": "real-009",
+  "arm": "omni",
+  "task": "Add a weekly report job that aggregates orders, sends an email, and records a run history row.",
+  "criteria": [
+    "job runs weekly",
+    "email contains summary",
+    "run history is recorded"
+  ],
+  "level": "L9 Long-horizon",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "TASK real-009 (omni arm): weekly report job — COMPLETE, all acceptance criteria verified.\n\n## What was delivered\n- `src/report.js` — implemented `WeeklyReportJob`:\n  - `isDue(now)`: due when no `report_runs` row exists for the current ISO week (`isoWeekKey` helper, \"YYYY-Www\"); enforces at-most-once-per-week → \"job runs weekly\".\n  - `run(now)`: aggregates orders, sends the summary email via `sendEmail` (recipient `ops@store.local`, subject `Weekly report 2026-W10`, body with total orders / total revenue / status breakdown) → \"email contains summary\"; records a `report_runs` row `{ id, runAt, summary }` → \"run history is recorded\". Returns summary (signature preserved).\n  - `runIfDue(now)`: runs only when due, `null` otherwise. Stale stub doc comments replaced.\n- `test/report.test.js` — 6 new tests (TDD: wrote first, ran RED — 5 failed for missing behavior; then implemented → GREEN).\n\n## Verification evidence (all runs performed after final edit)\n- Report suite: `npm run test:one -- test/report.test.js` → 7/7 pass.\n- Full suite: `npm test` → 44 tests, 41 pass, 3 fail. The 3 failures (`negative amounts show a single minus sign` currency, `last page returns the remaining items` pagination, `concurrent refreshes…` session) are OTHER benchmark tasks' intentionally-broken fixtures: proven by running the suite on a pristine baseline worktree (`git worktree add <tmp> 5bfb4da`) → baseline 35 tests / 32 pass / 3 fail, identical failure names. Zero regressions from my change.\n- End-to-end smoke run (node -e, temp store): isDue fresh=true → runIfDue returns summary → email contains subject \"Weekly report 2026-W10\" and body with totals/breakdown → `report_runs` has 1 row `{id, runAt, summary}` → isDue same week=false → runIfDue again=null → isDue next week=true. All three acceptance criteria demonstrated.\n\n## Important: concurrent agent in shared workspace (did NOT commit)\nThe working tree is shared with another agent running real-010 (checkout refactor): mid-session it switched",
+  "at": "2026-08-21T15:38:57+08:00"
+}

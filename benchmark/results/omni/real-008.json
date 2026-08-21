@@ -1,0 +1,23 @@
+{
+  "id": "real-008",
+  "arm": "omni",
+  "task": "Fix the currency formatting bug where negative amounts show an extra minus sign.",
+  "criteria": [
+    "negative amounts formatted correctly",
+    "unit tests pass"
+  ],
+  "level": "L2 Small bug",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "CURRENCY BUG FIXED — workspace: D:\\dsh\\dsh workspace\\Omni group (branch refactor/checkout-service)\n\nROOT CAUSE: In src/currency.js, `formatCurrency` computed `sign = amount < 0 ? '-' : ''` but then formatted the raw `amount` (e.g. `amount.toFixed(2)` → \"-12.50\"), so negative values carried the minus inside the formatted string AND got the prefix — producing \"-$-12.50\". Large negatives also got misapplied thousands separators (\"-$-1,234.50\").\n\nFIX (minimal, one line + stale comment cleanup):\n- src/currency.js: `const formatted = Math.abs(amount).toFixed(2).replace(...)` — sign now applied exactly once. Updated the old \"BUG:\" doc comments to describe correct behavior.\n\nTESTS (TDD: red confirmed before fix, green after):\n- test/currency.test.js: existing regression test `formatCurrency(-12.5) === '-$12.50'` (was failing red); added one regression test `formatCurrency(-1234.5) === '-$1,234.50'` (also failed red before fix).\n- Result: currency suite 5/5 pass after fix (ran via `npm run test:one -- test/currency.test.js`).\n- Edge probes (node -e): -1234.5 EUR → \"-€1,234.50\"; -1234567.89 JPY → \"-¥1,234,567.89\"; -0 → \"$0.00\"; 0 → \"$0.00\"; unknown currency → \"XYZ 1,234.50\". All correct.\n\nFULL SUITE: 35 pass, 1 fail — test/session.test.js \"concurrent refreshes both complete with a fresh expiry (regression)\". PROVEN PRE-EXISTING: ran it at baseline (my two currency files stashed) → identical failure. src/session.js and test/session.test.js have zero dependency on currency/pagination. This is a separate fixture task (session-refresh dedup), out of scope.\n\nIMPORTANT — CONCURRENT WORK IN SHARED WORKSPACE: src/pagination.js shows a working-tree modification (a fix for the partial-last-page bug) that I did NOT make and did not touch; it appeared mid-session, presumably from another agent working the pagination task in the same checkout. Leave it alone; do not commit/revert it. My changes are exactly: src/currency.js + test/currency.test.js.\n\nAcceptance criteria: negative amounts fo",
+  "at": "2026-08-21T15:14:46+08:00"
+}

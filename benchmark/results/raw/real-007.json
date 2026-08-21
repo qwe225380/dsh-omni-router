@@ -1,0 +1,24 @@
+{
+  "id": "real-007",
+  "arm": "raw",
+  "task": "Add request tracing headers across the API gateway and two downstream services.",
+  "criteria": [
+    "trace id propagates",
+    "logs include trace id",
+    "existing tests pass"
+  ],
+  "level": "L6 Cross-service",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Task real-007 (request tracing) completed and verified. Scope: `src/gateway.js` + `test/gateway.test.js` only.\n\nImplementation (`src/gateway.js`): `Gateway.forward` now resolves a trace id — accepts an inbound `X-Trace-Id` header (case-insensitive, trimmed; empty/missing → `generateTraceId()` falls back to `trace_<ts>_<rand>`) — injects it as lowercase `x-trace-id` into the headers passed to the downstream service (other headers preserved), and returns `traceId` in the result. Services A/B already recorded `traceId` from `headers['x-trace-id']`, so propagation automatically puts the id into their logs.\n\nTDD evidence: wrote 2 failing tests first (`gateway generates a trace id and propagates it to both downstream services`, `gateway accepts an inbound X-Trace-Id header and propagates it (any casing)`) — observed RED (service logs had `traceId: null`), then GREEN after the gateway change. `node --experimental-test-isolation=none --test test/gateway.test.js`: 4/4 pass. End-to-end smoke confirmed: generated id lands in service-A log, inbound `client-abc` lands in service-B log, and responses echo the traceId.\n\nFull suite: 38 tests, 36 pass, 2 fail, stable across 2 runs. The 2 failures (`currency` negative-amount format, `pagination` last-page) are PRE-EXISTING fixture bugs for other benchmark tasks (real-008, real-001), failing identically at baseline before my change and in files I never touched — zero regressions from my diff.\n\n⚠ Workspace note: this working tree is SHARED with concurrent agent work. Between my baseline run and now, another agent modified `src/session.js` + `test/session.test.js` (fixing the real-004 session concurrency bug; the baseline session failure now passes). Those changes are NOT mine — do not attribute them to this task. git status currently shows: `M src/gateway.js`, `M src/session.js`, `M test/gateway.test.js`, `M test/session.test.js`; nothing committed.\n\nAcceptance criteria verdict: (1) trace id propagates — verified via service-log assert",
+  "at": "2026-08-21T14:51:52+08:00"
+}

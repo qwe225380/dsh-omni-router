@@ -1,0 +1,24 @@
+{
+  "id": "real-005",
+  "arm": "omni",
+  "task": "Migrate the orders table to add an idempotency key column with a rollback path.",
+  "criteria": [
+    "migration applies",
+    "rollback works",
+    "existing queries pass"
+  ],
+  "level": "L7 Migration",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "BENCHMARK: PASS — Task real-005 \"Migrate the orders table to add an idempotency key column with a rollback path\" is complete and verified.\n\n## What was done\n- `migrations/migrate.js`: added v2 migration `add idempotency key to orders` — `apply` backfills every existing orders row with `idempotencyKey: null` (without clobbering a present key, preserving all other fields); `rollback` drops the column (`delete row.idempotencyKey`) per SQL DROP COLUMN semantics.\n- `test/migrate.test.js`: added 4 regression tests (v2 present in list; apply adds key to existing rows; apply doesn't clobber present key; rollback removes key).\n\n## Red-green evidence\n- RED: 4 new tests failed with \"Cannot read properties of undefined (reading 'apply')\" (MIGRATIONS[1] missing) — exit 1.\n- GREEN: `node --experimental-test-isolation=none --test test/migrate.test.js` → 8/8 pass.\n- Post-commit fresh run `test/migrate.test.js test/orders.test.js` → 11/11 pass.\n\n## Acceptance criteria (all verified)\n1. **Migration applies** — E2E via real runner: seeded a v1 db (2 rows, schemaVersion 1) in throwaway `db/data`, ran `node migrations/migrate.js apply` → \"applied v2 add idempotency key to orders\"; both rows gained `\"idempotencyKey\":null`, existing fields untouched, `schemaVersion: 2`, `status` shows both migrations applied.\n2. **Rollback works** — `node migrations/migrate.js rollback` → \"rolled back v2 add idempotency key to orders\"; rows restored to exact original shape (no idempotencyKey), `schemaVersion: 1`, status shows v2 un-applied. Rolled back to v0 and restored `db/data` to pristine empty (it is gitignored).\n3. **Existing queries pass** — orders.test.js 3/3; subset migrate/orders/checkout/report/server 22/22; migrated-data sanity via OrdersRepository: `listOrders`/`getOrder`/`createOrder` all work on v2 data. Full suite: 45 tests, 42 pass, 3 fail — the 3 failures are pre-existing and belong to other tasks (real-001 pagination \"last page returns the remaining items\", real-008 currency \"negative a",
+  "at": "2026-08-21T15:23:30+08:00"
+}

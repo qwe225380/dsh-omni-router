@@ -1,0 +1,24 @@
+{
+  "id": "real-009",
+  "arm": "raw",
+  "task": "Add a weekly report job that aggregates orders, sends an email, and records a run history row.",
+  "criteria": [
+    "job runs weekly",
+    "email contains summary",
+    "run history is recorded"
+  ],
+  "level": "L9 Long-horizon",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Green gate verified. Evidence from the current working tree:\n\n- **Report suite** (`test/report.test.js`): **6/6 pass, 0 fail** — ran just now after all changes.\n- **Full suite**: 43 tests, 40 pass, 3 fail. The 3 failures are `negative amounts show a single minus sign` (currency, real-008), `last page returns the remaining items` (pagination, real-001), and `concurrent refreshes both complete with a fresh expiry (regression)` (session, real-004) — these were **already failing at baseline before my first edit** (baseline run: 35 tests / 32 pass / 3 fail, same three names), they belong to other benchmark tasks' fixtures, and my diff touches only `src/report.js` and `test/report.test.js` (verified via `git diff --stat`). No regressions from this task.\n- The other working-tree changes (`src/checkout.js`, `src/server.js`, `checkout-*.js`) belong to the concurrent checkout-refactor agent and are not part of my task; they were left untouched and all their tests pass alongside mine.\n\nAll three acceptance criteria were verified by passing tests plus an end-to-end script: job runs weekly (due with no history → runs; not due same week → skipped; due again after a previous-week run), email contains the summary (subject + body with totals/status breakdown), and run history is recorded (`report_runs` rows with `id`/`runAt`/`summary`).\n\nBENCHMARK: PASS\n",
+  "at": "2026-08-21T15:08:40+08:00"
+}

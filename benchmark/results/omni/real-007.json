@@ -1,0 +1,24 @@
+{
+  "id": "real-007",
+  "arm": "omni",
+  "task": "Add request tracing headers across the API gateway and two downstream services.",
+  "criteria": [
+    "trace id propagates",
+    "logs include trace id",
+    "existing tests pass"
+  ],
+  "level": "L6 Cross-service",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "TASK REAL-007 (request tracing headers) — COMPLETE, verified, committed on branch `feature/request-tracing` (commit 526cc4c).\n\n## Structured plan (as executed)\n\n**Goal:** Trace id accepted/generated at the API gateway and propagated to both downstream services via the X-Trace-Id header, with the id recorded in the services' logs.\n**Scope:** `src/gateway.js` only (+ regression tests in `test/gateway.test.js`). `src/service-a.js`/`src/service-b.js` already log `traceId` from the header — no change needed there. `server.js` does not use the gateway; out of scope.\n**Involved files:** `src/gateway.js`, `test/gateway.test.js`.\n**Implementation:** In `Gateway.forward()`, copy incoming headers, locate any case-variant of `x-trace-id` (loop lowercasing keys), use it or `generateTraceId()`, normalize to lowercase `x-trace-id` on the downstream header object, pass to `target.handle()`.\n**Interface/data changes:** None — `forward(serviceName, payload, headers)` signature unchanged; behavior extended (id now always present downstream).\n**Test plan:** 2 new regression tests: (1) incoming `X-Trace-Id` (both cases) lands in both services' log entries; (2) absent header → generated id (`/^trace_\\d+_\\d+$/`) lands in the log entry. Red run first (2 failures, exit 1), then green (4/4).\n**Risks:** none found. Other headers pass through untouched; empty-string trace id treated as absent (generates new).\n**Compatibility:** plain Node 22, no deps, no public API change.\n**Rollback:** `git revert 526cc4c` or `git checkout HEAD~1 -- src/gateway.js test/gateway.test.js`.\n**Acceptance criteria:** see verification below.\n\n## Verification evidence (all runs after final edit)\n\n1. `node --experimental-test-isolation=none --test test/gateway.test.js` → **4/4 pass** (was 2/4 red before the fix).\n2. `npm test` → **37/38 pass, 1 fail**. The single failure is `currency.test.js` \"negative amounts show a single minus sign\" — a **pre-existing bug belonging to another benchmark task (real-008)**. Proven pre",
+  "at": "2026-08-21T15:18:32+08:00"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "real-010",
+  "arm": "omni",
+  "task": "Refactor a monolith checkout module into a checkout service with API, persistence, and integration tests, preserving behavior.",
+  "criteria": [
+    "service extracted",
+    "behavior preserved",
+    "integration tests pass",
+    "rollback path documented"
+  ],
+  "level": "L10 Autonomous",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Task real-010 (checkout monolith → checkout service) COMPLETE — all 4 acceptance criteria verified with fresh evidence.\n\n## What was built (all files on branch `feature/checkout-service`, 3 commits off baseline 5bfb4da)\n- `src/checkout-service.js` (new) — `CheckoutService`: business logic (cart validation, total, orchestration of order + payment + email), behavior identical to the old monolith.\n- `src/checkout-repository.js` (new) — `CheckoutRepository` persistence layer wrapping `OrdersRepository` + `PaymentService` (same row shapes).\n- `src/checkout-api.js` (new) — `CheckoutAPI.checkoutRequest(body) → {status, body}`: 201 on success, 400 on invalid JSON body / missing cart+customer / cart validation errors.\n- `src/checkout.js` (rewritten) — compat facade: `CheckoutModule` is an identity alias of `CheckoutService` (verified `c.CheckoutModule === s.CheckoutService` → true), so existing callers/tests are untouched.\n- `src/server.js` — wired `POST /checkout` via CheckoutAPI (invalid JSON body → 400 before parsing; route comment updated).\n- `test/checkout.integration.test.js` (new) — 3 integration tests: full HTTP flow → 201 with `{order, payment, email, total}` and order+payment rows persisted (verified with a fresh `Store`), exactly one confirmation email; empty cart → 400 `/cart must not be empty/`; missing cart/customer → 400.\n- `README.md` — layout updated + \"Rollback: checkout refactor\" section (git revert of refactor commits; no data migration involved since order/payment row shapes are unchanged; POST /checkout is the only new API surface).\n\n## Verification evidence (all runs after final edits)\n- Red first: integration tests ran before implementation → 3 fail / 0 pass (404, route missing).\n- Checkout-scoped suite (`checkout.test.js` + `checkout.integration.test.js` + `server.test.js`): **10/10 pass**.\n- Full suite: **44 tests, 41 pass, 3 fail** — the 3 failures (`negative amounts…`, `last page…`, `concurrent refreshes…`) are exactly the PRE-EXISTING failures at",
+  "at": "2026-08-21T15:37:36+08:00"
+}

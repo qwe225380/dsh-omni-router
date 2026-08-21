@@ -1,0 +1,24 @@
+{
+  "id": "real-006",
+  "arm": "omni",
+  "task": "Add a user notification preferences page with backend persistence and a toggle UI.",
+  "criteria": [
+    "preferences persist",
+    "toggle updates UI",
+    "tests pass"
+  ],
+  "level": "L4 Multi-file feature",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Task real-006 (user notification preferences page) — COMPLETE, all criteria verified.\n\n## What was built\n- `src/server.js` (modified): `NotificationService` wired into `createServer`; new routes — `GET /users/:userId/notification-preferences` (JSON), `PUT /users/:userId/notification-preferences` (JSON partial-update with validation → 400 on non-boolean emailEnabled/pushEnabled or digest outside daily/weekly/off), `GET /users/:userId/preferences` (HTML page).\n- `src/preferences-page.js` (new): dependency-free HTML page — email/push toggles (`role=\"switch\"`), digest `<select>` (daily/weekly/off), server-side rendered current state (`checked`/`selected` + `window.__PREFS__`), status bar (`role=\"status\"`, aria-live). Page JS: `change` on any control → `PUT` → on success updates status bar (\"Saved — email off, push on, digest weekly\"), on failure reverts control to last saved state.\n- `test/preferences.test.js` (new): 7 tests — GET defaults, PUT persists + GET reflects, persistence across a brand-new server instance on the same store dir, 400 validation, page served as HTML with toggle markup, page reflects saved state after a toggle round-trip, page JS wiring (fetch PUT / change listener / status role).\n- `README.md` (modified): one layout line for the new module.\n\n## Criteria verification (all backed by runs)\n1. **preferences persist** — automated restart test passes; live E2E: killed and restarted the server process on the same temp store, `GET /users/alice/notification-preferences` still returned `{\"userId\":\"alice\",\"emailEnabled\":false,\"pushEnabled\":true,\"digest\":\"weekly\"}`, and the page reload rendered those states.\n2. **toggle updates UI** — real browser at http://127.0.0.1:38913/users/alice/preferences: clicking the Push toggle checked the box and the status bar updated to \"Saved — email on, push on, digest daily\"; toggling email off + digest weekly → \"Saved — email off, push on, digest weekly\"; reload showed persisted state. Screenshot: D:\\Dsh\\DSH Desktop\\.dsh-tr",
+  "at": "2026-08-21T15:29:25+08:00"
+}

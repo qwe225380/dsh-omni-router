@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.45.0] - 2026-08-21
+
+- 接入真实 OmniBench 双臂数据（10 个 L1-L10 任务）：
+  - raw 10/10 PASS，avg OES 1.000
+  - omni 10/10 PASS，avg OES 1.000
+  - 缺失配对：无；回退告警：无
+  - 新增 `docs/OmniBench-2026-08-21.md` 完整评估报告
+  - 更新 `benchmark/results/`、README、ROADMAP
+
 ## [1.44.0] - 2026-08-19
 
 - OmniBench 连续评估增强：

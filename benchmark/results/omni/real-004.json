@@ -1,0 +1,25 @@
+{
+  "id": "real-004",
+  "arm": "omni",
+  "task": "Reproduce and fix the intermittent login timeout caused by a missing session refresh under concurrent requests.",
+  "criteria": [
+    "bug reproduced",
+    "root cause identified",
+    "regression test added",
+    "tests pass"
+  ],
+  "level": "L8 Debugging",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "TASK real-004 (L8 Debugging): \"Reproduce and fix the intermittent login timeout caused by a missing session refresh under concurrent requests\" — DONE, all acceptance criteria verified.\n\n**Bug reproduced (RED, before any edit):**\n- Focused run `node --experimental-test-isolation=none --test test/session.test.js`: 3 pass / 1 fail — the regression test failed with `ERR_ASSERTION: second caller must await the in-flight refresh`.\n- Baseline full suite: 32/35 pass (fails: session regression, plus 2 pre-existing seeded bugs for other tasks).\n\n**Root cause (verified from code):** `src/session.js` (old line 35): `if (this.refreshing) return { ...session }` — a concurrent `refreshSession` call returned a synchronous snapshot of the session taken BEFORE the in-flight refresh completed. The caller then proceeded with an expiry that was never extended → intermittent login/auth timeouts. The doc comment in the fixture described exactly this bug.\n\n**Fix (smallest change, committed as 1a75c34):** `src/session.js` — concurrent callers now await the SAME in-flight refresh promise: `this.refreshing` holds the running refresh promise; `if (this.refreshing) return this.refreshing`; `return await this.refreshing` inside try/finally (the `await` is required so `finally` clears the flag only after the refresh settles). All callers observe the freshly refreshed session. Also updated the stale BUG doc comment.\n\n**Regression test:** existing fixture test \"concurrent refreshes both complete with a fresh expiry (regression)\" (red→green) + added \"concurrent refreshes update the stored session (regression)\" in `test/session.test.js`.\n\n**Verification (fresh runs, post-commit 1a75c34):**\n- Session tests: 5/5 pass, exit 0.\n- Full suite: 38 tests, 37 pass, 1 fail — the single failure is `not ok 7 negative amounts show a single minus sign` = src/currency.js, a documented seeded BUG belonging to real-008, failing at baseline too, untouched (out of scope, I-7). No regressions introduced.\n- Edge probes (",
+  "at": "2026-08-21T15:18:35+08:00"
+}

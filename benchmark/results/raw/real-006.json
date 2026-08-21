@@ -1,0 +1,24 @@
+{
+  "id": "real-006",
+  "arm": "raw",
+  "task": "Add a user notification preferences page with backend persistence and a toggle UI.",
+  "criteria": [
+    "preferences persist",
+    "toggle updates UI",
+    "tests pass"
+  ],
+  "level": "L4 Multi-file feature",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Task real-006 (user notification preferences page) — COMPLETE, all criteria verified.\n\n## What was built\n- `src/server.js` (modified): new routes — `GET /users/:userId/notification-preferences` (JSON), `PUT /users/:userId/notification-preferences` (JSON, partial-update with validation → 400 on bad boolean/digest), `GET /users/:userId/preferences` (HTML page). `NotificationService` wired into `createServer`.\n- `src/preferences-page.js` (new): dependency-free HTML page — email/push toggles (`role=\"switch\"`), digest `<select>` (daily/weekly/off), signal-dot channel rows, `aria-live` status bar. JS loads prefs via GET, PUTs on every change, updates the UI on success, reverts controls to last-saved state on failure.\n- `test/preferences.test.js` (new): 7 tests — defaults, persistence across server restarts (new server + same store dir), partial-merge, 400 validation, page served as HTML with toggle markup, page→API wiring contract, and the exact toggle round-trip flow.\n\n## Criteria verification\n1. **preferences persist** — PUT writes `notification_preferences.json` to the store dir; verified live: killed and restarted the server process, page reload restored `email off / push on / digest weekly`. Automated test proves survival across a brand-new server instance on the same store.\n2. **toggle updates UI** — verified in a real browser: clicking the Push toggle flipped the checkbox, lit the signal dots, and the status bar changed to \"Saved — email on, push on, digest daily\"; email + digest changes reflected too (\"Saved — email off, push on, digest weekly\"). Screenshot: `D:\\Dsh\\DSH Desktop\\.dsh-trio\\screenshots\\preferences-page.png`.\n3. **tests pass** — `test/preferences.test.js`: 7/7 pass. Full suite: 43 pass / 3 fail; the 3 failures (currency #7, pagination #23, session #46) are pre-existing fixture bugs for OTHER benchmark tasks (real-008/001/004) — identical set failed in the baseline run before my changes (32/35 pass). My diff touches only `src/server.js`, plus new files",
+  "at": "2026-08-21T15:03:31+08:00"
+}

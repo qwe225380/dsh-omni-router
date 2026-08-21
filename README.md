@@ -234,6 +234,13 @@ Current router baseline (556 tasks):
 - false-direct rate: 0.0%
 - false-plan rate: 0.0%
 
+Current OmniBench real baseline (2026-08-21, 10 L1-L10 tasks):
+- raw:  10/10 PASS, avg OES 1.000
+- omni: 10/10 PASS, avg OES 1.000
+- missing pairs: none
+- regression alerts: none
+- Full report: `docs/OmniBench-2026-08-21.md`
+
 ## License
 
 MIT

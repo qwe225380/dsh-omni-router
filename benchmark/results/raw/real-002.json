@@ -1,0 +1,24 @@
+{
+  "id": "real-002",
+  "arm": "raw",
+  "task": "Add a refund endpoint that accepts an order id and amount, rejects duplicate refunds, and returns 201 on success.",
+  "criteria": [
+    "refund endpoint exists",
+    "duplicate refund is rejected",
+    "happy path returns 201"
+  ],
+  "level": "L3 Small feature",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "Green gate satisfied — passing run on record after the final changes:\n\n- **test/refunds.test.js: 5 pass / 0 fail** (service creates refund, duplicate rejected, POST /refunds → 201, duplicate → 409, validation → 400)\n- **Full suite: 42 pass / 3 fail** — the 3 failures (currency, pagination, session) are pre-existing fixture breakage for other benchmark tasks (real-001/008/004): proven earlier by stashing my `src/server.js` change and observing the identical 3 failures without any of my changes. My change introduces zero regressions.\n\nAll three acceptance criteria verified with both automated tests and a live end-to-end HTTP run: endpoint exists (POST /refunds responds 201, not 404), duplicate refund rejected (409, exactly 1 stored row), happy path returns 201.\n\nBENCHMARK: PASS\n",
+  "at": "2026-08-21T14:59:26+08:00"
+}

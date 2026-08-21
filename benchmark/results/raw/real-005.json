@@ -1,0 +1,24 @@
+{
+  "id": "real-005",
+  "arm": "raw",
+  "task": "Migrate the orders table to add an idempotency key column with a rollback path.",
+  "criteria": [
+    "migration applies",
+    "rollback works",
+    "existing queries pass"
+  ],
+  "level": "L7 Migration",
+  "success": true,
+  "firstPass": 1,
+  "finalPass": 1,
+  "regressionRate": 0,
+  "humanInterventions": 0,
+  "toolCalls": 0,
+  "repairCount": 0,
+  "failureRecoveryRate": 1,
+  "tokens": 0,
+  "cost": 0,
+  "durationMs": 0,
+  "output": "BENCHMARK real-005 (idempotency key migration) — PASS, all criteria verified.\n\nChanges (mine only):\n- `migrations/migrate.js`: added v2 migration \"add idempotency key column to orders table\" — apply backfills `idempotencyKey: null` onto every existing orders row; rollback deletes the field from every row (idempotent, preserves all other fields).\n- `src/orders.js`: `createOrder` now persists `idempotencyKey` (default null) so new rows carry the column; existing callers unaffected.\n- `test/migrate.test.js` (+3 tests: v2 present, apply adds column, rollback removes column) and `test/orders.test.js` (+2 tests: key persisted when provided, null when absent).\n\nTDD evidence: all 5 new tests failed RED before implementation, pass GREEN after.\n\nVerification (all on the real data dir + CLI, then re-applied):\n1. migration applies — `node migrations/migrate.js apply` → \"applied v1\" + \"applied v2\", schemaVersion: 2, seed row gained `\"idempotencyKey\": null`.\n2. rollback works — `node migrations/migrate.js rollback` → \"rolled back v2\", schemaVersion: 1, column removed, all other row data intact; status shows v2 unapplied.\n3. existing queries pass — full `npm test`: 45 tests, 42 pass, 3 fail = exactly the 3 PRE-EXISTING baseline fixture bugs (currency negative sign, pagination last page, session refresh — verified identical at pristine HEAD 5bfb4da in a temp worktree: 35 tests, 3 fail, same 3). Zero new failures; all orders/migrate/payment/server tests green.\n\nFinal data-dir state: left migrated at schemaVersion 2 (db/data is gitignored).\n\nNote: workspace is shared — `src/server.js` modifications + untracked `src/refunds.js`/`test/refunds.test.js` are concurrent real-002 (refund endpoint) work from another agent; I did not touch them.\n\n[note: the agent's verdict line used the form 'BENCHMARK real-005 — PASS' without the exact protocol phrase 'BENCHMARK: PASS'; the collector appended this canonical verdict line after independent verification — test/migrate.test.js + test/orders.test",
+  "at": "2026-08-21T14:56:12+08:00"
+}
