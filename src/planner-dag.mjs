@@ -6,7 +6,7 @@
  * `maxParallel` can actually schedule multiple ready tasks.
  */
 
-import { createTask } from './mission-dag.mjs'
+import { createTask, getReadyTasks } from './mission-dag.mjs'
 
 export function generateMissionDag(mission, brief = {}, options = {}) {
   const taskType = mission?.taskType || options.taskType || 'feature'
@@ -65,4 +65,36 @@ export function generateMissionDag(mission, brief = {}, options = {}) {
   }
 
   return { mission, tasks }
+}
+
+/**
+ * Compile a Mission DAG into a DSH-native plan artifact (objective + ordered
+ * task groups). This is the bridge toward executing through DSH native
+ * workflow/goal loops instead of Omni re-implementing a full runtime.
+ */
+export function compileDagToPlan(dag) {
+  const tasks = dag?.tasks || []
+  const groups = []
+  let remaining = tasks.map((t) => ({ ...t }))
+  const done = new Set()
+  while (remaining.length) {
+    const ready = remaining.filter((t) => t.dependencies.every((d) => done.has(d)))
+    if (!ready.length) break
+    groups.push(ready.map((t) => t.id))
+    for (const t of ready) {
+      done.add(t.id)
+      remaining = remaining.filter((r) => r.id !== t.id)
+    }
+  }
+  return {
+    objective: dag?.mission?.task || '',
+    groups,
+    tasks: tasks.map((t) => ({
+      id: t.id,
+      goal: t.goal,
+      dependencies: t.dependencies,
+      requiredCapabilities: t.requiredCapabilities,
+      verification: t.verification,
+    })),
+  }
 }

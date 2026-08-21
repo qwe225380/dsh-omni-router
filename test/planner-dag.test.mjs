@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { generateMissionDag } from '../src/planner-dag.mjs'
+import { compileDagToPlan, generateMissionDag } from '../src/planner-dag.mjs'
 import { buildMission } from '../src/mission-planner.mjs'
 import { getReadyTasks, markTaskDone } from '../src/mission-dag.mjs'
 
@@ -28,4 +28,12 @@ test('bugfix DAG is a focused reproduce->fix->verify chain', () => {
   const ids = dag.tasks.map((t) => t.id)
   assert.deepEqual(ids.slice(0, 4), ['T1', 'T2', 'T3', 'T4'])
   assert.equal(dag.tasks.find((t) => t.id === 'T4').dependencies[0], 'T3')
+})
+
+test('compileDagToPlan emits ordered parallel groups', () => {
+  const dag = generateMissionDag(buildMission('实现用户通知页', { taskType: 'feature' }))
+  const plan = compileDagToPlan(dag)
+  assert.equal(plan.groups[0][0], 'T1')
+  assert.ok(plan.groups[1].includes('T2a'))
+  assert.ok(plan.groups[1].includes('T2b'))
 })

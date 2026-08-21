@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.52.0] - 2026-08-21
+
+- OmniBench v2 工具链增强：
+  - `compileDagToPlan`：把 Mission DAG 编译成 DSH-native plan artifact（ordered parallel groups）
+  - `benchmark/omnibench-v2/prepare.mjs`：按 manifest clone repo 并 checkout 固定 commit
+  - 新增 npm scripts：`omnibench:v2:plan` / `omnibench:v2:prepare`
+
 ## [1.51.0] - 2026-08-21
 
 - Capability Resolver v2：
