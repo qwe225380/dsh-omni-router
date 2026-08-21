@@ -52,6 +52,16 @@ export function recordLearnedSkill(memory, skill = {}) {
   }
 }
 
+export function learnFromTrajectory(memory, trajectory = []) {
+  const successes = trajectory.filter((e) => /success|done|pass|完成/i.test(e.text || ''))
+  if (!successes.length) return memory
+  return recordLearnedSkill(memory, {
+    name: `learned-${Date.now().toString(36)}`,
+    recipe: successes.map((e) => e.text).join(' -> '),
+    triggers: [],
+  })
+}
+
 export function retrieveLearnedSkill(memory, taskText = '') {
   const text = String(taskText || '').toLowerCase()
   const skills = memory.learnedSkills || []

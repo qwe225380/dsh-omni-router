@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.28.0] - 2026-08-19
+
+- 继续推进优化3/4.md：
+  - Learned Skills 自动沉淀：`learnFromTrajectory` 从成功轨迹生成 learned skill
+  - Experience-based Router：`src/experience-router.mjs` 根据 learned skill 偏置路由
+
 ## [1.27.0] - 2026-08-19
 
 - 继续推进优化3/4.md：

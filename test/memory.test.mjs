@@ -11,6 +11,7 @@ import {
   recordDecision,
   recordFailure,
   recordLearnedSkill,
+  learnFromTrajectory,
   recordProject,
   recordTrajectory,
   retrieveLearnedSkill,
@@ -93,4 +94,14 @@ test('recordLearnedSkill and retrieveLearnedSkill support procedural memory', ()
   assert.equal(memory.learnedSkills.length, 1)
   const found = retrieveLearnedSkill(memory, 'run a prisma migration')
   assert.equal(found[0].name, 'safe-prisma-migration')
+})
+
+test('learnFromTrajectory creates a learned skill from successful trajectory', () => {
+  let memory = createMemory()
+  memory = learnFromTrajectory(memory, [
+    { text: 'inspect schema -> generate migration -> dry run -> verify success' },
+    { text: 'unrelated failure' },
+  ])
+  assert.equal(memory.learnedSkills.length, 1)
+  assert.match(memory.learnedSkills[0].recipe, /dry run/)
 })
