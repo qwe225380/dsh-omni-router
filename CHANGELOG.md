@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.39.0] - 2026-08-19
+
+- 可选 Tree-sitter AST Provider：
+  - 新增 `src/ast-provider.mjs`，使用 `web-tree-sitter` + `tree-sitter-wasms`（optionalDependencies）解析 definitions / imports / calls / extends / implements
+  - 未安装 WASM 时自动回退到轻量 `dependency-graph` 解析
+  - 新增 `test/ast-provider.test.mjs`
+
 ## [1.38.0] - 2026-08-19
 
 - 新增 `npm run benchmark:status`：命令行查看 OmniBench 采集覆盖率与缺失配对

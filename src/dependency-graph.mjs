@@ -138,10 +138,18 @@ export function buildProjectGraph(files = {}) {
     }
   }
 
+  return { files: indexed, edges: buildEdgesFromIndexed(indexed) }
+}
+
+/**
+ * Build cross-file edges from an already-indexed files map.
+ * Each entry should have definitions/imports/calls/inheritance arrays.
+ */
+export function buildEdgesFromIndexed(indexed = {}) {
   const exportedBy = new Map()
   for (const [filePath, info] of Object.entries(indexed)) {
     const id = nodeId(filePath)
-    for (const def of info.definitions) {
+    for (const def of info.definitions || []) {
       if (!def.exported) continue
       if (!exportedBy.has(def.name)) exportedBy.set(def.name, [])
       exportedBy.get(def.name).push(id)
@@ -160,22 +168,22 @@ export function buildProjectGraph(files = {}) {
 
   for (const [filePath, info] of Object.entries(indexed)) {
     const from = nodeId(filePath)
-    for (const callee of info.calls) {
+    for (const callee of info.calls || []) {
       for (const targetFile of exportedBy.get(callee) || []) {
         addEdge(from, targetFile, 'call')
       }
     }
-    for (const rel of info.inheritance) {
+    for (const rel of info.inheritance || []) {
       for (const targetFile of exportedBy.get(rel.target) || []) {
         addEdge(from, targetFile, rel.kind)
       }
     }
-    for (const specifier of info.imports) {
+    for (const specifier of info.imports || []) {
       const resolved = resolveModulePath(filePath, specifier)
       if (resolved && !resolved.startsWith('.') && !resolved.includes('/')) continue
       addEdge(from, resolved, 'import')
     }
   }
 
-  return { files: indexed, edges }
+  return edges
 }
