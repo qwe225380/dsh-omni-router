@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.0] - 2026-08-19
+
+- OmniBench 连续评估：
+  - 新增 `benchmark/continuous-eval.mjs`，按日期输出 raw/omni 的 success rate / avg OES 趋势
+  - 新增 `npm run benchmark:continuous`
+  - 新增 `benchmark/results/README.md` 采集说明
+
 ## [1.29.0] - 2026-08-19
 
 - OmniBench 采集基础设施：
