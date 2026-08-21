@@ -5,7 +5,7 @@
  * symbol + graph/test expansion) to answer repository-level questions.
  */
 
-import { openProjectBrain, closeProjectBrain, indexSource, queryRelevant } from './project-brain-v2.mjs'
+import { openProjectBrain, closeProjectBrain, indexSource, indexProjectGraph, queryRelevant } from './project-brain-v2.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
 
 export function openProjectBrainV3(cwd) {
@@ -20,15 +20,23 @@ export function indexProjectBrainV3(db, entries, files = {}) {
   for (const [name, content] of Object.entries(files || {})) {
     indexSource(db, name, content)
   }
+  const graph = indexProjectGraph(db, files || {})
   return {
     indexedFiles: Object.keys(files || {}).length,
     entries: entries?.length || 0,
+    graphEdges: graph.edgeCount,
   }
 }
 
 export function queryRelevantV3(db, taskText, entries, files = {}, options = {}) {
   const sqliteHits = queryRelevant(db, taskText)
-  const hybrid = retrieveContext(taskText, entries, files, options)
+  const edgeRows = db.prepare('SELECT from_file, to_file, kind FROM edges').all() || []
+  const graph = {}
+  for (const row of edgeRows) {
+    if (!graph[row.from_file]) graph[row.from_file] = []
+    graph[row.from_file].push({ to: row.to_file, kind: row.kind })
+  }
+  const hybrid = retrieveContext(taskText, entries, files, { ...options, graph })
   const merged = new Map()
   for (const hit of sqliteHits) {
     const key = hit.file

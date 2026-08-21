@@ -21,6 +21,24 @@ test('retrieveContext ranks lexical and symbol matches', () => {
   assert.ok(result.candidates.some((c) => c.name === 'auth.test.ts'))
 })
 
+test('retrieveContext expands through real indexed graph edges', () => {
+  const graphEntries = [
+    { name: 'auth.ts', type: 'file' },
+    { name: 'controller.ts', type: 'file' },
+  ]
+  const graphFiles = {
+    'auth.ts': 'export function login() {}',
+    'controller.ts': 'import { login } from "./auth"\nlogin()',
+  }
+  const graph = {
+    'controller.ts': [{ to: 'auth', kind: 'call' }, { to: 'auth', kind: 'import' }],
+  }
+  const result = retrieveContext('login', graphEntries, graphFiles, { graph })
+  assert.ok(result.candidates.some((c) => c.name === 'controller.ts'))
+  const controller = result.candidates.find((c) => c.name === 'controller.ts')
+  assert.ok(controller.reasons.includes('call') || controller.reasons.includes('import'))
+})
+
 test('formatRetrievalResults renders candidates with scores', () => {
   const result = retrieveContext('login', entries, files)
   const text = formatRetrievalResults(result)

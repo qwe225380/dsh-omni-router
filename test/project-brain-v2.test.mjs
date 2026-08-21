@@ -7,6 +7,7 @@ import { DatabaseSync } from 'node:sqlite'
 
 import {
   buildGitGraph,
+  indexProjectGraph,
   indexSource,
   openProjectBrain,
   queryRelevant,
@@ -43,6 +44,20 @@ test('indexSource stores symbols and edges', () => {
   assert.ok(symbols.some((s) => s.name === 'login'))
   const edges = db.prepare('SELECT * FROM edges').all()
   assert.ok(edges.some((e) => e.to_file === 'src/user'))
+})
+
+test('indexProjectGraph adds call and extends edges across files', () => {
+  const db = memoryDb()
+  const files = {
+    'src/auth.ts': 'export function login() {}',
+    'src/controller.ts': 'import { login } from "./auth"\nlogin()',
+  }
+  indexSource(db, 'src/auth.ts', files['src/auth.ts'])
+  indexSource(db, 'src/controller.ts', files['src/controller.ts'])
+  const stats = indexProjectGraph(db, files)
+  assert.ok(stats.edgeCount >= 1)
+  const callEdge = db.prepare("SELECT * FROM edges WHERE from_file='src/controller' AND kind='call'").all()
+  assert.ok(callEdge.some((e) => e.to_file === 'src/auth'))
 })
 
 test('queryRelevant finds symbols by task text', () => {

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.33.0] - 2026-08-19
+
+- Project Brain 真实依赖图解析：
+  - 新增 `src/dependency-graph.mjs`：提取 definitions / imports / calls / extends / implements
+  - Project Brain v2/v3 索引 call、extends、implements 边；Hybrid Retrieval 沿真实图双向扩展上下文
+  - 新增 `test/dependency-graph.test.mjs` 与 graph expansion 测试
+
 ## [1.32.0] - 2026-08-19
 
 - OmniBench / Router Benchmark 扩充：

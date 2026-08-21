@@ -50,6 +50,44 @@ export function retrieveContext(taskText, entries, files = {}, options = {}) {
     candidates.set(test, prev)
   }
 
+  // Graph: real indexed dependency/call/extends edges when available.
+  const realGraph = options.graph || null
+  if (realGraph) {
+    const baseOf = (name) => String(name || '').replace(/\.(m?js|ts|jsx|tsx)$/i, '')
+    const entryNameFor = (id) => {
+      const exact = (entries || []).find((e) => String(e.name) === id)
+      if (exact) return exact.name
+      const base = baseOf(id)
+      const match = (entries || []).find((e) => baseOf(e.name) === base)
+      return match ? match.name : id
+    }
+    const reverseGraph = {}
+    for (const [from, edges] of Object.entries(realGraph)) {
+      for (const edge of edges) {
+        const rawTo = edge.to || edge
+        const key = String(rawTo)
+        if (!reverseGraph[key]) reverseGraph[key] = []
+        reverseGraph[key].push({ to: from, kind: edge.kind || 'graph' })
+      }
+    }
+    const addEdgeCandidate = (toId, kind) => {
+      const to = entryNameFor(toId)
+      const prev = candidates.get(to) || { name: to, score: 0, reasons: [] }
+      prev.score += kind === 'call' ? 2 : 1
+      prev.reasons.push(kind || 'graph')
+      candidates.set(to, prev)
+    }
+    for (const file of matched) {
+      const base = baseOf(file)
+      for (const edge of realGraph[file] || realGraph[base] || []) {
+        addEdgeCandidate(edge.to || edge, edge.kind)
+      }
+      for (const edge of reverseGraph[file] || reverseGraph[base] || []) {
+        addEdgeCandidate(edge.to || edge, edge.kind)
+      }
+    }
+  }
+
   const ranked = [...candidates.values()].sort((a, b) => b.score - a.score)
   return {
     candidates: ranked.slice(0, options.limit || 10),

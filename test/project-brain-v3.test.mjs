@@ -26,6 +26,7 @@ test('openProjectBrainV3 creates db and indexes files', () => {
     const db = openProjectBrainV3(base)
     const stats = indexProjectBrainV3(db, entries, files)
     assert.equal(stats.indexedFiles, 2)
+    assert.ok(stats.graphEdges >= 0)
     const result = queryRelevantV3(db, 'login', entries, files)
     assert.ok(result.candidates.some((c) => c.name === 'auth.ts'))
     assert.match(formatBrainV3(result), /Project Brain v3/)

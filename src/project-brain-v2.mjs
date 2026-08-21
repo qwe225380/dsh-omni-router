@@ -11,6 +11,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { extractSymbolsFromText } from './project-brain.mjs'
+import { buildProjectGraph, extractDefinitions, extractImports, resolveModulePath } from './dependency-graph.mjs'
 
 export function openProjectBrain(cwd) {
   const dir = path.join(cwd, '.omni')
@@ -71,14 +72,16 @@ export function indexSource(db, filePath, content) {
   db.prepare('DELETE FROM symbols WHERE file = ?').run(filePath)
   db.prepare('DELETE FROM edges WHERE from_file = ? OR to_file = ?').run(filePath, filePath)
 
+  const defs = extractDefinitions(text)
+  for (const def of defs) {
+    db.prepare('INSERT OR IGNORE INTO symbols (file, name, kind) VALUES (?, ?, ?)').run(filePath, def.name, def.kind)
+  }
+  // Keep the old broad symbol scan as a fallback for unusual syntax.
   for (const name of extractSymbolsFromText(text)) {
     db.prepare('INSERT OR IGNORE INTO symbols (file, name, kind) VALUES (?, ?, ?)').run(filePath, name, 'symbol')
   }
 
-  const importRe = /(?:from\s+['"]([^'"]+)['"]|require\(['"]([^'"]+)['"]\))/g
-  let match
-  while ((match = importRe.exec(text)) !== null) {
-    const target = match[1] || match[2]
+  for (const target of extractImports(text)) {
     if (!target) continue
     const resolved = resolveImport(filePath, target)
     db.prepare('INSERT OR IGNORE INTO edges (from_file, to_file, kind) VALUES (?, ?, ?)').run(filePath, resolved, 'import')
@@ -89,6 +92,21 @@ function resolveImport(fromFile, target) {
   if (!target.startsWith('.')) return target
   const base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile.replace(/\\/g, '/')), target))
   return base.replace(/\.(m?js|ts|jsx|tsx)$/i, '')
+}
+
+/**
+ * Index whole-repository graph edges (calls, extends, implements) in addition
+ * to the per-file import edges written by indexSource.
+ */
+export function indexProjectGraph(db, files = {}) {
+  const graph = buildProjectGraph(files)
+  let edgeCount = 0
+  const insert = db.prepare('INSERT OR IGNORE INTO edges (from_file, to_file, kind) VALUES (?, ?, ?)')
+  for (const edge of graph.edges) {
+    insert.run(edge.from, edge.to, edge.kind)
+    edgeCount++
+  }
+  return { edgeCount, fileCount: Object.keys(files || {}).length }
 }
 
 export function buildGitGraph(db, gitInfo = {}) {
