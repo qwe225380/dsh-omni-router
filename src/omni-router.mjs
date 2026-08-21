@@ -34,6 +34,7 @@ import { bindCapabilitiesToDag, createMissionDag, formatMissionDag } from './mis
 import { generateMissionDag } from './planner-dag.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
+import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
@@ -1386,11 +1387,13 @@ export function apply(ctx, config = {}) {
             : ''
           const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
           const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
+          const sandbox = capabilityToolFilter(capabilityBrain, action.task?.requiredCapabilities || [], 'builder')
           const run = await subagents.start('spawn', {
             label: `mission-${action.taskId}`,
             prompt: [{ type: 'text', text: prompt }],
             parent: agent,
             maxDepth: 1,
+            ...(sandbox.allow.length || sandbox.deny.length ? { toolFilter: sandbox } : {}),
           })
           const result = await run.result
           const output = (Array.isArray(result.output) ? result.output : [])

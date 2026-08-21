@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.50.0] - 2026-08-21
+
+- Real capability sandbox 接入 Mission Runtime：
+  - `omni_mission_run` 每个 subagent 按 task 的 requiredCapabilities + role 生成 `toolFilter`
+  - 真正把 Capability Brain / Manifest 解析结果用于执行隔离
+
 ## [1.49.0] - 2026-08-21
 
 - P1/P3 补充：
