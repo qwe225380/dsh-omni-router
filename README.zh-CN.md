@@ -84,9 +84,9 @@
 - **技能建议**：根据任务类型/文本自动提示加载相关技能（`skill` 工具），避免重复实现已有能力。
 - **工程原则**：轻量注入 Omni 原创的工程原则、Integrity Rules、独立 Verifier/Repair 证据链（`methodologyDirectives: false` 可关闭）。
 - **dsh-routing-suite 兼容**：检测到 router-standard 时自动让出 reasoning-mode 路由，避免重复开发；未检测到时保留 Omni 自身轻量路由。
-- **Router Benchmark**：内置 `benchmark/run.mjs`（399 个任务），可评估 accuracy / false-direct rate。
+- **Router Benchmark**：内置 `benchmark/run.mjs`（556 个任务），可评估 accuracy / false-direct rate。
 - **Engineering Benchmark v1**：`npm run benchmark:engineering` 用 OES 评分评估端到端工程交付质量（L1-L10）。
-- **Real agent-run comparison**：`omni_benchmark` / `omni_benchmark_all` 收集 raw/omni 真实运行结果（`real-tasks.json` 10 个 L1-L10 任务），`npm run benchmark:compare` 输出 OES 对比，`npm run benchmark:continuous` 输出趋势。
+- **Real agent-run comparison**：`omni_benchmark` / `omni_benchmark_all` 收集 raw/omni 真实运行结果（`real-tasks.json` 10 个 L1-L10 任务；workspace 没有该文件时自动使用 bundle 内任务集），`npm run benchmark:compare` 输出 OES 对比，`npm run benchmark:continuous` 输出趋势。
 - **Visual QA 硬编排**：前端/UI 任务在 `omni_mission_run` 的 validate 阶段强制 `browser_screenshot` + `omni_visual_check`，未 PASS 则 Replan；可 `autoVisualQA: false` 关闭。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。
@@ -209,7 +209,7 @@ npm test
 ## 评估
 
 ```sh
-# 路由准确率（399 个任务）
+# 路由准确率（556 个任务）
 npm run benchmark
 
 # 工程 OES 示例
@@ -224,10 +224,10 @@ npm run benchmark:compare
 - `benchmark/compare.mjs` — 读取 `benchmark/results/{raw,omni}/*.json` 输出 OES 对比。
 - 在 DSH 会话中用 `omni_benchmark` 工具采集真实运行结果。
 
-当前路由基线（399 个任务）：
-- 复杂度准确率：67.7%
-- false-direct 率：9.7%
-- false-plan 率：9.7%
+当前路由基线（556 个任务）：
+- 复杂度准确率：64.9%
+- false-direct 率：12.8%
+- false-plan 率：10.1%
 
 ## 许可证
 

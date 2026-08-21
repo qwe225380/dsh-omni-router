@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.32.0] - 2026-08-19
+
+- OmniBench / Router Benchmark 扩充：
+  - `benchmark/tasks.json` 从 399 个路由任务扩到 556 个（>500）
+  - 新增 `test/benchmark-tasks.test.mjs` 守护任务集规模与字段合法性
+  - `omni_benchmark_all` 支持 workspace 无 `benchmark/real-tasks.json` 时回退到 bundle 内置任务集
+  - `omni_benchmark` / `omni_benchmark_all` 保存 `criteria` 到结果 JSON，便于复现与审计
+
 ## [1.31.0] - 2026-08-19
 
 - Evidence Protocol 接入 QA 判定：

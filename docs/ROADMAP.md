@@ -11,12 +11,12 @@
 - [x] Context Graph 第一版（相关文件 + 测试映射 + symbols + dependency hints + 真实符号提取）
 - [x] Agent Orchestrator（真实子代理派发）
 - [x] Benchmark 399 任务
+- [x] Benchmark 扩到 500+（当前 556 个路由任务）
 - [x] CI 多版本矩阵（Node 20/22/24）
 - [x] 兼容性文档
 
 ## 下一步（按优先级）
 
-- [ ] Benchmark 扩到 500+
 - [ ] 多模型实测（DeepSeek / Qwen / 其它）
 - [ ] 降低 false-direct / false-plan
 - [ ] Context Graph 完整版（真实依赖图解析）

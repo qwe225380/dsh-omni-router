@@ -1,401 +1,4450 @@
 [
-  { "task": "修复登录接口返回 500 的问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "帮我设计一个用户登录功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "把这个变量名改成 foo", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "重构一下订单模块的代码结构", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给这个函数补单元测试", "expected": { "complexity": "direct", "taskType": "test", "thinkingMode": "react" } },
-  { "task": "帮我 review 一下这个 PR", "expected": { "complexity": "direct", "taskType": "review", "thinkingMode": "react" } },
-  { "task": "优化一下数据库查询，现在订单接口很慢", "expected": { "complexity": "direct", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "删掉这个没用的数据库字段", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
-  { "task": "把 monolith 改造成微服务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "增加一个 API endpoint", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修改数据库 schema", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修改 auth 模块", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "今天天气怎么样", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "balanced" } },
-  { "task": "运行测试", "expected": { "complexity": "direct", "taskType": "test", "thinkingMode": "react" } },
-  { "task": "写一个 README", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "调研一下新的支付方案", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
-  { "task": "修复登录超时", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把这个函数拆成两个", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "帮我生成项目架构文档", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
-  { "task": "删除一个无用文件", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "新增一个前端页面", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户头像上传失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构支付模块，抽出公共方法", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给订单接口加缓存", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修改 CI 配置，增加 lint 步骤", "expected": { "complexity": "plan", "taskType": "other", "thinkingMode": "spec" } },
-  { "task": "更新 README 安装说明", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "优化登录页加载速度", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "删除过期的 npm 依赖", "expected": { "complexity": "balanced", "taskType": "other", "thinkingMode": "balanced" } },
-  { "task": "新增一个后端健康检查接口", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复数据库连接池泄漏", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把前端状态管理从 redux 换成 zustand", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给用户模块补充集成测试", "expected": { "complexity": "balanced", "taskType": "test", "thinkingMode": "spec" } },
-  { "task": "升级 TypeScript 到 5.x", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "修复移动端样式错乱", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增支付回调验签", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "清理无用日志输出", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "设计新的权限模型", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复定时任务重复执行", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把配置文件改成环境变量注入", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "修复用户头像上传失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增一个搜索框", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "优化首屏加载时间", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "把日志改为异步写入", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增导出 Excel 功能", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复下拉框选项不显示", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构权限校验逻辑", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级 Node 版本到 22", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给订单模块加审计日志", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复日期选择器时区问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把旧接口迁移到新版本", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增短信验证码登录", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "清理未使用的 import", "expected": { "complexity": "direct", "taskType": "other", "thinkingMode": "react" } },
-  { "task": "修复 WebSocket 断线重连", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把表格组件改成虚拟滚动", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增夜间模式", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复搜索接口分页丢失", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "升级数据库驱动", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给所有接口加超时时间", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端键盘遮挡输入框", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把用户列表改成懒加载", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "新增错误监控上报", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "重构购物车状态管理", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "修复订单金额精度问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户反馈表单", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "优化商品列表渲染", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复购物车数量不同步", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把订单导出改为异步任务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增多语言支持", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复图片懒加载失效", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构用户通知模块", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端构建工具", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给接口加限流", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复搜索框防抖失效", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增商品收藏功能", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券计算错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把用户头像上传改为 OSS", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单状态机", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复列表滚动加载重复", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构错误处理中间件", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级数据库连接池配置", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给日志加 traceId", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复通知重复发送", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户注销功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复表格列宽拖动异常", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把支付回调改为消息队列", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增数据看板", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复权限菜单不显示", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构第三方登录模块", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级消息推送 SDK", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给表单增加校验", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复图表数据更新不刷新", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增库存扣减重试机制", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复 Webhook 签名校验失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把缓存改为 Redis Cluster", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增操作审计日志", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复分页组件页码错乱", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构订单查询 SQL", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增优惠券核销接口", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复文件上传大小限制不生效", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把用户状态改为枚举", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增搜索历史记录", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复定时报表发送失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增二维码登录", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复弹窗关闭后状态残留", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把消息推送改为批量发送", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增数据导出权限", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复轮播图自动播放异常", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构商品规格模型", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端路由为懒加载", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给下单接口加幂等", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复搜索无结果时页面空白", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增优惠券领取限制", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复表单提交按钮重复点击", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把用户反馈接入工单系统", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复图表在移动端不显示", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构库存扣减逻辑", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级日志采集 SDK", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给支付接口增加超时重试", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户头像缓存不更新", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增多仓库支持", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复订单列表排序错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把短信服务商切换为阿里云", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户标签系统", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复富文本编辑器粘贴样式丢失", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构优惠券计算引擎", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级支付网关 SDK", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给用户注册加图形验证码", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复后台菜单权限控制失效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增订单备注功能", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复导出 CSV 中文乱码", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把首页接口改为聚合查询", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户黑名单功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复登录态过期后页面不跳转", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构消息中心数据结构", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端监控 SDK", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给优惠券加使用时间窗", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复商品详情页图片加载慢", "expected": { "complexity": "balanced", "taskType": "bugfix", "thinkingMode": "balanced" } },
-  { "task": "新增客服在线状态", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复结算页优惠券不可用", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把订单号改为全局唯一", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增搜索关键词高亮", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复 websocket 心跳断开", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构用户积分模块", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端基础组件库", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给后台操作加二次确认", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复日期格式化时区错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增批量导入用户", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复下拉加载更多重复请求", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把报表导出改为异步生成", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增会员等级体系", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复库存超卖问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增优惠券批量发放", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品详情页分享图不生成", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把订单查询改为读写分离", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户积分明细", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复购物车价格实时刷新", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构优惠券领取接口", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级图片处理库", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给登录接口加验证码", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复报表日期筛选无效", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增商品库存预警", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户中心菜单高亮错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把消息中心改为 WebSocket 推送", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单批量导出", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复支付成功回调重复处理", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构用户地址管理", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级前端地图 SDK", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给商品搜索加筛选", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端底部导航遮挡", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把退款流程改为异步审核", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增售后工单", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品规格切换后价格不变", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构订单状态流转", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级数据库备份策略", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给用户协议加版本管理", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券过期不提醒", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增商品评价回复", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复库存扣减并发问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把日志检索接入 ES", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增购物车合并功能", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户签到连续天数错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构支付对账模块", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端权限指令", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单列表加导出按钮", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户头像上传后不显示", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把商品推荐改为实时计算", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户注销二次确认", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券核销状态不同步", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构库存盘点模块", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级消息模板引擎", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给商品列表加排序", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复订单详情接口超时", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户行为埋点", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复前端打包体积过大", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "把文件存储切换到 MinIO", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增优惠券转赠", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复移动端支付回调不跳转", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构用户通知偏好设置", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级定时任务调度框架", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单改价功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品详情页加载白屏", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把库存查询改为缓存", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户消息免打扰", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券列表分页错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构支付结果通知", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端图表库", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给订单增加配送方式", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户积分不累计", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品收藏夹", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复后台统计数字不对", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把短信通知改为邮件通知", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增用户实名认证", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品搜索无结果", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构购物车结算逻辑", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端路由权限", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给支付接口加签名", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复消息已读状态不同步", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品标签管理", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复订单取消后库存未恢复", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把用户协议改为动态配置", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增搜索建议词", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端图片上传压缩失败", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构优惠券过期任务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级数据库读写分离", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给订单增加备注标签", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户搜索历史重复", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把商品图片改为 CDN", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增优惠券使用记录", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复签到页面崩溃", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构用户成长值计算", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级消息队列", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给商品加多规格图片", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复退款金额计算错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户收货地址解析", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复后台菜单加载慢", "expected": { "complexity": "balanced", "taskType": "bugfix", "thinkingMode": "balanced" } },
-  { "task": "把支付对账改为定时任务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增商品库存同步", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户协议弹窗不出现", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构订单列表查询", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端状态管理库", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给优惠券加使用条件", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户消息列表顺序错乱", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把库存扣减改为 MQ 异步", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增商品评价图片", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券领取后不生效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构用户登录流程", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端打包优化", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户邀请奖励", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品评价图片上传失败", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把订单超时自动关闭改为定时任务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户收货地址地图选点", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券使用后未标记", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构商品详情页数据加载", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端构建缓存", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加发票功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户消息角标不更新", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增商品浏览历史", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复后台权限角色冲突", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把支付回调日志改为结构化", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增用户设备管理", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品库存显示错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构优惠券核销事务", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端监控告警", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给搜索接口加高亮", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户签到漏签", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品预售功能", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复订单支付超时未关闭", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把用户消息已读改为批量", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增优惠券分享", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端列表卡顿", "expected": { "complexity": "balanced", "taskType": "bugfix", "thinkingMode": "balanced" } },
-  { "task": "重构用户注册流程", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端国际化方案", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给商品加销量排序", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复后台导出权限不足", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增订单物流跟踪", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复优惠券并发领取超发", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把用户头像存储改为私有桶", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增商品二维码", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户协议版本不兼容", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构库存预警阈值", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级前端错误边界", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加优惠明细", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户消息推送延迟", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品分享海报", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券使用条件不生效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把订单查询改为索引优化", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户标签自动打标", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复移动端登录后返回异常", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构商品搜索排序", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级前端组件按需加载", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给优惠券增加使用范围", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户积分过期提醒", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把订单通知改为站内信", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增商品视频介绍", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复退款原路退回失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构用户签到奖励规则", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端安全防护", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给订单增加取消原因", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "新增用户积分商城", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复商品评价排序错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把优惠券领取改为异步", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单配送时间选择", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户等级升级不生效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构商品评价审核流程", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端图片压缩", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给用户增加收货提醒", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券使用范围不生效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品补货提醒", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端分享图白屏", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把用户反馈改为工单流转", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单评价提醒", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复库存同步延迟", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构优惠券模板", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端表单校验", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给商品增加关联推荐", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户消息已读回执丢失", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增订单售后进度", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券过期时间显示错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把商品搜索改为 ES", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户足迹", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端支付密码键盘", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构订单优惠计算", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端请求重试", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给用户增加会员日", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复商品评价点赞失败", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把订单打印改为模板化", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户头像框", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券领取条件判断错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构库存预警通知", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级前端埋点 SDK", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加备注修改", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户积分明细缺失", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品评价置顶", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券核销并发问题", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把用户消息中心改为分页", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "新增订单合并支付", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复移动端搜索框失焦", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构用户积分过期策略", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端 WebSocket 重连", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给商品增加预售标签", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券使用后未核销", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户生日提醒", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复订单物流信息不更新", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把商品评价改为审核后显示", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户黑名单申诉", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端下拉刷新冲突", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构订单对账报表", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端国际化词条", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给用户增加消息订阅", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券批量发放失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品价格保护", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户优惠券数量显示错误", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把订单评价改为可追评", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "新增用户足迹清理", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复商品库存预警重复通知", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构用户消息免打扰规则", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "升级前端主题切换", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加预计送达时间", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券使用后积分未到账", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品评价筛选", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复移动端支付成功页白屏", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把用户签到改为连续签到", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单评价标签", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户等级权益不生效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构优惠券发放渠道", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端列表虚拟滚动", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "给商品增加库存状态", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复用户消息批量已读失败", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "新增订单售后原因", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券转赠后不可用", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把商品推荐改为协同过滤", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户设备登录提醒", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端搜索历史不同步", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "重构用户积分发放", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端离线缓存", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加发货提醒", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券过期未自动失效", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品评价回复审核", "expected": { "complexity": "plan", "taskType": "feature", "thinkingMode": "spec" } },
-  { "task": "修复用户头像上传格式限制", "expected": { "complexity": "direct", "taskType": "bugfix", "thinkingMode": "react" } },
-  { "task": "把库存同步改为事件驱动", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增用户优惠券过期提醒", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复订单状态变更通知丢失", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构商品分类树", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端错误上报", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给用户增加收货地址默认", "expected": { "complexity": "direct", "taskType": "feature", "thinkingMode": "react" } },
-  { "task": "修复优惠券叠加规则错误", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增商品评价举报", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端首页加载慢", "expected": { "complexity": "balanced", "taskType": "bugfix", "thinkingMode": "balanced" } },
-  { "task": "把用户协议改为版本化", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增订单售后图片", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复用户签到奖励未发放", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "重构商品详情页 SEO", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "升级前端动画性能", "expected": { "complexity": "balanced", "taskType": "refactor", "thinkingMode": "balanced" } },
-  { "task": "给订单增加支付倒计时", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复优惠券使用后回滚失败", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "新增用户消息分类", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } },
-  { "task": "修复移动端登录状态丢失", "expected": { "complexity": "plan", "taskType": "bugfix", "thinkingMode": "spec" } },
-  { "task": "把订单导出权限改为角色控制", "expected": { "complexity": "plan", "taskType": "refactor", "thinkingMode": "spec" } },
-  { "task": "新增商品价格历史", "expected": { "complexity": "balanced", "taskType": "feature", "thinkingMode": "balanced" } }
+  {
+    "task": "修复登录接口返回 500 的问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "帮我设计一个用户登录功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把这个变量名改成 foo",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构一下订单模块的代码结构",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给这个函数补单元测试",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "test",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "帮我 review 一下这个 PR",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "review",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "优化一下数据库查询，现在订单接口很慢",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "删掉这个没用的数据库字段",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "other",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把 monolith 改造成微服务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "增加一个 API endpoint",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修改数据库 schema",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修改 auth 模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "今天天气怎么样",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "运行测试",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "test",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "写一个 README",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "调研一下新的支付方案",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "other",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复登录超时",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把这个函数拆成两个",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "帮我生成项目架构文档",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "other",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "删除一个无用文件",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增一个前端页面",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户头像上传失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构支付模块，抽出公共方法",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单接口加缓存",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修改 CI 配置，增加 lint 步骤",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "other",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "更新 README 安装说明",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "优化登录页加载速度",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "删除过期的 npm 依赖",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "other",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增一个后端健康检查接口",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复数据库连接池泄漏",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把前端状态管理从 redux 换成 zustand",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给用户模块补充集成测试",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "test",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级 TypeScript 到 5.x",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端样式错乱",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增支付回调验签",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "清理无用日志输出",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "设计新的权限模型",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复定时任务重复执行",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把配置文件改成环境变量注入",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户头像上传失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增一个搜索框",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "优化首屏加载时间",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "把日志改为异步写入",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增导出 Excel 功能",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复下拉框选项不显示",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构权限校验逻辑",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级 Node 版本到 22",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单模块加审计日志",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复日期选择器时区问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把旧接口迁移到新版本",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增短信验证码登录",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "清理未使用的 import",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复 WebSocket 断线重连",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把表格组件改成虚拟滚动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增夜间模式",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复搜索接口分页丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级数据库驱动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给所有接口加超时时间",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端键盘遮挡输入框",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户列表改成懒加载",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增错误监控上报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "重构购物车状态管理",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复订单金额精度问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户反馈表单",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "优化商品列表渲染",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复购物车数量不同步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单导出改为异步任务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增多语言支持",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复图片懒加载失效",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户通知模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端构建工具",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给接口加限流",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复搜索框防抖失效",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增商品收藏功能",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券计算错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户头像上传改为 OSS",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单状态机",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复列表滚动加载重复",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构错误处理中间件",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级数据库连接池配置",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给日志加 traceId",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复通知重复发送",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户注销功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复表格列宽拖动异常",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把支付回调改为消息队列",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增数据看板",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复权限菜单不显示",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构第三方登录模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级消息推送 SDK",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给表单增加校验",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复图表数据更新不刷新",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增库存扣减重试机制",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复 Webhook 签名校验失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把缓存改为 Redis Cluster",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增操作审计日志",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复分页组件页码错乱",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单查询 SQL",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增优惠券核销接口",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复文件上传大小限制不生效",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户状态改为枚举",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增搜索历史记录",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复定时报表发送失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增二维码登录",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复弹窗关闭后状态残留",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把消息推送改为批量发送",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增数据导出权限",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复轮播图自动播放异常",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构商品规格模型",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端路由为懒加载",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给下单接口加幂等",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复搜索无结果时页面空白",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增优惠券领取限制",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复表单提交按钮重复点击",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户反馈接入工单系统",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复图表在移动端不显示",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构库存扣减逻辑",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级日志采集 SDK",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给支付接口增加超时重试",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户头像缓存不更新",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增多仓库支持",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复订单列表排序错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把短信服务商切换为阿里云",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户标签系统",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复富文本编辑器粘贴样式丢失",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构优惠券计算引擎",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级支付网关 SDK",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给用户注册加图形验证码",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复后台菜单权限控制失效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单备注功能",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复导出 CSV 中文乱码",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把首页接口改为聚合查询",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户黑名单功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复登录态过期后页面不跳转",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构消息中心数据结构",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端监控 SDK",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给优惠券加使用时间窗",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复商品详情页图片加载慢",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "bugfix",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增客服在线状态",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复结算页优惠券不可用",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单号改为全局唯一",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增搜索关键词高亮",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复 websocket 心跳断开",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户积分模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端基础组件库",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给后台操作加二次确认",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复日期格式化时区错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增批量导入用户",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复下拉加载更多重复请求",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把报表导出改为异步生成",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增会员等级体系",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复库存超卖问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增优惠券批量发放",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品详情页分享图不生成",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单查询改为读写分离",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户积分明细",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复购物车价格实时刷新",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构优惠券领取接口",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级图片处理库",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给登录接口加验证码",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复报表日期筛选无效",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增商品库存预警",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户中心菜单高亮错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把消息中心改为 WebSocket 推送",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单批量导出",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复支付成功回调重复处理",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户地址管理",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端地图 SDK",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品搜索加筛选",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端底部导航遮挡",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把退款流程改为异步审核",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增售后工单",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品规格切换后价格不变",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单状态流转",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级数据库备份策略",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给用户协议加版本管理",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券过期不提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增商品评价回复",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复库存扣减并发问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把日志检索接入 ES",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增购物车合并功能",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户签到连续天数错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构支付对账模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端权限指令",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单列表加导出按钮",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户头像上传后不显示",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把商品推荐改为实时计算",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户注销二次确认",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券核销状态不同步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存盘点模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级消息模板引擎",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品列表加排序",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复订单详情接口超时",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户行为埋点",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复前端打包体积过大",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把文件存储切换到 MinIO",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增优惠券转赠",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端支付回调不跳转",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户通知偏好设置",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级定时任务调度框架",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单改价功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品详情页加载白屏",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把库存查询改为缓存",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户消息免打扰",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券列表分页错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构支付结果通知",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端图表库",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单增加配送方式",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户积分不累计",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品收藏夹",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复后台统计数字不对",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把短信通知改为邮件通知",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增用户实名认证",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品搜索无结果",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构购物车结算逻辑",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端路由权限",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给支付接口加签名",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复消息已读状态不同步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品标签管理",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复订单取消后库存未恢复",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户协议改为动态配置",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增搜索建议词",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端图片上传压缩失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构优惠券过期任务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级数据库读写分离",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单增加备注标签",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户搜索历史重复",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把商品图片改为 CDN",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增优惠券使用记录",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复签到页面崩溃",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户成长值计算",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级消息队列",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品加多规格图片",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复退款金额计算错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户收货地址解析",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复后台菜单加载慢",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "bugfix",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "把支付对账改为定时任务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品库存同步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户协议弹窗不出现",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单列表查询",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端状态管理库",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给优惠券加使用条件",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户消息列表顺序错乱",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把库存扣减改为 MQ 异步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价图片",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券领取后不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户登录流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端打包优化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户邀请奖励",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品评价图片上传失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单超时自动关闭改为定时任务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户收货地址地图选点",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用后未标记",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品详情页数据加载",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端构建缓存",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加发票功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户消息角标不更新",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增商品浏览历史",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复后台权限角色冲突",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把支付回调日志改为结构化",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增用户设备管理",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品库存显示错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构优惠券核销事务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端监控告警",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给搜索接口加高亮",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户签到漏签",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品预售功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复订单支付超时未关闭",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户消息已读改为批量",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增优惠券分享",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端列表卡顿",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "bugfix",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "重构用户注册流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端国际化方案",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品加销量排序",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复后台导出权限不足",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增订单物流跟踪",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复优惠券并发领取超发",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户头像存储改为私有桶",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品二维码",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户协议版本不兼容",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存预警阈值",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端错误边界",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加优惠明细",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户消息推送延迟",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品分享海报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用条件不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单查询改为索引优化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户标签自动打标",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端登录后返回异常",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构商品搜索排序",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端组件按需加载",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给优惠券增加使用范围",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户积分过期提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单通知改为站内信",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增商品视频介绍",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复退款原路退回失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户签到奖励规则",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端安全防护",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单增加取消原因",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增用户积分商城",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品评价排序错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把优惠券领取改为异步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单配送时间选择",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户等级升级不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品评价审核流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端图片压缩",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加收货提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用范围不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品补货提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端分享图白屏",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户反馈改为工单流转",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单评价提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复库存同步延迟",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构优惠券模板",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端表单校验",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给商品增加关联推荐",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户消息已读回执丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单售后进度",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券过期时间显示错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把商品搜索改为 ES",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户足迹",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端支付密码键盘",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单优惠计算",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端请求重试",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加会员日",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复商品评价点赞失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单打印改为模板化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户头像框",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券领取条件判断错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存预警通知",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端埋点 SDK",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加备注修改",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户积分明细缺失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价置顶",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券核销并发问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户消息中心改为分页",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增订单合并支付",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端搜索框失焦",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户积分过期策略",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端 WebSocket 重连",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给商品增加预售标签",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券使用后未核销",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户生日提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复订单物流信息不更新",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把商品评价改为审核后显示",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户黑名单申诉",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端下拉刷新冲突",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单对账报表",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端国际化词条",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加消息订阅",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券批量发放失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品价格保护",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户优惠券数量显示错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单评价改为可追评",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户足迹清理",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复商品库存预警重复通知",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户消息免打扰规则",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端主题切换",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加预计送达时间",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用后积分未到账",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价筛选",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复移动端支付成功页白屏",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户签到改为连续签到",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单评价标签",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户等级权益不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构优惠券发放渠道",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端列表虚拟滚动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品增加库存状态",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户消息批量已读失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增订单售后原因",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券转赠后不可用",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把商品推荐改为协同过滤",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户设备登录提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端搜索历史不同步",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户积分发放",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端离线缓存",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加发货提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券过期未自动失效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价回复审核",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户头像上传格式限制",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把库存同步改为事件驱动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户优惠券过期提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复订单状态变更通知丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品分类树",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端错误上报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加收货地址默认",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券叠加规则错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价举报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端首页加载慢",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "bugfix",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "把用户协议改为版本化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单售后图片",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户签到奖励未发放",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品详情页 SEO",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端动画性能",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加支付倒计时",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用后回滚失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户消息分类",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端登录状态丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单导出权限改为角色控制",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品价格历史",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券计算精度问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单列表加筛选条件",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "把支付回调改成消息队列异步处理",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "为退款接口补充集成测试",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "test",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "检查一下这个 PR 的并发安全性",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "review",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "清理无用的环境变量",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "other",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复移动端日期选择器闪退",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增用户黑名单申诉流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存扣减逻辑为独立服务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给登录接口加上限流",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复订单号重复生成的问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把前端状态管理从 Redux 换成 Zustand",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "为导出功能添加权限校验",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复富文本编辑器粘贴样式丢失",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "升级数据库驱动到新版本",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "增加用户签到连续奖励",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复 WebSocket 断线后不重连",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把定时任务改成分布式锁版本",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品搜索加拼音匹配",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复后台菜单权限控制失效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把日志输出改为结构化 JSON",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增短信验证码登录",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复表格组件列宽拖拽异常",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户协议签署流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给报表接口增加缓存",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复导出 CSV 中文乱码",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把旧接口迁移到新版本",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品预售功能",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复购物车数量不同步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把首页接口改成聚合查询",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "为后台操作增加审计日志",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复图片懒加载失效",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构优惠券核销事务",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增多仓库支持",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复订单支付超时未关闭",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户头像存储改为私有桶",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品二维码",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复协议版本不兼容",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存预警阈值",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给搜索接口加高亮",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户签到漏签",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品分享海报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用条件不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单查询改为索引优化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户标签自动打标",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端登录后返回异常",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构商品搜索排序",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端组件按需加载",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给优惠券增加使用范围",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户积分过期提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单通知改为站内信",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增商品视频介绍",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复退款原路退回失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户签到奖励规则",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端安全防护",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给订单增加取消原因",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增用户积分商城",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复商品评价排序错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把优惠券领取改为异步",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单配送时间选择",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户等级升级不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品评价审核流程",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端图片压缩",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加收货提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用范围不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品补货提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端分享图白屏",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户反馈改为工单流转",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单评价提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复库存同步延迟",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构优惠券模块",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端表单校验",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给商品增加关联推荐",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户消息已读回执丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单售后进度",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券过期时间显示错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把商品搜索改为 ES",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户足迹",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端支付密码键盘",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单优惠计算",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端请求重试",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加会员日",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复商品评价点赞失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单打印改为模板化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户头像框",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券领取条件判断错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构库存预警通知",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端埋点 SDK",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加备注修改",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户积分明细缺失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价置顶",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券核销并发问题",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把用户消息中心改为分页",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "新增订单合并支付",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端搜索框失焦",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户积分过期策略",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端 WebSocket 重连",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给商品增加预售标签",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券使用后未核销",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户生日提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复订单物流信息不更新",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把商品评价改为审核后显示",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户黑名单申请",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端下拉刷新冲突",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构订单对账报表",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端国际化词条",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加消息免打扰",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券批量发放失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品价格保护",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复用户优惠券数量显示错误",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把订单评价改为可追评",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户足迹清理",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复商品库存预警重复通知",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构用户消息免打扰规则",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "升级前端主题切换",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加预计送达时间",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用后积分未到账",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价筛选",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复移动端支付成功页白屏",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把用户签到改为连续签到",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单评价标签",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户等级权益不生效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构优惠券发放渠道",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端列表虚拟滚动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "给商品增加库存状态",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复用户消息批量已读失败",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "新增订单售后原因",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券转赠后不可用",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把商品推荐改为协同过滤",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户设备登录提醒",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端搜索历史不同步",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "重构用户积分发放",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端离线缓存",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加发货提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券过期未自动失效",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价回复审核",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "feature",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "修复移动端头像上传格式限制",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "bugfix",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "把库存同步改为事件驱动",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户优惠券过期提醒",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复订单状态变更通知丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品分类树",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端错误上报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给用户增加默认收货地址",
+    "expected": {
+      "complexity": "direct",
+      "taskType": "feature",
+      "thinkingMode": "react"
+    }
+  },
+  {
+    "task": "修复优惠券叠加规则错误",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品评价举报",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端首页加载慢",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "bugfix",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "把用户协议改为版本化",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增订单售后图片",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复用户签到奖励未发放",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "重构商品详情 SEO",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "升级前端动画性能",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "refactor",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "给订单增加支付倒计时",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复优惠券使用后回滚失败",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增用户消息分类",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  },
+  {
+    "task": "修复移动端登录状态丢失",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "bugfix",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "把订单导出权限改为角色控制",
+    "expected": {
+      "complexity": "plan",
+      "taskType": "refactor",
+      "thinkingMode": "spec"
+    }
+  },
+  {
+    "task": "新增商品价格历史",
+    "expected": {
+      "complexity": "balanced",
+      "taskType": "feature",
+      "thinkingMode": "balanced"
+    }
+  }
 ]

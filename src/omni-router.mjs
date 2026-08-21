@@ -14,6 +14,7 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
 import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
 import { buildMethodologyDirective } from './methodology.mjs'
@@ -48,6 +49,8 @@ export {
 } from './project-brain.mjs'
 
 export const name = 'omni-router'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export const inject = ['systemPrompt', 'tools', 'llm', 'commands', 'skills']
 
@@ -1046,6 +1049,7 @@ export function apply(ctx, config = {}) {
           id: taskId,
           arm,
           task,
+          criteria,
           level,
           success,
           firstPass: success ? 1 : 0,
@@ -1100,8 +1104,10 @@ export function apply(ctx, config = {}) {
       const cwd = session.meta?.cwd || session.header?.cwd
       if (!cwd) return 'No workspace cwd found.'
       const tasksPath = path.join(cwd, 'benchmark', 'real-tasks.json')
-      if (!fs.existsSync(tasksPath)) return `real-tasks.json not found: ${tasksPath}`
-      const tasks = JSON.parse(fs.readFileSync(tasksPath, 'utf8'))
+      const bundledTasksPath = path.join(__dirname, '..', 'benchmark', 'real-tasks.json')
+      const resolvedTasksPath = fs.existsSync(tasksPath) ? tasksPath : bundledTasksPath
+      if (!fs.existsSync(resolvedTasksPath)) return `real-tasks.json not found in workspace (${tasksPath}) or bundle (${bundledTasksPath})`
+      const tasks = JSON.parse(fs.readFileSync(resolvedTasksPath, 'utf8'))
       const results = []
       for (const t of tasks) {
         const task = String(t.task || '')
@@ -1125,7 +1131,7 @@ export function apply(ctx, config = {}) {
           try { await run.dispose() } catch { /* best-effort */ }
           const success = /BENCHMARK:\s*PASS/i.test(output)
           const record = {
-            id: t.id, arm, task, level: t.level || 'L1 Single-file', success,
+            id: t.id, arm, task, criteria, level: t.level || 'L1 Single-file', success,
             firstPass: success ? 1 : 0, finalPass: success ? 1 : 0, regressionRate: 0,
             humanInterventions: 0, toolCalls: 0, repairCount: 0, failureRecoveryRate: success ? 1 : 0,
             tokens: 0, cost: 0, durationMs: Date.now() - start, output: output.slice(0, 2000),
