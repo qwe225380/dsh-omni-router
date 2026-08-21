@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.43.0] - 2026-08-19
+
+- Runtime 补齐 toolCalls / repairs 预算：
+  - `runMissionLoop` 支持 `maxToolCalls`，超限返回 `max_tool_calls`
+  - `applyObservation` 真正累计 `repairCount` 并执行 `maxRepairs` 拦截
+  - 新增对应测试
+
 ## [1.42.0] - 2026-08-19
 
 - Runtime 补齐 wall-clock stop condition：

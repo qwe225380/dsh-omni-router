@@ -25,6 +25,7 @@ export function createRuntimeState(mission, options = {}) {
     sameActionCount: 0,
     tokenUsage: 0,
     cost: 0,
+    toolCalls: 0,
     status: 'active',
     observations: [],
     actions: [],
@@ -35,6 +36,7 @@ export function createRuntimeState(mission, options = {}) {
       maxRepairs: Number(options.maxRepairs) || 5,
       maxTokens: Number(options.maxTokens) || 200000,
       maxCost: Number(options.maxCost) || 2,
+      maxToolCalls: Number(options.maxToolCalls) || 0,
       maxWallClockMs: Number(options.maxWallClockMs) || 0,
     },
   }
@@ -54,6 +56,8 @@ export function applyObservation(state, observation = {}) {
     const sameAction = replan.nextPhase === state.phase
     const nextReplanCount = state.replanCount + 1
     const nextSameActionCount = sameAction ? state.sameActionCount + 1 : 0
+    const isRepair = replan.nextPhase === 'repair' || /repair/i.test(observation.type || '')
+    const nextRepairCount = isRepair ? state.repairCount + 1 : state.repairCount
 
     if (nextReplanCount > state.budgets.maxReplans) {
       return { ...state, status: 'blocked', observations: [...state.observations, { type: 'max_replans' }] }
@@ -61,11 +65,15 @@ export function applyObservation(state, observation = {}) {
     if (nextSameActionCount > state.budgets.maxSameActionRetries) {
       return { ...state, status: 'blocked', observations: [...state.observations, { type: 'max_same_action_retries' }] }
     }
+    if (nextRepairCount > state.budgets.maxRepairs) {
+      return { ...state, status: 'blocked', observations: [...state.observations, { type: 'max_repairs' }] }
+    }
 
     return {
       ...state,
       replanCount: nextReplanCount,
       sameActionCount: nextSameActionCount,
+      repairCount: nextRepairCount,
       phase: replan.nextPhase || state.phase,
       phaseStep: 0,
       observations: [...state.observations, { type: observation.type || 'unknown', reason: replan.reason, nextPhase: replan.nextPhase }],
@@ -117,6 +125,10 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
       current = { ...current, status: 'max_cost' }
       break
     }
+    if (budget.maxToolCalls > 0 && current.toolCalls >= budget.maxToolCalls) {
+      current = { ...current, status: 'max_tool_calls' }
+      break
+    }
 
     const action = nextRuntimeAction(current)
     const result = await act(action, current)
@@ -128,6 +140,7 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
       actions: [...current.actions, { action, observation }],
       tokenUsage: current.tokenUsage + (result.tokenUsage || 0),
       cost: current.cost + (result.cost || 0),
+      toolCalls: current.toolCalls + (result.toolCalls || 0),
     }
   }
   return current

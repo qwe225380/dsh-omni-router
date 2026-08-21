@@ -89,6 +89,25 @@ test('runMissionLoop respects maxWallClockMs', async () => {
   assert.equal(final.status, 'max_wall_clock')
 })
 
+test('runMissionLoop respects maxToolCalls', async () => {
+  const state = createRuntimeState(buildMission('实现退款', { taskType: 'feature' }), { maxToolCalls: 1 })
+  const final = await runMissionLoop(state, {
+    act: async () => ({ ok: true, toolCalls: 1 }),
+    observe: async () => ({ type: 'step_done' }),
+    maxSteps: 100,
+  })
+  assert.equal(final.status, 'max_tool_calls')
+})
+
+test('applyObservation blocks after maxRepairs', () => {
+  let state = createRuntimeState(buildMission('修复 bug', { taskType: 'bugfix' }), { maxRepairs: 1 })
+  state = applyObservation(state, { type: 'test_failure' })
+  assert.equal(state.repairCount, 1)
+  state = applyObservation(state, { type: 'test_failure' })
+  assert.equal(state.status, 'blocked')
+  assert.ok(state.observations.some((o) => o.type === 'max_repairs'))
+})
+
 test('runDagLoop executes ready tasks and completes the DAG', async () => {
   const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
   const result = await runDagLoop(dag, {
