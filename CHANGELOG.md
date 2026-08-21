@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.44.0] - 2026-08-19
+
+- OmniBench 连续评估增强：
+  - `benchmark/continuous-eval.mjs` 支持 `--json` 输出
+  - 自动检测 Omni 最新日期相对前一日的 success rate / avgOES 回退并输出 `REGRESSION DETECTED`
+  - 导出 `buildTrend` / `detectRegressions` 并新增测试
+
 ## [1.43.0] - 2026-08-19
 
 - Runtime 补齐 toolCalls / repairs 预算：
