@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.0] - 2026-08-19
+
+- P2 深度集成：
+  - `runDagLoop`：真正按 Mission DAG 执行 ready tasks，支持并行 `maxParallel`
+  - `bindCapabilitiesToDag`：把 Task 的 requiredCapabilities 解析为具体 provider id
+  - Progressive Context Expansion：新增 `src/context-expansion.mjs`，按层级逐步展开 repo map → symbols → implementations → callers → tests/configs
+
 ## [1.24.0] - 2026-08-19
 
 - P2 优化（依据 优化3/4.md）：

@@ -69,6 +69,9 @@
 - **Capability Brain**：`src/capability-brain.mjs` 以 provider-agnostic 方式注册/解析/选择能力，缺失时优雅降级。
 - **Role capability sandbox**：QA / Reviewer / Judge 通过 `toolFilter` 禁止 edit/write/shell，权限来自 Runtime 而非模型自觉。
 - **Mission DAG**：`src/mission-dag.mjs` 用 Task 依赖图代替固定模板，支持插入任务、就绪调度、并行批次、失败时插入 repair。
+- **DAG-driven Runtime**：`runDagLoop` 真正按 DAG 执行 ready tasks，支持 `maxParallel` 并行。
+- **Capability-aware DAG**：`bindCapabilitiesToDag` 把 Task 的 requiredCapabilities 解析为具体 provider id。
+- **Progressive Context Expansion**：`src/context-expansion.mjs` 按 repo map → symbols → implementations → callers → tests/configs 逐步展开上下文。
 - **Failure Taxonomy**：`src/failure-taxonomy.mjs` 稳定分类失败（test/build/dependency/scope/permission/timeout）并给出恢复路径。
 - **Memory v1**：`omni_memory` 维护 project/decision/failure/trajectory 结构化记忆，支持长任务 resume；自动持久化到 `.omni/memory.json`。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。

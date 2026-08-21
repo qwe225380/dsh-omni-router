@@ -5,6 +5,7 @@
  */
 
 import { buildPhaseTasks } from './mission-planner.mjs'
+import { resolveCapability } from './capability-brain.mjs'
 
 export function createTask({ id, goal, dependencies = [], allowedTools = [], writeScope = '', acceptance = [], verification = [], rollback = '', requiredCapabilities = [], preferredCapabilities = [], forbiddenCapabilities = [] } = {}) {
   return {
@@ -102,6 +103,18 @@ export function scheduleParallel(dag, maxParallel = 2) {
     for (const t of batch) current = markTaskDone(current, t.id)
   }
   return batches
+}
+
+export function bindCapabilitiesToDag(dag, capabilityBrain) {
+  return {
+    ...dag,
+    tasks: dag.tasks.map((t) => ({
+      ...t,
+      allowedTools: (t.requiredCapabilities || [])
+        .flatMap((req) => resolveCapability(capabilityBrain, req).slice(0, 1))
+        .map((c) => c.id),
+    })),
+  }
 }
 
 export function formatMissionDag(dag = {}) {

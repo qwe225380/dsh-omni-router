@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   addTask,
   applyObservationToDag,
+  bindCapabilitiesToDag,
   createMissionDag,
   createTask,
   formatMissionDag,
@@ -13,6 +14,7 @@ import {
   scheduleParallel,
 } from '../src/mission-dag.mjs'
 import { buildMission } from '../src/mission-planner.mjs'
+import { createCapabilityBrain, registerCapability } from '../src/capability-brain.mjs'
 
 test('createMissionDag builds sequential tasks from mission phases', () => {
   const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
@@ -65,4 +67,12 @@ test('addTask appends a task', () => {
   const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
   const next = addTask(dag, createTask({ id: 'Z', goal: 'z' }))
   assert.equal(next.tasks.length, dag.tasks.length + 1)
+})
+
+test('bindCapabilitiesToDag resolves required capabilities to provider ids', () => {
+  let brain = createCapabilityBrain()
+  brain = registerCapability(brain, { id: 'verify-tool', capabilities: ['verification'] })
+  const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
+  const bound = bindCapabilitiesToDag(dag, brain)
+  assert.ok(bound.tasks.some((t) => t.allowedTools.includes('verify-tool')))
 })

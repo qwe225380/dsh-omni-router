@@ -5,9 +5,11 @@ import {
   applyObservation,
   createRuntimeState,
   nextRuntimeAction,
+  runDagLoop,
   runMissionLoop,
 } from '../src/agent-runtime.mjs'
 import { buildMission } from '../src/mission-planner.mjs'
+import { createMissionDag } from '../src/mission-dag.mjs'
 
 test('createRuntimeState starts at first phase', () => {
   const state = createRuntimeState(buildMission('实现退款', { taskType: 'feature' }))
@@ -72,4 +74,16 @@ test('runMissionLoop respects maxGlobalSteps', async () => {
     maxSteps: 0,
   })
   assert.equal(final.status, 'max_steps')
+})
+
+test('runDagLoop executes ready tasks and completes the DAG', async () => {
+  const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
+  const result = await runDagLoop(dag, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'step_done' }),
+    maxSteps: 100,
+    maxParallel: 1,
+  })
+  assert.equal(result.status, 'completed')
+  assert.ok(result.dag.tasks.every((t) => t.status === 'done'))
 })

@@ -10,6 +10,7 @@
  */
 
 import { buildPhaseTasks, decideReplan } from './mission-planner.mjs'
+import { applyObservationToDag, getReadyTasks, markTaskDone } from './mission-dag.mjs'
 
 export function createRuntimeState(mission, options = {}) {
   const phases = mission?.phases || []
@@ -124,4 +125,43 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
     }
   }
   return current
+}
+
+/**
+ * DAG-driven runtime: execute ready tasks from a Mission DAG, optionally in
+ * parallel, and mutate the DAG on failures.
+ */
+export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel = 1 } = {}) {
+  let current = dag
+  let step = 0
+  const actions = []
+
+  while (step < maxSteps) {
+    const ready = getReadyTasks(current)
+    if (ready.length === 0) break
+    const batch = ready.slice(0, maxParallel)
+    const results = await Promise.all(batch.map(async (task) => {
+      const action = { taskId: task.id, task, phase: task.id }
+      const result = await act(action, current)
+      const observation = await observe(result, current)
+      return { task, result, observation }
+    }))
+
+    for (const { task, observation } of results) {
+      if (observation?.type === 'test_failure' || observation?.type === 'build_failure') {
+        current = applyObservationToDag(current, observation)
+      } else {
+        current = markTaskDone(current, task.id, observation)
+      }
+      actions.push({ taskId: task.id, observation })
+    }
+    step += 1
+  }
+
+  const done = current.tasks.every((t) => t.status === 'done')
+  return {
+    dag: current,
+    status: done ? 'completed' : step >= maxSteps ? 'max_steps' : 'blocked',
+    actions,
+  }
 }
