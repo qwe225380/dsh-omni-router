@@ -29,6 +29,7 @@ import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTask } from './task-compiler.mjs'
+import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -1126,12 +1127,15 @@ export function apply(ctx, config = {}) {
         maxSteps,
       })
 
+      const dag = createMissionDag(mission)
       return [
         `Mission run: ${finalState.status}`,
         `Phase: ${finalState.phase || '(none)'}`,
         `Steps: ${finalState.actions.length}`,
         `Replans: ${finalState.replanCount}`,
         `Mission: ${task}`,
+        '',
+        formatMissionDag(dag),
       ].join('\n')
     },
   })

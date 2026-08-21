@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.24.0] - 2026-08-19
+
+- P2 优化（依据 优化3/4.md）：
+  - Mission DAG：新增 `src/mission-dag.mjs`，Task 带依赖/能力约束/验证/回滚，支持插入、就绪调度、并行批次
+  - Observation-driven DAG mutation：`applyObservationToDag` 在 test/build failure 时插入 repair 任务
+  - Failure Taxonomy：新增 `src/failure-taxonomy.mjs`，稳定分类失败并给出恢复路径
+  - `omni_mission_run` 返回 Mission DAG 视图
+
 ## [1.23.0] - 2026-08-19
 
 - P1 优化（依据 优化3/4.md）：
