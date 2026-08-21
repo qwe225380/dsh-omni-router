@@ -1,0 +1,14 @@
+[
+  {
+    "id": "repo-001",
+    "repo": "https://github.com/example/store-app",
+    "commit": "abc123def456",
+    "language": "typescript",
+    "framework": "express",
+    "task": "Fix intermittent login timeout under concurrent session refresh.",
+    "acceptance": ["regression test added", "all tests pass"],
+    "hiddenTests": ["tests/hidden/session-concurrent.test.js"],
+    "timeoutMs": 7200000,
+    "runs": 5
+  }
+]

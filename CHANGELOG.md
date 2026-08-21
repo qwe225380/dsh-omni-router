@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.49.0] - 2026-08-21
+
+- P1/P3 补充：
+  - Real capability sandbox：`src/capability-sandbox.mjs`，按 role + required capabilities 生成 toolFilter
+  - OmniBench v2 scaffold：`benchmark/omnibench-v2/`（manifest schema、示例、runner stub）
+
 ## [1.48.0] - 2026-08-21
 
 - P1/P2 第二批：
