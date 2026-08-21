@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.48.0] - 2026-08-21
+
+- P1/P2 第二批：
+  - Evidence Store：`src/evidence-store.mjs`，harness-captured 证据记录（E-ID / type / ok / source）
+  - `omni_mission_run` 每个 agent 步骤自动捕获 evidence，并在结果中报告 captured/failed
+  - Memory v3：`src/memory-v3.mjs`，skill distillation（连续 N 次成功才提升）、skill outcome 学习、historical failure retrieval、execution policies、cross-session strategies
+
 ## [1.47.0] - 2026-08-21
 
 - 按优化5.md 完成 P1 第一批：

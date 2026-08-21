@@ -17,6 +17,7 @@
 - [x] OmniBench 真实双臂数据（10 个 L1-L10 任务，raw/omni 各 10 次，2026-08-21）
 - [x] Integration Phase P0：Capability Brain 接入 Mission Runtime、Project Brain v3 接入默认 Context、DAG failure/retry lineage、统一 ExecutionBudget、Evidence 禁文本绕过、TaskDecision 持久化、maxParallel 暴露
 - [x] Integration Phase P1 第一批：Planner-generated DAG、Dynamic Context Expansion、Capability Manifest、Failure-aware DAG mutation
+- [x] P1/P2：Evidence Store、Memory v3（skill distillation / execution policies / historical failures / cross-session strategies）
 - [x] CI 多版本矩阵（Node 20/22/24）
 - [x] 兼容性文档
 

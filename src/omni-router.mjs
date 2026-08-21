@@ -38,6 +38,7 @@ import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
+import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
 
@@ -1375,6 +1376,7 @@ export function apply(ctx, config = {}) {
       let capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
       const dag = bindCapabilitiesToDag(generateMissionDag(mission, brief, { taskType }), capabilityBrain)
+      const evidenceStore = createEvidenceStore()
 
       const finalDag = await runDagLoop(dag, {
         act: async (action) => {
@@ -1396,7 +1398,13 @@ export function apply(ctx, config = {}) {
             .map((block) => block.text)
             .join('')
           try { await run.dispose() } catch { /* best-effort */ }
-          return { output }
+          const captured = captureEvidence(evidenceStore, {
+            type: 'agent_output',
+            source: action.taskId,
+            value: output.slice(0, 2000),
+            ok: !/FAIL|error|失败|not ok/i.test(output),
+          })
+          return { output, evidenceId: captured.record.id }
         },
         observe: async (result, _current, action) => {
           const goal = action?.task?.goal || ''
@@ -1415,11 +1423,13 @@ export function apply(ctx, config = {}) {
       })
 
       const metrics = finalDag.metrics || {}
+      const evSummary = evidenceSummary(evidenceStore)
       return [
         `Mission run: ${finalDag.status}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
         `Steps: ${finalDag.actions.length}`,
         `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,
+        `Evidence captured: ${evSummary.total} (failed=${evSummary.failed})`,
         `Mission: ${task}`,
         '',
         formatMissionDag(finalDag.dag),
