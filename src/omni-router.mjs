@@ -33,6 +33,7 @@ import { compileTaskWithLLM } from './task-compiler.mjs'
 import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
+import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 
 export {
   buildContextGraph,
@@ -1179,6 +1180,76 @@ export function apply(ctx, config = {}) {
         await Promise.all(batch.map((t) => runOne(t)))
       }
       return `Benchmark batch (${arm}) complete:\n${results.join('\n')}`
+    },
+  })
+
+  registerTool({
+    name: 'omni_benchmark_status',
+    description: 'Show collected OmniBench result counts, coverage, and missing task ids for raw/omni arms.',
+    parameters: {
+      type: 'object',
+      properties: {},
+    },
+    execute() {
+      const session = currentSession()
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const resultsRoot = path.join(cwd, 'benchmark', 'results')
+      const groups = collectResults(resultsRoot)
+      const summary = summarizeResults(groups)
+      const tasksPath = path.join(cwd, 'benchmark', 'real-tasks.json')
+      const bundledTasksPath = path.join(__dirname, '..', 'benchmark', 'real-tasks.json')
+      const tasks = fs.existsSync(tasksPath)
+        ? JSON.parse(fs.readFileSync(tasksPath, 'utf8'))
+        : fs.existsSync(bundledTasksPath)
+          ? JSON.parse(fs.readFileSync(bundledTasksPath, 'utf8'))
+          : []
+      const missing = missingTaskIds(resultsRoot, tasks)
+      const lines = [formatResultSummary(summary), '']
+      if (missing.length) {
+        lines.push(`Missing pairs (${missing.length}):`)
+        for (const m of missing) lines.push(`- ${m.id}: raw=${m.raw ? 'yes' : 'no'} omni=${m.omni ? 'yes' : 'no'}`)
+      } else {
+        lines.push('All known real tasks have both raw and omni results.')
+      }
+      return lines.join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_benchmark_import',
+    description: 'Import one or more real OmniBench result records into benchmark/results/<arm>/. Useful for pasting runs collected in another DSH session.',
+    parameters: {
+      type: 'object',
+      properties: {
+        records: { type: 'array', items: { type: 'object' }, description: 'Array of result records; each requires id, arm, task, success.' },
+        record: { type: 'object', description: 'Single result record; alternative to records.' },
+        arm: { type: 'string', enum: ['raw', 'omni'], description: 'Arm override when importing a single record without arm.' },
+      },
+    },
+    async execute(args) {
+      const session = currentSession()
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const resultsRoot = path.join(cwd, 'benchmark', 'results')
+      const list = Array.isArray(args?.records) ? args.records : (args?.record ? [args.record] : [])
+      if (!list.length) return 'Provide record or records.'
+      const imported = []
+      const errors = []
+      for (const rec of list) {
+        const record = { ...rec }
+        if (args?.arm && !record.arm) record.arm = args.arm
+        try {
+          const file = importBenchmarkRecord(resultsRoot, record)
+          imported.push(file)
+        } catch (error) {
+          errors.push(`${record?.id || '?'}: ${error?.message || error}`)
+        }
+      }
+      const lines = [`Imported ${imported.length} record(s).`]
+      if (imported.length) lines.push(...imported.map((f) => `- ${f}`))
+      if (errors.length) lines.push('Errors:', ...errors)
+      return lines.join('\n')
     },
   })
 

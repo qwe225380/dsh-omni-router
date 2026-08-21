@@ -86,7 +86,7 @@
 - **dsh-routing-suite 兼容**：检测到 router-standard 时自动让出 reasoning-mode 路由，避免重复开发；未检测到时保留 Omni 自身轻量路由。
 - **Router Benchmark**：内置 `benchmark/run.mjs`（556 个任务），可评估 accuracy / false-direct rate。
 - **Engineering Benchmark v1**：`npm run benchmark:engineering` 用 OES 评分评估端到端工程交付质量（L1-L10）。
-- **Real agent-run comparison**：`omni_benchmark` / `omni_benchmark_all` 收集 raw/omni 真实运行结果（`real-tasks.json` 10 个 L1-L10 任务；workspace 没有该文件时自动使用 bundle 内任务集；`omni_benchmark_all` 支持 `maxParallel` 并发采集），`npm run benchmark:compare` 输出 OES 对比，`npm run benchmark:continuous` 输出趋势。
+- **Real agent-run comparison**：`omni_benchmark` / `omni_benchmark_all` 收集 raw/omni 真实运行结果（`real-tasks.json` 10 个 L1-L10 任务；workspace 没有该文件时自动使用 bundle 内任务集；`omni_benchmark_all` 支持 `maxParallel` 并发采集），`omni_benchmark_status` 查看采集覆盖率，`omni_benchmark_import` 可导入外部会话结果，`npm run benchmark:compare` 输出 OES 对比，`npm run benchmark:continuous` 输出趋势。
 - **Visual QA 硬编排**：前端/UI 任务在 `omni_mission_run` 的 validate 阶段强制 `browser_screenshot` + `omni_visual_check`，未 PASS 则 Replan；可 `autoVisualQA: false` 关闭。
 - **Benchmark 分析**：`benchmark/analyze.mjs` 输出混淆矩阵和最高频误判词。
 - **LLM 对比评估**：`benchmark/llm-eval.mjs` 可对比 Heuristic vs LLM 路由效果。

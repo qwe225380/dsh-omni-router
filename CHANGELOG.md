@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.37.0] - 2026-08-19
+
+- OmniBench 数据管理工具：
+  - 新增 `omni_benchmark_status`：显示 raw/omni 已采集数量、成功率/avgOES，以及缺失配对任务
+  - 新增 `omni_benchmark_import`：支持把外部 DSH 会话采集的 JSON 结果导入 `benchmark/results/<arm>/`
+  - 新增 `src/benchmark-results.mjs` 与 `test/benchmark-results.test.mjs`
+
 ## [1.36.0] - 2026-08-19
 
 - Router 复杂度启发式大幅调优（556 任务基准）：
