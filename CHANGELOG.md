@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.34.0] - 2026-08-19
+
+- Router 启发式调优（556 任务基准）：
+  - `classifyTaskType` 准确率 71.2% → 95.9%（补充 feature/refactor 关键词）
+  - `classifyThinkingMode` 准确率 27.0% → 68.7%（无显式模式词时按 plan/direct 强信号推断）
+
 ## [1.33.0] - 2026-08-19
 
 - Project Brain 真实依赖图解析：

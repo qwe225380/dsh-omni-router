@@ -226,6 +226,8 @@ npm run benchmark:compare
 
 当前路由基线（556 个任务）：
 - 复杂度准确率：64.9%
+- 任务类型准确率：95.9%
+- 思维模式准确率：68.7%
 - false-direct 率：12.8%
 - false-plan 率：10.1%
 

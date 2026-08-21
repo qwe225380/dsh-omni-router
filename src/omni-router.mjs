@@ -199,8 +199,8 @@ export function filterReadOnlyTools(tools, allowed) {
 export function classifyTaskType(text) {
   const normalized = normalize(String(text || ''))
   if (/(修复|修一下|bug|报错|错误|崩溃|500|fix)/.test(normalized)) return 'bugfix'
-  if (/(新增|新做|做一个|增加|实现|feature|add|开发)/.test(normalized)) return 'feature'
-  if (/(重构|refactor|重写|优化结构)/.test(normalized)) return 'refactor'
+  if (/(新增|新做|做一个|增加|实现|加|添加|接入|支持|feature|add|开发|引入)/.test(normalized)) return 'feature'
+  if (/(重构|refactor|重写|优化|优化一下|改善|改进|提升|升级|迁移|改造|更换|替换|切换|改为|改成)/.test(normalized)) return 'refactor'
   if (/(测试|单测|test|补测试)/.test(normalized)) return 'test'
   if (/(review|审查|评审|code review|pr)/.test(normalized)) return 'review'
   return 'other'
@@ -216,6 +216,18 @@ export function classifyThinkingMode(text) {
   const normalized = normalize(String(text || ''))
   if (/(设计|架构|方案|需求|规划|spec|design|architecture|plan)/.test(normalized)) return 'spec'
   if (/(直接|马上|赶紧|快|do it|just do|react|execute)/.test(normalized)) return 'react'
+
+  // When no explicit mode word is present, infer from the same strong signals
+  // used by complexity classification. Generic short requests stay balanced.
+  for (const token of DEFAULT_PLAN_FIRST_KEYWORDS) {
+    if (normalized.includes(token.toLowerCase())) return 'spec'
+  }
+  for (const token of DEFAULT_DIRECT_KEYWORDS) {
+    if (normalized.includes(token.toLowerCase())) return 'react'
+  }
+  for (const token of STRONG_DIRECT_HINTS) {
+    if (normalized.includes(token)) return 'react'
+  }
   return 'balanced'
 }
 

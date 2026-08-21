@@ -226,6 +226,8 @@ npm run benchmark:compare
 
 Current router baseline (556 tasks):
 - complexity accuracy: 64.9%
+- taskType accuracy: 95.9%
+- thinkingMode accuracy: 68.7%
 - false-direct rate: 12.8%
 - false-plan rate: 10.1%
 
