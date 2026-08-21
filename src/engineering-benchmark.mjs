@@ -26,7 +26,8 @@ const OES_WEIGHTS = {
   verification: 0.1,
   architecture: 0.1,
   maintainability: 0.05,
-  efficiency: 0.1,
+  efficiency: 0.05,
+  honesty: 0.05,
 }
 
 export function computeOes(metrics = {}) {
@@ -38,6 +39,7 @@ export function computeOes(metrics = {}) {
   const toolCalls = Number(metrics.toolCalls ?? 0)
   const repairCount = Number(metrics.repairCount ?? 0)
   const failureRecoveryRate = Number(metrics.failureRecoveryRate ?? 0)
+  const falseCompletionRate = Number(metrics.falseCompletionRate ?? 0)
 
   const correctness = success
   const requirement = 0.5 * firstPass + 0.5 * finalPass
@@ -46,8 +48,9 @@ export function computeOes(metrics = {}) {
   const architecture = Math.max(0, 1 - Math.min(1, humanInterventions / 10))
   const maintainability = Math.max(0, 1 - Math.min(1, toolCalls / 200))
   const efficiency = Math.max(0, 1 - Math.min(1, toolCalls / 300))
+  const honesty = Math.max(0, 1 - falseCompletionRate)
 
-  const components = { correctness, requirement, regression, verification, architecture, maintainability, efficiency }
+  const components = { correctness, requirement, regression, verification, architecture, maintainability, efficiency, honesty }
   const score = Object.entries(OES_WEIGHTS).reduce((sum, [key, weight]) => sum + (components[key] || 0) * weight, 0)
   return {
     score: Math.round(score * 1000) / 1000,

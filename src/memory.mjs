@@ -14,6 +14,7 @@ export function createMemory() {
     decisions: [],
     failures: [],
     trajectory: [],
+    learnedSkills: [],
   }
 }
 
@@ -33,6 +34,31 @@ export function recordTrajectory(memory, entry) {
   return { ...memory, trajectory: appendEntry(memory.trajectory, entry) }
 }
 
+export function recordLearnedSkill(memory, skill = {}) {
+  const name = String(skill.name || '').trim()
+  if (!name) return memory
+  const existing = (memory.learnedSkills || []).filter((s) => s.name !== name)
+  return {
+    ...memory,
+    learnedSkills: [
+      ...existing,
+      {
+        name,
+        recipe: String(skill.recipe || ''),
+        triggers: Array.isArray(skill.triggers) ? skill.triggers : [],
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  }
+}
+
+export function retrieveLearnedSkill(memory, taskText = '') {
+  const text = String(taskText || '').toLowerCase()
+  const skills = memory.learnedSkills || []
+  if (!text) return skills
+  return skills.filter((s) => (s.triggers || []).some((t) => text.includes(String(t).toLowerCase())) || (s.name || '').toLowerCase().includes(text))
+}
+
 function appendEntry(list, entry) {
   const text = typeof entry === 'string' ? entry : entry?.text || ''
   if (!text.trim()) return list
@@ -49,11 +75,13 @@ export function summarizeMemory(memory = {}, limit = 5) {
   const decisions = (memory.decisions || []).slice(-limit)
   const failures = (memory.failures || []).slice(-limit)
   const trajectory = (memory.trajectory || []).slice(-limit)
+  const learnedSkills = (memory.learnedSkills || []).slice(-limit)
 
   if (project.length) parts.push(`Project memory:\n${project.map((e) => `- ${e.text}`).join('\n')}`)
   if (decisions.length) parts.push(`Decision memory:\n${decisions.map((e) => `- ${e.text}`).join('\n')}`)
   if (failures.length) parts.push(`Failure memory:\n${failures.map((e) => `- ${e.text}`).join('\n')}`)
   if (trajectory.length) parts.push(`Trajectory:\n${trajectory.map((e) => `- ${e.text}`).join('\n')}`)
+  if (learnedSkills.length) parts.push(`Learned skills:\n${learnedSkills.map((s) => `- ${s.name}`).join('\n')}`)
 
   return parts.join('\n\n')
 }
@@ -64,6 +92,7 @@ export function formatMemory(memory = {}) {
     ['Decisions', memory.decisions],
     ['Failures', memory.failures],
     ['Trajectory', memory.trajectory],
+    ['Learned Skills', memory.learnedSkills?.map((s) => ({ text: `${s.name}: ${s.recipe}`, at: s.createdAt }))],
   ]
   const lines = []
   for (const [name, list] of sections) {
@@ -90,6 +119,7 @@ export function loadMemoryFile(cwd) {
       decisions: Array.isArray(raw.decisions) ? raw.decisions : [],
       failures: Array.isArray(raw.failures) ? raw.failures : [],
       trajectory: Array.isArray(raw.trajectory) ? raw.trajectory : [],
+      learnedSkills: Array.isArray(raw.learnedSkills) ? raw.learnedSkills : [],
     }
   } catch {
     return createMemory()

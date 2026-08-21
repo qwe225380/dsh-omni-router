@@ -33,11 +33,28 @@ export function registerCapability(brain, capability = {}) {
   }
 }
 
+export function recordCapabilityOutcome(brain, id, success) {
+  return {
+    ...brain,
+    capabilities: (brain.capabilities || []).map((c) => {
+      if (c.id !== id) return c
+      const prev = c.successRate ?? c.reliability ?? 0.8
+      const next = prev * 0.9 + (success ? 1 : 0) * 0.1
+      return {
+        ...c,
+        successRate: Math.round(next * 1000) / 1000,
+        lastUsed: new Date().toISOString(),
+        lastFailure: success ? c.lastFailure : new Date().toISOString(),
+      }
+    }),
+  }
+}
+
 export function resolveCapability(brain, requiredCapability) {
   const candidates = (brain.capabilities || [])
     .map((cap) => ({
       ...cap,
-      score: cap.capabilities.includes(requiredCapability) ? cap.reliability || 0.8 : 0,
+      score: cap.capabilities.includes(requiredCapability) ? (cap.successRate ?? cap.reliability ?? 0.8) : 0,
     }))
     .filter((c) => c.score > 0)
     .sort((a, b) => b.score - a.score)

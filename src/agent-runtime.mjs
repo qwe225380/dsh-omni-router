@@ -143,7 +143,7 @@ export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel
     const results = await Promise.all(batch.map(async (task) => {
       const action = { taskId: task.id, task, phase: task.id }
       const result = await act(action, current)
-      const observation = await observe(result, current)
+      const observation = await observe(result, current, action)
       return { task, result, observation }
     }))
 

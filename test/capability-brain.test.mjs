@@ -5,6 +5,7 @@ import {
   createCapabilityBrain,
   fallbackForMissing,
   formatCapabilityBrain,
+  recordCapabilityOutcome,
   registerCapability,
   resolveCapability,
   selectCapabilities,
@@ -51,4 +52,13 @@ test('formatCapabilityBrain renders capabilities', () => {
   brain = registerCapability(brain, { id: 'browser', capabilities: ['browser.automation'] })
   assert.match(formatCapabilityBrain(brain), /browser/)
   assert.match(formatCapabilityBrain(createCapabilityBrain()), /empty/)
+})
+
+test('recordCapabilityOutcome updates success rate and lastUsed', () => {
+  let brain = createCapabilityBrain()
+  brain = registerCapability(brain, { id: 'browser', capabilities: ['browser.automation'], reliability: 0.8 })
+  brain = recordCapabilityOutcome(brain, 'browser', true)
+  const cap = brain.capabilities.find((c) => c.id === 'browser')
+  assert.ok(cap.successRate > 0.8)
+  assert.ok(cap.lastUsed)
 })

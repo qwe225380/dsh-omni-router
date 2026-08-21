@@ -10,15 +10,17 @@ import {
   loadMemoryFile,
   recordDecision,
   recordFailure,
+  recordLearnedSkill,
   recordProject,
   recordTrajectory,
+  retrieveLearnedSkill,
   saveMemoryFile,
   summarizeMemory,
 } from '../src/memory.mjs'
 
 test('createMemory returns empty structured memory', () => {
   const memory = createMemory()
-  assert.deepEqual(memory, { project: [], decisions: [], failures: [], trajectory: [] })
+  assert.deepEqual(memory, { project: [], decisions: [], failures: [], trajectory: [], learnedSkills: [] })
 })
 
 test('record* appends entries with timestamps', () => {
@@ -83,4 +85,12 @@ test('loadMemoryFile returns empty memory when missing', () => {
   } finally {
     fs.rmSync(base, { recursive: true, force: true })
   }
+})
+
+test('recordLearnedSkill and retrieveLearnedSkill support procedural memory', () => {
+  let memory = createMemory()
+  memory = recordLearnedSkill(memory, { name: 'safe-prisma-migration', recipe: 'inspect -> generate -> dry-run -> verify', triggers: ['prisma', 'migration'] })
+  assert.equal(memory.learnedSkills.length, 1)
+  const found = retrieveLearnedSkill(memory, 'run a prisma migration')
+  assert.equal(found[0].name, 'safe-prisma-migration')
 })

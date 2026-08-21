@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.26.0] - 2026-08-19
+
+- 继续推进优化3/4.md：
+  - `omni_mission_run` 切换为 DAG-driven 执行（`runDagLoop`），支持 `maxParallel`
+  - `getProjectContext` 接入 Progressive Context Expansion（`progressiveContext` / `contextExpansionLevel` 可配）
+  - Hybrid Retrieval：新增 `src/hybrid-retrieval.mjs`（lexical + symbol + graph/test 扩展）
+  - Memory v2：新增 `learnedSkills` / `recordLearnedSkill` / `retrieveLearnedSkill`
+  - Capability performance learning：`recordCapabilityOutcome` 更新 successRate / lastUsed
+  - OES 新增 False Completion Rate（honesty 维度）
+
 ## [1.25.0] - 2026-08-19
 
 - P2 深度集成：

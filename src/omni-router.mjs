@@ -25,11 +25,12 @@ import {
   selectKeyFilesForTask,
 } from './project-brain.mjs'
 import { buildMission, formatMissionPlan } from './mission-planner.mjs'
-import { createRuntimeState, runMissionLoop } from './agent-runtime.mjs'
+import { runDagLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTask } from './task-compiler.mjs'
 import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
+import { buildProgressiveContext } from './context-expansion.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 
 export {
@@ -585,6 +586,13 @@ export function apply(ctx, config = {}) {
         }
       }
       if (taskText) {
+        if (config.progressiveContext !== false) {
+          return buildProgressiveContext(taskText, entries, files, {
+            level: Number(config.contextExpansionLevel) || 2,
+            maxFiles: 3,
+            maxFileChars: 800,
+          })
+        }
         return buildTaskContext(taskText, entries, files, { maxTotalChars: 3000 })
       }
       return buildContextSummary(entries, files, { maxTotalChars: 3000 })
@@ -1096,17 +1104,17 @@ export function apply(ctx, config = {}) {
       const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
       const brief = compileTask(task, { taskType })
-      const state = createRuntimeState(mission)
-
-      const finalState = await runMissionLoop(state, {
+      const dag = createMissionDag(mission)
+      const finalDag = await runDagLoop(dag, {
         act: async (action) => {
-          const visualQa = frontend && action.phase === 'validate' && config.autoVisualQA !== false
+          const goal = action.task?.goal || action.taskId || ''
+          const visualQa = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
             ? `\n\n${buildVisualQaStepRequirement()}`
             : ''
           const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
-          const prompt = `Mission: ${task}\nCurrent phase: ${action.phase}\nTask: ${action.task}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
+          const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
           const run = await subagents.start('spawn', {
-            label: `mission-${action.phase}-${action.index}`,
+            label: `mission-${action.taskId}`,
             prompt: [{ type: 'text', text: prompt }],
             parent: agent,
             maxDepth: 1,
@@ -1119,23 +1127,23 @@ export function apply(ctx, config = {}) {
           try { await run.dispose() } catch { /* best-effort */ }
           return { output }
         },
-        observe: async (result, current) => {
-          const needsVisual = frontend && current.phase === 'validate' && config.autoVisualQA !== false
+        observe: async (result, _current, action) => {
+          const goal = action?.task?.goal || ''
+          const needsVisual = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
           if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure' }
           return /FAIL|error|失败|not ok/i.test(result.output || '') ? { type: 'test_failure' } : { type: 'step_done' }
         },
         maxSteps,
+        maxParallel: Number(args?.maxParallel) || 1,
       })
 
-      const dag = createMissionDag(mission)
       return [
-        `Mission run: ${finalState.status}`,
-        `Phase: ${finalState.phase || '(none)'}`,
-        `Steps: ${finalState.actions.length}`,
-        `Replans: ${finalState.replanCount}`,
+        `Mission run: ${finalDag.status}`,
+        `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
+        `Steps: ${finalDag.actions.length}`,
         `Mission: ${task}`,
         '',
-        formatMissionDag(dag),
+        formatMissionDag(finalDag.dag),
       ].join('\n')
     },
   })

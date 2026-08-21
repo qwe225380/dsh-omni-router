@@ -72,8 +72,11 @@
 - **DAG-driven Runtime**：`runDagLoop` 真正按 DAG 执行 ready tasks，支持 `maxParallel` 并行。
 - **Capability-aware DAG**：`bindCapabilitiesToDag` 把 Task 的 requiredCapabilities 解析为具体 provider id。
 - **Progressive Context Expansion**：`src/context-expansion.mjs` 按 repo map → symbols → implementations → callers → tests/configs 逐步展开上下文。
+- **Hybrid Retrieval**：`src/hybrid-retrieval.mjs` 组合 lexical + symbol + graph/test 扩展，返回排序候选。
 - **Failure Taxonomy**：`src/failure-taxonomy.mjs` 稳定分类失败（test/build/dependency/scope/permission/timeout）并给出恢复路径。
-- **Memory v1**：`omni_memory` 维护 project/decision/failure/trajectory 结构化记忆，支持长任务 resume；自动持久化到 `.omni/memory.json`。
+- **Memory v2**：`omni_memory` 维护 project/decision/failure/trajectory/learnedSkills；支持 `recordLearnedSkill` / `retrieveLearnedSkill`，自动持久化到 `.omni/memory.json`。
+- **Capability performance learning**：`recordCapabilityOutcome` 更新 successRate / lastUsed，能力解析优先历史表现。
+- **OES False Completion**：评分加入 honesty 维度，惩罚“说 DONE 但实际没完成”。
 - **Policy/State Orchestration**：用 `workflowPolicy` 状态机代替大量重复 prompt。
 - **Agent 选择**：`selectAgentForTask` 推荐 frontend/backend/db/browser/security/review agent。
 - **Fable 风格子代理链**：`omni_delegate` 可运行 builder → qa-verifier → (repair → qa-verifier)* → code-reviewer → judge，独立验证 + 冷读对抗审查 + 证据交接 + 最终裁决。

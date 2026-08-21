@@ -34,6 +34,13 @@ test('scoreTask annotates a result with OES', () => {
   assert.ok(scored.oes.score > 0)
 })
 
+test('computeOes penalizes false completion rate via honesty', () => {
+  const honest = computeOes({ success: 1, firstPass: 1, finalPass: 1, regressionRate: 0, humanInterventions: 0, toolCalls: 10, repairCount: 0, failureRecoveryRate: 1, falseCompletionRate: 0 })
+  const liar = computeOes({ success: 1, firstPass: 1, finalPass: 1, regressionRate: 0, humanInterventions: 0, toolCalls: 10, repairCount: 0, failureRecoveryRate: 1, falseCompletionRate: 0.5 })
+  assert.ok(liar.score < honest.score)
+  assert.equal(liar.components.honesty, 0.5)
+})
+
 test('summarizeBenchmark renders success rate and average OES', () => {
   const summary = summarizeBenchmark([
     { id: 'a', level: 'L1 Single-file', success: true },
