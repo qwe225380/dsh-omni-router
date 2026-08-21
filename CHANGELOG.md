@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.36.0] - 2026-08-19
+
+- Router 复杂度启发式大幅调优（556 任务基准）：
+  - complexity accuracy 64.9% → **73.7%**
+  - false-direct rate 12.8% → **0.0%**
+  - false-plan rate 10.1% → **0.0%**
+  - thinkingMode accuracy 68.7% → **71.4%**
+  - 新增 `COMPLEX_FIX_KEYWORDS`，对复杂修复（并发/回滚/幂等/协议/退款/权限控制等）自动 plan，同时避免简单修复被误判 plan
+
 ## [1.35.0] - 2026-08-19
 
 - OmniBench 批量采集提速：

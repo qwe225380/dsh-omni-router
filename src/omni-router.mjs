@@ -60,13 +60,14 @@ const DEFAULT_PLAN_FIRST_KEYWORDS = [
   '改造', '迁移', '升级', '更换', '替换', '定时',
   '时区', 'WebSocket', '重连', '限流', '状态机', '看板',
   '重试', '核销', '改为', '多语言', '国际化', '通知',
-  '库存', '签名', 'Webhook', 'OSS', '超时',
-  '登录接口', '上传失败', '短信验证码', '分页丢失',
-  '金额精度', '不同步', '二维码登录', '幂等', '多仓库', '服务商',
+  '库存扣减', '库存超卖', '库存预警', '签名', 'Webhook', 'OSS', '超时',
+  '登录接口', '头像上传失败', '短信验证码', '分页丢失',
+  '金额精度', '数量不同步', '二维码登录', '幂等', '多仓库', '服务商',
   '黑名单', '批量导入', '会员等级', '状态管理', '虚拟滚动', '批量发放', '注销功能',
   '优惠券计算', '优惠券不可用', '优惠券转赠', '优惠券领取', '批量导出', '重复处理',
-  '售后', '日志检索', '签到', '打包', 'MinIO', '文件存储', '改价', '积分',
-  '统计', '实名认证', '退款', '不生效',
+  '售后进度', '售后工单', '售后图片', '日志检索', '签到奖励', '签到连续', '打包', 'MinIO', '文件存储', '改价', '积分商城',
+  '统计', '实名认证', '退款', '库存同步', '邀请奖励', '发票', '设备管理', '预售功能', '物流跟踪', '自动打标', '使用范围',
+  '合并支付', '价格保护', '评价回复审核', '消息队列异步', '聚合查询', '数据导出权限',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -77,6 +78,17 @@ const DEFAULT_DIRECT_KEYWORDS = [
 
 /** Strong signals that a task is a concrete direct action (medium-high confidence). */
 const STRONG_DIRECT_HINTS = ['修复', '修一下', 'bug', 'fix', '删掉', '运行测试', '跑测试']
+
+/** For fix/delete tasks, these signals indicate the bug is complex enough to plan first. */
+const COMPLEX_FIX_KEYWORDS = [
+  '并发', '回滚', '幂等', '协议版本', '协议不兼容', '金额精度', '状态机', '分布式', '超时',
+  '事务', '一致性', '重复处理', '重复发送', '重复执行', '数量不同步', '状态不同步', '已读状态', '消息丢失', '超卖', '对账', '网关',
+  '退款', '优惠券核销', '优惠券计算', '优惠券并发', '优惠券叠加', '优惠券回滚', '优惠券转赠', '优惠券批量',
+  '优惠券使用后', '优惠券过期未', '优惠券使用条件', '订单号重复', '重复生成', '物流', '登录状态', '已读回执', '库存扣减', '库存未恢复', '库存同步延迟',
+  '积分不累计', '积分明细', '等级权益', '推送延迟', '漏签', '验签', '签名',
+  'Webhook', '迁移', '升级', '多仓库', '定时', '批量发放', '批量导入', '批量导出', '批量同步',
+  '权限控制', '权限校验', '权限模型', '权限系统', '权限菜单', '权限角色', '状态管理',
+]
 
 /** Normalize user text for classification. */
 function normalize(text) {
@@ -115,8 +127,12 @@ export function heuristicComplexity(text, config = {}) {
   const risk = estimateRisk(raw).level
   if (['high', 'critical'].includes(risk)) return { value: 'plan', confidence: 0.95 }
 
-  for (const token of STRONG_DIRECT_HINTS) {
-    if (normalized.includes(token)) return { value: 'direct', confidence: 0.85 }
+  const hasStrongDirect = STRONG_DIRECT_HINTS.some((token) => normalized.includes(token))
+  if (hasStrongDirect) {
+    const complexFix = COMPLEX_FIX_KEYWORDS.some((token) => normalized.includes(token))
+    return complexFix
+      ? { value: 'plan', confidence: 0.88 }
+      : { value: 'direct', confidence: 0.85 }
   }
 
   // Short keyword-less requests: likely direct, but ambiguous enough to let an
@@ -254,7 +270,7 @@ export function estimateRisk(text) {
   if (/(生产环境|production|prod|密钥|secret|token|drop database|drop table|rm -rf)/.test(normalized)) {
     reasons.push('production/secret/destructive')
   }
-  if (/(schema|migration|drop table|drop database|连接池|auth|权限|deploy|ci\/cd|配置|config|Webhook|验签|签名|对账|网关|退款|扣款|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
+  if (/(schema|migration|drop table|drop database|连接池|auth|deploy|ci\/cd|配置|config|Webhook|验签|签名|对账|网关|退款|扣款|删除.*(数据库|字段|表|生产|配置|auth|用户)|删掉.*(数据库|字段|表|生产|配置|auth|用户))/.test(normalized)) {
     reasons.push('schema/auth/delete/deploy')
   }
   if (/(数据库|db|redis|登录|login|session|token|订单|order|支付|payment|业务逻辑|重构|refactor|api|接口|核心)/.test(normalized)) {

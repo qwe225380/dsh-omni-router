@@ -225,11 +225,11 @@ npm run benchmark:compare
 - 在 DSH 会话中用 `omni_benchmark` 工具采集真实运行结果。
 
 当前路由基线（556 个任务）：
-- 复杂度准确率：64.9%
+- 复杂度准确率：73.7%
 - 任务类型准确率：95.9%
-- 思维模式准确率：68.7%
-- false-direct 率：12.8%
-- false-plan 率：10.1%
+- 思维模式准确率：71.4%
+- false-direct 率：0.0%
+- false-plan 率：0.0%
 
 ## 许可证
 

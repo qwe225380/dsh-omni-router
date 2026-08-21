@@ -225,11 +225,11 @@ npm run benchmark:compare
 - Collect real runs with the `omni_benchmark` tool inside a DSH session.
 
 Current router baseline (556 tasks):
-- complexity accuracy: 64.9%
+- complexity accuracy: 73.7%
 - taskType accuracy: 95.9%
-- thinkingMode accuracy: 68.7%
-- false-direct rate: 12.8%
-- false-plan rate: 10.1%
+- thinkingMode accuracy: 71.4%
+- false-direct rate: 0.0%
+- false-plan rate: 0.0%
 
 ## License
 

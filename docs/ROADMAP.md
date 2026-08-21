@@ -13,13 +13,13 @@
 - [x] Benchmark 399 任务
 - [x] Benchmark 扩到 500+（当前 556 个路由任务）
 - [x] Context Graph 完整版（真实依赖图解析：import/call/extends/implements）
+- [x] 降低 false-direct / false-plan（556 任务上均为 0.0%）
 - [x] CI 多版本矩阵（Node 20/22/24）
 - [x] 兼容性文档
 
 ## 下一步（按优先级）
 
 - [ ] 多模型实测（DeepSeek / Qwen / 其它）
-- [ ] 降低 false-direct / false-plan
 - [ ] 发布正式版 1.0.0
 - [ ] 设置面板（Web UI）
 - [ ] 插件市场收录确认
