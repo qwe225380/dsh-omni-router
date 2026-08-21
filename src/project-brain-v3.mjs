@@ -5,8 +5,9 @@
  * symbol + graph/test expansion) to answer repository-level questions.
  */
 
-import { openProjectBrain, closeProjectBrain, indexSource, indexProjectGraph, queryRelevant } from './project-brain-v2.mjs'
+import { openProjectBrain, closeProjectBrain, indexSource, indexProjectGraph, indexSourceFromIndexed, indexProjectGraphFromIndexed, queryRelevant } from './project-brain-v2.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
+import { buildAstGraph } from './ast-provider.mjs'
 
 export function openProjectBrainV3(cwd) {
   return openProjectBrain(cwd)
@@ -25,6 +26,24 @@ export function indexProjectBrainV3(db, entries, files = {}) {
     indexedFiles: Object.keys(files || {}).length,
     entries: entries?.length || 0,
     graphEdges: graph.edgeCount,
+  }
+}
+
+/**
+ * Index a project with the optional Tree-sitter AST provider.
+ * Falls back to the lightweight parser when tree-sitter is unavailable.
+ */
+export async function indexProjectBrainV3WithAst(db, entries, files = {}) {
+  const graph = await buildAstGraph(files || {})
+  for (const [name, info] of Object.entries(graph.files || {})) {
+    indexSourceFromIndexed(db, name, info)
+  }
+  const stats = indexProjectGraphFromIndexed(db, graph.files || {})
+  return {
+    indexedFiles: Object.keys(files || {}).length,
+    entries: entries?.length || 0,
+    graphEdges: stats.edgeCount,
+    ast: true,
   }
 }
 

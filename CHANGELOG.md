@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.41.0] - 2026-08-19
+
+- Project Brain v3 接入 Tree-sitter AST：
+  - 新增 `indexProjectBrainV3WithAst`，用 `buildAstGraph` 把 AST 解析结果写入 SQLite brain
+  - v2 新增 `indexSourceFromIndexed` / `indexProjectGraphFromIndexed`，支持复用已解析图
+  - 保留原同步轻量索引作为回退
+
 ## [1.40.0] - 2026-08-19
 
 - 新增 `omni_ast_scan` 工具：

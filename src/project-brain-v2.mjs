@@ -11,7 +11,7 @@ import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { extractSymbolsFromText } from './project-brain.mjs'
-import { buildProjectGraph, extractDefinitions, extractImports, resolveModulePath } from './dependency-graph.mjs'
+import { buildEdgesFromIndexed, buildProjectGraph, extractDefinitions, extractImports, resolveModulePath } from './dependency-graph.mjs'
 
 export function openProjectBrain(cwd) {
   const dir = path.join(cwd, '.omni')
@@ -92,6 +92,45 @@ function resolveImport(fromFile, target) {
   if (!target.startsWith('.')) return target
   const base = path.posix.normalize(path.posix.join(path.posix.dirname(fromFile.replace(/\\/g, '/')), target))
   return base.replace(/\.(m?js|ts|jsx|tsx)$/i, '')
+}
+
+/**
+ * Write an already-parsed indexed entry (definitions/imports/calls/
+ * inheritance) into the SQLite brain for one file.
+ */
+export function indexSourceFromIndexed(db, filePath, info = {}) {
+  const now = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO files (path, content_hash, indexed_at)
+    VALUES (?, ?, ?)
+    ON CONFLICT(path) DO UPDATE SET content_hash=excluded.content_hash, indexed_at=excluded.indexed_at
+  `).run(filePath, String(info.contentHash || ''), now)
+
+  db.prepare('DELETE FROM symbols WHERE file = ?').run(filePath)
+  db.prepare('DELETE FROM edges WHERE from_file = ? OR to_file = ?').run(filePath, filePath)
+
+  for (const def of info.definitions || []) {
+    db.prepare('INSERT OR IGNORE INTO symbols (file, name, kind) VALUES (?, ?, ?)').run(filePath, def.name, def.kind)
+  }
+  for (const target of info.imports || []) {
+    if (!target) continue
+    const resolved = resolveImport(filePath, target)
+    db.prepare('INSERT OR IGNORE INTO edges (from_file, to_file, kind) VALUES (?, ?, ?)').run(filePath, resolved, 'import')
+  }
+}
+
+/**
+ * Write cross-file edges from an already-indexed files map into SQLite.
+ */
+export function indexProjectGraphFromIndexed(db, indexed = {}) {
+  const edges = buildEdgesFromIndexed(indexed)
+  let edgeCount = 0
+  const insert = db.prepare('INSERT OR IGNORE INTO edges (from_file, to_file, kind) VALUES (?, ?, ?)')
+  for (const edge of edges) {
+    insert.run(edge.from, edge.to, edge.kind)
+    edgeCount++
+  }
+  return { edgeCount, fileCount: Object.keys(indexed || {}).length }
 }
 
 /**
