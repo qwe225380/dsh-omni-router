@@ -217,6 +217,9 @@ npm run benchmark:engineering
 
 # Real agent-run OES comparison: Omni vs raw Flash
 npm run benchmark:compare
+
+# Show collected OmniBench coverage / missing pairs
+npm run benchmark:status
 ```
 
 - `benchmark/run.mjs` — router accuracy / false-direct / false-plan on `benchmark/tasks.json`.

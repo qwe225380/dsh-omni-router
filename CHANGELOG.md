@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.38.0] - 2026-08-19
+
+- 新增 `npm run benchmark:status`：命令行查看 OmniBench 采集覆盖率与缺失配对
+  - `benchmark/results-summary.mjs` 复用 `src/benchmark-results.mjs`
+
 ## [1.37.0] - 2026-08-19
 
 - OmniBench 数据管理工具：

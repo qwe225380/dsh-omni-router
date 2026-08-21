@@ -217,6 +217,9 @@ npm run benchmark:engineering
 
 # 真实 agent-run OES 对比：Omni vs raw Flash
 npm run benchmark:compare
+
+# 查看 OmniBench 采集覆盖率 / 缺失配对
+npm run benchmark:status
 ```
 
 - `benchmark/run.mjs` — `benchmark/tasks.json` 路由准确率 / false-direct / false-plan。
