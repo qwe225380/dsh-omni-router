@@ -1,8 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
 import {
   buildAstGraph,
+  collectSourceFiles,
   languageForPath,
   parseSourceWithTreeSitter,
 } from '../src/ast-provider.mjs'
@@ -49,4 +53,21 @@ test('buildAstGraph creates call and extends edges', async () => {
   const graph = await buildAstGraph(files)
   assert.ok(graph.edges.some((e) => e.from === 'src/controller' && e.to === 'src/auth' && e.kind === 'call'))
   assert.ok(graph.edges.some((e) => e.from === 'src/admin' && e.to === 'src/auth' && e.kind === 'extends'))
+})
+
+test('collectSourceFiles finds supported source files and skips ignored dirs', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ast-scan-'))
+  try {
+    fs.mkdirSync(path.join(root, 'src'), { recursive: true })
+    fs.mkdirSync(path.join(root, 'node_modules'), { recursive: true })
+    fs.writeFileSync(path.join(root, 'src', 'a.js'), 'export function a() {}')
+    fs.writeFileSync(path.join(root, 'src', 'b.ts'), 'export function b() {}')
+    fs.writeFileSync(path.join(root, 'node_modules', 'skip.js'), 'skip')
+    const files = collectSourceFiles(root)
+    assert.ok(files[path.join(root, 'src', 'a.js')])
+    assert.ok(files[path.join(root, 'src', 'b.ts')])
+    assert.ok(!files[path.join(root, 'node_modules', 'skip.js')])
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
 })

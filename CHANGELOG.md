@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.40.0] - 2026-08-19
+
+- 新增 `omni_ast_scan` 工具：
+  - 递归扫描 workspace 源码（自动跳过 node_modules/.git/.omni/dist/build 等）
+  - 使用 Tree-sitter 构建依赖/调用/继承图并返回统计与边样本
+  - 未安装 WASM 时回退到轻量解析
+
 ## [1.39.0] - 2026-08-19
 
 - 可选 Tree-sitter AST Provider：

@@ -34,6 +34,7 @@ import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
+import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
 
 export {
   buildContextGraph,
@@ -1249,6 +1250,38 @@ export function apply(ctx, config = {}) {
       const lines = [`Imported ${imported.length} record(s).`]
       if (imported.length) lines.push(...imported.map((f) => `- ${f}`))
       if (errors.length) lines.push('Errors:', ...errors)
+      return lines.join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_ast_scan',
+    description: 'Scan source files in the workspace with Tree-sitter (or lightweight fallback) and return graph/definition statistics.',
+    parameters: {
+      type: 'object',
+      properties: {
+        limit: { type: 'number', description: 'Maximum number of source files to scan (default 200)' },
+      },
+    },
+    async execute(args) {
+      const session = currentSession()
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const files = collectSourceFiles(cwd, { limit: Number(args?.limit) || 200 })
+      if (!Object.keys(files).length) return 'No supported source files found to scan.'
+      const graph = await buildAstGraph(files)
+      const defCount = Object.values(graph.files || {}).reduce((sum, info) => sum + (info.definitions?.length || 0), 0)
+      const lines = [
+        `AST scan: ${Object.keys(files).length} files, ${graph.edges.length} edges, ${defCount} definitions`,
+        '',
+      ]
+      const byKind = {}
+      for (const edge of graph.edges.slice(0, 20)) {
+        byKind[edge.kind] = (byKind[edge.kind] || 0) + 1
+        lines.push(`- ${edge.from} ${edge.kind}-> ${edge.to}`)
+      }
+      if (graph.edges.length > 20) lines.push(`… and ${graph.edges.length - 20} more edges`)
+      lines.push('', 'Edge kinds:', Object.entries(byKind).map(([k, v]) => `${k}=${v}`).join(', '))
       return lines.join('\n')
     },
   })

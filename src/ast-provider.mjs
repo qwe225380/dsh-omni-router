@@ -48,6 +48,40 @@ const LANGUAGE_BY_EXT = {
 let parserPromise = null
 const languageCache = new Map()
 
+const SKIP_DIRS = new Set(['node_modules', '.git', '.omni', 'dist', 'build', 'coverage', '.dsh', '.turbo', '.cache'])
+
+export function collectSourceFiles(cwd, options = {}) {
+  const limit = Number(options.limit) || 200
+  const files = {}
+  const walk = (dir) => {
+    if (Object.keys(files).length >= limit) return
+    let entries
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      if (Object.keys(files).length >= limit) return
+      const full = path.join(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (!SKIP_DIRS.has(entry.name)) walk(full)
+      } else if (entry.isFile()) {
+        const ext = path.extname(entry.name).toLowerCase()
+        if (LANGUAGE_BY_EXT[ext]) {
+          try {
+            files[full] = fs.readFileSync(full, 'utf8')
+          } catch {
+            // skip unreadable files
+          }
+        }
+      }
+    }
+  }
+  walk(cwd)
+  return files
+}
+
 export function languageForPath(filePath) {
   const ext = path.extname(String(filePath || '')).toLowerCase()
   return LANGUAGE_BY_EXT[ext] || 'javascript'

@@ -60,7 +60,7 @@
 - **Context Budget**：`buildContextBudget` 按复杂度/风险分配上下文预算。
 - **Next Best Action**：`decideNextAction` 作为 Agent Runtime 核心 API，根据状态返回下一步行动。
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
-- **Project Brain v1/v2/v3**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`，并解析真实 import/call/extends/implements 图边；可选安装 `web-tree-sitter` + `tree-sitter-wasms` 后自动升级为 Tree-sitter AST 解析；v3 在 SQLite 之上叠加 Hybrid Retrieval 沿真实图双向扩展查询。
+- **Project Brain v1/v2/v3**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`，并解析真实 import/call/extends/implements 图边；可选安装 `web-tree-sitter` + `tree-sitter-wasms` 后自动升级为 Tree-sitter AST 解析（也可用 `omni_ast_scan` 手动扫描）；v3 在 SQLite 之上叠加 Hybrid Retrieval 沿真实图双向扩展查询。
 - **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
 - **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` 预算。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
