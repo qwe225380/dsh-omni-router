@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.31.0] - 2026-08-19
+
+- Evidence Protocol 接入 QA 判定：
+  - `isQaPass` 支持结构化 JSON evidence（commands/files/tests/findings），不再只信文本 `QA: PASS`
+  - 新增 `extractEvidenceFromOutput` 解析外层 JSON
+
 ## [1.30.0] - 2026-08-19
 
 - OmniBench 连续评估：

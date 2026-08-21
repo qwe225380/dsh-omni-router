@@ -89,6 +89,13 @@ test('isQaPass requires QA PASS and rejects QA FAIL', () => {
   assert.equal(isQaPass('ran tests'), false)
 })
 
+test('isQaPass accepts structured evidence without text PASS', () => {
+  const output = '{"tests":[{"command":"npm test","exitCode":0,"total":5,"passed":5,"failed":0}]}'
+  assert.equal(isQaPass(output), true)
+  const failOutput = '{"tests":[{"command":"npm test","exitCode":1,"total":5,"passed":4,"failed":1}]}'
+  assert.equal(isQaPass(failOutput), false)
+})
+
 test('hasCriticalFindings flags critical/high unless review passes', () => {
   assert.equal(hasCriticalFindings('HIGH: missing validation'), true)
   assert.equal(hasCriticalFindings('REVIEW: PASS\nno critical findings'), false)

@@ -9,6 +9,7 @@
  */
 
 import { buildJudgePrompt, isJudgePass } from './judge.mjs'
+import { evidencePass } from './evidence.mjs'
 
 const DEFAULT_MAX_REPAIRS = 1
 const MAX_REPAIR_CAP = 3
@@ -167,9 +168,42 @@ Hunt specifically for:
 Return findings by severity (critical/high/medium/low) with file:line or evidence. If no critical/high findings, end with "REVIEW: PASS". Otherwise end with "REVIEW: FAIL".`
 }
 
+export function extractEvidenceFromOutput(output) {
+  const text = String(output || '').trim()
+  const evidence = { commands: [], files: [], tests: [], findings: [] }
+  const candidates = []
+  try { candidates.push(JSON.parse(text)) } catch { /* not pure JSON */ }
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start !== -1 && end > start) {
+    try { candidates.push(JSON.parse(text.slice(start, end + 1))) } catch { /* ignore */ }
+  }
+  const greedy = text.match(/\{[\s\S]*\}/)
+  if (greedy) {
+    try { candidates.push(JSON.parse(greedy[0])) } catch { /* ignore */ }
+  }
+  for (const obj of candidates) {
+    if (Array.isArray(obj.commands)) evidence.commands.push(...obj.commands)
+    if (Array.isArray(obj.files)) evidence.files.push(...obj.files)
+    if (Array.isArray(obj.tests)) evidence.tests.push(...obj.tests)
+    if (Array.isArray(obj.findings)) evidence.findings.push(...obj.findings)
+    if (Array.isArray(obj.evidence)) {
+      for (const e of obj.evidence) {
+        if (e?.type === 'command') evidence.commands.push(e)
+        else if (e?.type === 'file') evidence.files.push(e)
+        else if (e?.type === 'test') evidence.tests.push(e)
+        else if (e?.type === 'finding') evidence.findings.push(e)
+      }
+    }
+  }
+  return evidence
+}
+
 export function isQaPass(output) {
   const text = String(output || '')
-  return /QA:\s*PASS/i.test(text) && !/QA:\s*FAIL/i.test(text)
+  if (/QA:\s*FAIL/i.test(text)) return false
+  if (/QA:\s*PASS/i.test(text)) return true
+  return evidencePass(extractEvidenceFromOutput(text))
 }
 
 export function hasCriticalFindings(output) {
