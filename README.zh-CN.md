@@ -62,7 +62,7 @@
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
 - **Project Brain v1/v2/v3**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`，并解析真实 import/call/extends/implements 图边；可选安装 `web-tree-sitter` + `tree-sitter-wasms` 后自动升级为 Tree-sitter AST 解析（`indexProjectBrainV3WithAst` / `omni_ast_scan`）；v3 在 SQLite 之上叠加 Hybrid Retrieval 沿真实图双向扩展查询。
 - **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
-- **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` 预算。
+- **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` / `maxWallClockMs` 预算。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。
 - **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。

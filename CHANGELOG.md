@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.42.0] - 2026-08-19
+
+- Runtime 补齐 wall-clock stop condition：
+  - `runMissionLoop` / `runDagLoop` 支持 `maxWallClockMs`
+  - 超时返回 `max_wall_clock`，避免长任务无限挂起
+  - 新增对应测试
+
 ## [1.41.0] - 2026-08-19
 
 - Project Brain v3 接入 Tree-sitter AST：

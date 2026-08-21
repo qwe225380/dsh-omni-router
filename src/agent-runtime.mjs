@@ -35,6 +35,7 @@ export function createRuntimeState(mission, options = {}) {
       maxRepairs: Number(options.maxRepairs) || 5,
       maxTokens: Number(options.maxTokens) || 200000,
       maxCost: Number(options.maxCost) || 2,
+      maxWallClockMs: Number(options.maxWallClockMs) || 0,
     },
   }
 }
@@ -97,8 +98,13 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
   let current = state
   const budget = current.budgets || {}
   const maxGlobalSteps = maxSteps ?? budget.maxGlobalSteps ?? 50
+  const startTime = Date.now()
 
   while (current.status === 'active') {
+    if (budget.maxWallClockMs > 0 && Date.now() - startTime >= budget.maxWallClockMs) {
+      current = { ...current, status: 'max_wall_clock' }
+      break
+    }
     if (current.globalStep >= maxGlobalSteps) {
       current = { ...current, status: 'max_steps' }
       break
@@ -131,12 +137,16 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
  * DAG-driven runtime: execute ready tasks from a Mission DAG, optionally in
  * parallel, and mutate the DAG on failures.
  */
-export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel = 1 } = {}) {
+export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel = 1, maxWallClockMs = 0 } = {}) {
   let current = dag
   let step = 0
   const actions = []
+  const startTime = Date.now()
 
   while (step < maxSteps) {
+    if (maxWallClockMs > 0 && Date.now() - startTime >= maxWallClockMs) {
+      return { dag: current, status: 'max_wall_clock', actions }
+    }
     const ready = getReadyTasks(current)
     if (ready.length === 0) break
     const batch = ready.slice(0, maxParallel)
