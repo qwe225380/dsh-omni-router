@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.53.0] - 2026-08-21
+
+- OmniBench v2 离线/本地支持：
+  - `prepare.mjs` 对本地 git 路径 clone 加引号，支持含空格路径
+  - 新增 `manifest.local.example.json`（指向现有 `Omni group` fixture）
+  - README 增加本地/离线使用说明
+
 ## [1.52.0] - 2026-08-21
 
 - OmniBench v2 工具链增强：

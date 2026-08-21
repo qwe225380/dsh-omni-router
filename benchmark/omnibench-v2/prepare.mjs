@@ -24,7 +24,7 @@ function main() {
     const dir = path.join(workDir, m.id)
     if (!fs.existsSync(path.join(dir, '.git'))) {
       console.log(`cloning ${m.repo} -> ${dir}`)
-      execSync(`git clone ${m.repo} ${dir}`, { stdio: 'inherit' })
+      execSync(`git clone "${m.repo}" "${dir}"`, { stdio: 'inherit' })
     }
     console.log(`checkout ${m.id} @ ${m.commit}`)
     execSync(`git -C "${dir}" checkout ${m.commit}`, { stdio: 'inherit' })

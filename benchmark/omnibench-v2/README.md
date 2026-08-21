@@ -37,3 +37,18 @@ See `manifest.example.json`.
 `node benchmark/omnibench-v2/runner-stub.mjs <manifest.json>` validates the
 manifest and prints a run plan. Actual execution will be driven by DSH
 subagents in a future integration.
+
+## Local / offline usage
+
+If you don't have real GitHub repos or network access, you can use a local git
+repo as the benchmark target. `manifest.local.example.json` points at the
+existing `Omni group` fixture:
+
+```bash
+npm run omnibench:v2:prepare -- benchmark/omnibench-v2/manifest.local.example.json
+npm run omnibench:v2:plan -- benchmark/omnibench-v2/manifest.local.example.json
+```
+
+`git clone` works with local paths, so no network is required. Replace `repo`
+with any local git repository path and `commit` with a commit that exists in
+that repo.

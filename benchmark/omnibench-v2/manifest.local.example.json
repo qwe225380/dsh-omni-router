@@ -1,0 +1,14 @@
+[
+  {
+    "id": "local-store-app",
+    "repo": "D:/dsh/dsh workspace/Omni group",
+    "commit": "5bfb4da47edf026819b5a7f959b415147982b00b",
+    "language": "javascript",
+    "framework": "node",
+    "task": "Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.",
+    "acceptance": ["pagination returns correct last page", "existing tests pass"],
+    "hiddenTests": [],
+    "timeoutMs": 600000,
+    "runs": 3
+  }
+]
