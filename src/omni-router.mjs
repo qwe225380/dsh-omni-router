@@ -1081,6 +1081,68 @@ export function apply(ctx, config = {}) {
   })
 
   registerTool({
+    name: 'omni_benchmark_all',
+    description: 'Run all tasks from benchmark/real-tasks.json in the current workspace for one arm (raw or omni) and save results.',
+    parameters: {
+      type: 'object',
+      properties: {
+        arm: { type: 'string', enum: ['raw', 'omni'], description: 'raw or omni' },
+      },
+      required: ['arm'],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      const subagents = ctx.get('subagents') || ctx.subagents
+      if (!session || !agent || !subagents?.start) return 'Benchmark batch requires an active session with subagents.'
+      const arm = String(args?.arm || '').toLowerCase()
+      if (!['raw', 'omni'].includes(arm)) return 'arm must be raw or omni.'
+      const cwd = session.meta?.cwd || session.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const tasksPath = path.join(cwd, 'benchmark', 'real-tasks.json')
+      if (!fs.existsSync(tasksPath)) return `real-tasks.json not found: ${tasksPath}`
+      const tasks = JSON.parse(fs.readFileSync(tasksPath, 'utf8'))
+      const results = []
+      for (const t of tasks) {
+        const task = String(t.task || '')
+        const criteria = Array.isArray(t.criteria) ? t.criteria : []
+        const prompt = arm === 'raw'
+          ? `Task:\n${task}\n\nAcceptance criteria:\n${criteria.map((c) => `- ${c}`).join('\n')}\n\nWork on the task. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
+          : `Task:\n${task}\n\nAcceptance criteria:\n${criteria.map((c) => `- ${c}`).join('\n')}\n\n${buildMethodologyDirective(classifyTaskType(task))}\n\nVerification: run relevant checks and report evidence. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
+        try {
+          const start = Date.now()
+          const run = await subagents.start('spawn', {
+            label: `benchmark-${t.id}-${arm}`,
+            prompt: [{ type: 'text', text: prompt }],
+            parent: agent,
+            maxDepth: 1,
+          })
+          const result = await run.result
+          const output = (Array.isArray(result.output) ? result.output : [])
+            .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+            .map((block) => block.text)
+            .join('')
+          try { await run.dispose() } catch { /* best-effort */ }
+          const success = /BENCHMARK:\s*PASS/i.test(output)
+          const record = {
+            id: t.id, arm, task, level: t.level || 'L1 Single-file', success,
+            firstPass: success ? 1 : 0, finalPass: success ? 1 : 0, regressionRate: 0,
+            humanInterventions: 0, toolCalls: 0, repairCount: 0, failureRecoveryRate: success ? 1 : 0,
+            tokens: 0, cost: 0, durationMs: Date.now() - start, output: output.slice(0, 2000),
+          }
+          const dir = path.join(cwd, 'benchmark', 'results', arm)
+          fs.mkdirSync(dir, { recursive: true })
+          fs.writeFileSync(path.join(dir, `${t.id}.json`), JSON.stringify(record, null, 2), 'utf8')
+          results.push(`${t.id}: ${success ? 'PASS' : 'FAIL'}`)
+        } catch (error) {
+          results.push(`${t.id}: ERROR ${error?.message || error}`)
+        }
+      }
+      return `Benchmark batch (${arm}) complete:\n${results.join('\n')}`
+    },
+  })
+
+  registerTool({
     name: 'omni_mission_run',
     description: 'Run a Mission Planner loop with real subagents: Observe → Think → Act → Replan until completed or maxSteps.',
     parameters: {

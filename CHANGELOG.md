@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.29.0] - 2026-08-19
+
+- OmniBench 采集基础设施：
+  - `benchmark/real-tasks.json` 扩充到 10 个真实任务（L1-L10）
+  - 新增 `omni_benchmark_all` 工具：在 DSH 会话内批量跑 raw/omni 并写入 `benchmark/results/<arm>/`
+
 ## [1.28.0] - 2026-08-19
 
 - 继续推进优化3/4.md：

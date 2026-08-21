@@ -28,5 +28,35 @@
     "level": "L7 Migration",
     "task": "Migrate the orders table to add an idempotency key column with a rollback path.",
     "criteria": ["migration applies", "rollback works", "existing queries pass"]
+  },
+  {
+    "id": "real-006",
+    "level": "L4 Multi-file feature",
+    "task": "Add a user notification preferences page with backend persistence and a toggle UI.",
+    "criteria": ["preferences persist", "toggle updates UI", "tests pass"]
+  },
+  {
+    "id": "real-007",
+    "level": "L6 Cross-service",
+    "task": "Add request tracing headers across the API gateway and two downstream services.",
+    "criteria": ["trace id propagates", "logs include trace id", "existing tests pass"]
+  },
+  {
+    "id": "real-008",
+    "level": "L2 Small bug",
+    "task": "Fix the currency formatting bug where negative amounts show an extra minus sign.",
+    "criteria": ["negative amounts formatted correctly", "unit tests pass"]
+  },
+  {
+    "id": "real-009",
+    "level": "L9 Long-horizon",
+    "task": "Add a weekly report job that aggregates orders, sends an email, and records a run history row.",
+    "criteria": ["job runs weekly", "email contains summary", "run history is recorded"]
+  },
+  {
+    "id": "real-010",
+    "level": "L10 Autonomous",
+    "task": "Refactor a monolith checkout module into a checkout service with API, persistence, and integration tests, preserving behavior.",
+    "criteria": ["service extracted", "behavior preserved", "integration tests pass", "rollback path documented"]
   }
 ]
