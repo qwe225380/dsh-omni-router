@@ -33,6 +33,38 @@ export function registerCapability(brain, capability = {}) {
   }
 }
 
+export function discoverCapabilitiesFromTools(toolNames = []) {
+  const map = {
+    browser_open: ['browser.automation', 'browser.navigation'],
+    browser_screenshot: ['browser.screenshot', 'frontend.validation'],
+    browser_click: ['browser.interaction'],
+    browser_type: ['browser.interaction'],
+    browser_eval: ['browser.evaluation'],
+    read: ['repository.read'],
+    glob: ['repository.search'],
+    grep: ['repository.search'],
+    edit: ['source.write'],
+    write: ['source.write'],
+    skill: ['skill.load'],
+  }
+  const grouped = {}
+  for (const name of toolNames) {
+    for (const cap of map[name] || []) {
+      if (!grouped[name]) grouped[name] = []
+      grouped[name].push(cap)
+    }
+  }
+  return Object.entries(grouped).map(([id, caps]) => ({ id, type: 'tool', capabilities: caps }))
+}
+
+export function autoPopulateCapabilityBrain(brain, toolNames = []) {
+  let next = brain
+  for (const cap of discoverCapabilitiesFromTools(toolNames)) {
+    next = registerCapability(next, cap)
+  }
+  return next
+}
+
 export function recordCapabilityOutcome(brain, id, success) {
   return {
     ...brain,

@@ -23,6 +23,7 @@ export function normalizeRun(raw = {}) {
     toolCalls: Number(raw.toolCalls ?? 0),
     repairCount: Number(raw.repairCount ?? 0),
     failureRecoveryRate: Number(raw.failureRecoveryRate ?? 0),
+    falseCompletionRate: Number(raw.falseCompletionRate ?? 0),
     tokens: Number(raw.tokens ?? 0),
     cost: Number(raw.cost ?? 0),
     durationMs: Number(raw.durationMs ?? 0),

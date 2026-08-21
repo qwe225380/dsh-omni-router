@@ -14,6 +14,7 @@ test('normalizeRun fills default metrics', () => {
   assert.equal(run.firstPass, 1)
   assert.equal(run.regressionRate, 0)
   assert.equal(run.cost, 0)
+  assert.equal(run.falseCompletionRate, 0)
 })
 
 test('scoreRun attaches OES', () => {

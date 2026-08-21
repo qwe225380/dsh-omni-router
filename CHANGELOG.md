@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.27.0] - 2026-08-19
+
+- 继续推进优化3/4.md：
+  - Project Brain v3：新增 `src/project-brain-v3.mjs`，SQLite + Hybrid Retrieval 图增强查询
+  - Task Compiler LLM 化：`compileTaskWithLLM` 可用 LLM 生成结构化 brief，失败回退启发式
+  - Capability Brain 自动发现：`autoPopulateCapabilityBrain` 从已安装工具名自动注册能力
+  - Benchmark runner 支持 `falseCompletionRate`
+
 ## [1.26.0] - 2026-08-19
 
 - 继续推进优化3/4.md：

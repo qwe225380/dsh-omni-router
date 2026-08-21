@@ -60,13 +60,13 @@
 - **Context Budget**：`buildContextBudget` 按复杂度/风险分配上下文预算。
 - **Next Best Action**：`decideNextAction` 作为 Agent Runtime 核心 API，根据状态返回下一步行动。
 - **Repository Snapshot**：`buildRepositorySnapshot` 识别包管理器、测试框架、框架、入口点。
-- **Project Brain v1/v2**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；`buildTaskContext` 生成有界任务上下文；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`。
+- **Project Brain v1/v2/v3**：`buildProjectBrain` 聚合仓库快照、符号索引、依赖/测试映射、工程约定；v2 用 SQLite + 轻量 AST + git graph 持久化到 `.omni/project-brain.db`；v3 在 SQLite 之上叠加 Hybrid Retrieval 图增强查询。
 - **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
 - **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxTokens` / `maxCost` 预算。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL，不再只信文本。
-- **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts。
-- **Capability Brain**：`src/capability-brain.mjs` 以 provider-agnostic 方式注册/解析/选择能力，缺失时优雅降级。
+- **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。
+- **Capability Brain**：`src/capability-brain.mjs` 以 provider-agnostic 方式注册/解析/选择能力，缺失时优雅降级；支持从工具名自动发现能力。
 - **Role capability sandbox**：QA / Reviewer / Judge 通过 `toolFilter` 禁止 edit/write/shell，权限来自 Runtime 而非模型自觉。
 - **Mission DAG**：`src/mission-dag.mjs` 用 Task 依赖图代替固定模板，支持插入任务、就绪调度、并行批次、失败时插入 repair。
 - **DAG-driven Runtime**：`runDagLoop` 真正按 DAG 执行 ready tasks，支持 `maxParallel` 并行。

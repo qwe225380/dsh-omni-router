@@ -113,3 +113,42 @@ function inferArtifacts(text, taskType) {
   if (taskType === 'refactor') return ['refactored code', 'test results', 'diff summary']
   return ['deliverable', 'verification evidence']
 }
+
+export async function compileTaskWithLLM(taskText, { llm, agent } = {}) {
+  const fallback = compileTask(taskText)
+  if (!llm || !agent?.options?.provider || !agent?.options?.model) return fallback
+  try {
+    const system = 'You are a task compiler. Return ONLY JSON with fields: taskType, objective, constraints, nonGoals, acceptanceCriteria, hiddenAssumptions, ambiguities, requiredInvariants, risk, expectedArtifacts.'
+    const stream = llm.stream({
+      provider: agent.options.provider,
+      model: agent.options.model,
+      system,
+      messages: [{ role: 'user', content: [{ type: 'text', text: taskText }] }],
+      maxTokens: 600,
+    })
+    let output = ''
+    for await (const chunk of stream) {
+      if (chunk.type === 'text-delta') output += chunk.text
+    }
+    const start = output.indexOf('{')
+    const end = output.lastIndexOf('}')
+    if (start === -1 || end <= start) return fallback
+    const parsed = JSON.parse(output.slice(start, end + 1))
+    return {
+      taskText: String(taskText || ''),
+      taskType: parsed.taskType || fallback.taskType,
+      objective: parsed.objective || fallback.objective,
+      constraints: Array.isArray(parsed.constraints) ? parsed.constraints : fallback.constraints,
+      nonGoals: Array.isArray(parsed.nonGoals) ? parsed.nonGoals : fallback.nonGoals,
+      acceptanceCriteria: Array.isArray(parsed.acceptanceCriteria) ? parsed.acceptanceCriteria : fallback.acceptanceCriteria,
+      hiddenAssumptions: Array.isArray(parsed.hiddenAssumptions) ? parsed.hiddenAssumptions : fallback.hiddenAssumptions,
+      ambiguities: Array.isArray(parsed.ambiguities) ? parsed.ambiguities : fallback.ambiguities,
+      requiredInvariants: Array.isArray(parsed.requiredInvariants) ? parsed.requiredInvariants : fallback.requiredInvariants,
+      risk: parsed.risk || fallback.risk,
+      expectedArtifacts: Array.isArray(parsed.expectedArtifacts) ? parsed.expectedArtifacts : fallback.expectedArtifacts,
+      confidence: 0.9,
+    }
+  } catch {
+    return fallback
+  }
+}

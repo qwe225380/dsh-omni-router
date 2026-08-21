@@ -28,7 +28,7 @@ import { buildMission, formatMissionPlan } from './mission-planner.mjs'
 import { runDagLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
-import { compileTask } from './task-compiler.mjs'
+import { compileTaskWithLLM } from './task-compiler.mjs'
 import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
@@ -1103,7 +1103,7 @@ export function apply(ctx, config = {}) {
       const maxSteps = Number(args?.maxSteps) || 20
       const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
-      const brief = compileTask(task, { taskType })
+      const brief = await compileTaskWithLLM(task, { llm: ctx.get('llm') || ctx.llm, agent })
       const dag = createMissionDag(mission)
       const finalDag = await runDagLoop(dag, {
         act: async (action) => {

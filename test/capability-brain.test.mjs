@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  autoPopulateCapabilityBrain,
   createCapabilityBrain,
   fallbackForMissing,
   formatCapabilityBrain,
@@ -61,4 +62,11 @@ test('recordCapabilityOutcome updates success rate and lastUsed', () => {
   const cap = brain.capabilities.find((c) => c.id === 'browser')
   assert.ok(cap.successRate > 0.8)
   assert.ok(cap.lastUsed)
+})
+
+test('autoPopulateCapabilityBrain discovers capabilities from tool names', () => {
+  let brain = createCapabilityBrain()
+  brain = autoPopulateCapabilityBrain(brain, ['browser_open', 'browser_screenshot', 'grep'])
+  assert.ok(brain.capabilities.some((c) => c.id === 'browser_open'))
+  assert.ok(brain.capabilities.some((c) => c.capabilities.includes('browser.screenshot')))
 })
