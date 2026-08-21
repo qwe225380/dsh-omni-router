@@ -1103,6 +1103,7 @@ export function apply(ctx, config = {}) {
       type: 'object',
       properties: {
         arm: { type: 'string', enum: ['raw', 'omni'], description: 'raw or omni' },
+        maxParallel: { type: 'number', description: 'How many benchmark subagents to run concurrently (default 1)' },
       },
       required: ['arm'],
     },
@@ -1120,8 +1121,9 @@ export function apply(ctx, config = {}) {
       const resolvedTasksPath = fs.existsSync(tasksPath) ? tasksPath : bundledTasksPath
       if (!fs.existsSync(resolvedTasksPath)) return `real-tasks.json not found in workspace (${tasksPath}) or bundle (${bundledTasksPath})`
       const tasks = JSON.parse(fs.readFileSync(resolvedTasksPath, 'utf8'))
+      const maxParallel = Math.max(1, Number(args?.maxParallel) || 1)
       const results = []
-      for (const t of tasks) {
+      const runOne = async (t) => {
         const task = String(t.task || '')
         const criteria = Array.isArray(t.criteria) ? t.criteria : []
         const prompt = arm === 'raw'
@@ -1155,6 +1157,10 @@ export function apply(ctx, config = {}) {
         } catch (error) {
           results.push(`${t.id}: ERROR ${error?.message || error}`)
         }
+      }
+      for (let i = 0; i < tasks.length; i += maxParallel) {
+        const batch = tasks.slice(i, i + maxParallel)
+        await Promise.all(batch.map((t) => runOne(t)))
       }
       return `Benchmark batch (${arm}) complete:\n${results.join('\n')}`
     },

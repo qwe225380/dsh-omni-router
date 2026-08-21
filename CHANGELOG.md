@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.35.0] - 2026-08-19
+
+- OmniBench 批量采集提速：
+  - `omni_benchmark_all` 新增 `maxParallel` 参数，可并发跑多个 benchmark 子代理（默认 1）
+
 ## [1.34.0] - 2026-08-19
 
 - Router 启发式调优（556 任务基准）：
