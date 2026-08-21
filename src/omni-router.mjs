@@ -30,8 +30,10 @@ import { runDagLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTaskWithLLM } from './task-compiler.mjs'
-import { createMissionDag, formatMissionDag } from './mission-dag.mjs'
+import { bindCapabilitiesToDag, createMissionDag, formatMissionDag } from './mission-dag.mjs'
+import { autoPopulateCapabilityBrain, createCapabilityBrain } from './capability-brain.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
+import { retrieveContext } from './hybrid-retrieval.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
@@ -195,6 +197,8 @@ export function readStateFromEvents(events) {
         planRequested: !!data.planRequested,
         directOverride: !!data.directOverride,
         memory: data.memory || null,
+        taskDecision: data.taskDecision || null,
+        taskDecisionVersion: data.taskDecisionVersion || null,
       }
     }
   }
@@ -563,6 +567,8 @@ export function apply(ctx, config = {}) {
         planRequested: !!state.planRequested,
         directOverride: !!state.directOverride,
         memory: state.memory || null,
+        taskDecision: state.taskDecision || null,
+        taskDecisionVersion: state.taskDecision?.version || state.taskDecisionVersion || null,
       })
     } catch {
       // Persistence is best-effort; the in-memory state still works.
@@ -579,6 +585,23 @@ export function apply(ctx, config = {}) {
     const current = ctx.get('agent')
     if (current && current.session === session) return current
     return agents.get(session.id)
+  }
+
+  async function collectToolNames(toolsService) {
+    if (!toolsService) return []
+    if (Array.isArray(toolsService)) {
+      return toolsService.map((t) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+    }
+    for (const method of ['list', 'names', 'keys']) {
+      if (typeof toolsService[method] !== 'function') continue
+      try {
+        const raw = await toolsService[method]()
+        if (Array.isArray(raw)) {
+          return raw.map((t) => (typeof t === 'string' ? t : t?.name)).filter(Boolean)
+        }
+      } catch { /* try next */ }
+    }
+    return []
   }
 
   function planMode() {
@@ -604,13 +627,13 @@ export function apply(ctx, config = {}) {
     try {
       const root = await fs.resolve('.', { cwd })
       const entries = await fs.listDir(root)
-      const graph = taskText
+      const initialGraph = taskText
         ? buildContextGraph(entries, taskText)
         : { relevant: selectKeyFilesForTask(taskType, entries), tests: [], symbols: [] }
       const fileNames = new Set((entries || []).filter((entry) => entry.type === 'file').map((entry) => entry.name))
-      const keyFiles = graph.relevant.filter((name) => fileNames.has(name))
       const files = {}
-      for (const name of keyFiles) {
+      const readFile = async (name) => {
+        if (files[name] !== undefined) return
         try {
           const target = await fs.resolve(name, { cwd })
           files[name] = await fs.readText(target)
@@ -618,17 +641,41 @@ export function apply(ctx, config = {}) {
           // Ignore unreadable files; context collection is best-effort.
         }
       }
+      const keyFiles = initialGraph.relevant.filter((name) => fileNames.has(name)).slice(0, 8)
+      for (const name of keyFiles) await readFile(name)
+
       if (taskText) {
+        let graphAdj = null
+        const buildGraphAdj = async () => {
+          try {
+            const ast = await buildAstGraph(files)
+            const adj = {}
+            for (const edge of ast.edges || []) {
+              if (!adj[edge.from]) adj[edge.from] = []
+              adj[edge.from].push({ to: edge.to, kind: edge.kind })
+            }
+            graphAdj = adj
+          } catch {
+            graphAdj = null
+          }
+        }
+        await buildGraphAdj()
+        const retrieval = retrieveContext(taskText, entries, files, { graph: graphAdj })
+        const ranked = retrieval.candidates.map((c) => c.name).filter((name) => fileNames.has(name))
+        for (const name of ranked) await readFile(name)
+        await buildGraphAdj()
+
         if (config.progressiveContext !== false) {
           return buildProgressiveContext(taskText, entries, files, {
-            level: Number(config.contextExpansionLevel) || 2,
-            maxFiles: 3,
-            maxFileChars: 800,
+            level: Number(config.contextExpansionLevel) || 3,
+            maxFiles: 8,
+            maxFileChars: 2000,
+            graph: graphAdj,
           })
         }
-        return buildTaskContext(taskText, entries, files, { maxTotalChars: 3000 })
+        return buildTaskContext(taskText, entries, files, { maxTotalChars: 8000 })
       }
-      return buildContextSummary(entries, files, { maxTotalChars: 3000 })
+      return buildContextSummary(entries, files, { maxTotalChars: 5000 })
     } catch {
       return ''
     }
@@ -1295,6 +1342,13 @@ export function apply(ctx, config = {}) {
         task: { type: 'string', description: 'Mission task description' },
         taskType: { type: 'string', enum: ['bugfix', 'feature', 'refactor', 'test', 'review', 'other'], description: 'Optional task type' },
         maxSteps: { type: 'number', description: 'Max loop steps (default 20)' },
+        maxParallel: { type: 'number', description: 'Max tasks to run concurrently (default 1)' },
+        maxTokens: { type: 'number', description: 'Max token budget (0 = unlimited)' },
+        maxCost: { type: 'number', description: 'Max cost budget (0 = unlimited)' },
+        maxToolCalls: { type: 'number', description: 'Max tool calls (0 = unlimited)' },
+        maxRepairs: { type: 'number', description: 'Max repairs before blocking (0 = unlimited)' },
+        maxReplans: { type: 'number', description: 'Max replans before blocking (0 = unlimited)' },
+        maxWallClockMs: { type: 'number', description: 'Max wall-clock time in ms (0 = unlimited)' },
       },
       required: ['task'],
     },
@@ -1310,7 +1364,12 @@ export function apply(ctx, config = {}) {
       const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
       const brief = await compileTaskWithLLM(task, { llm: ctx.get('llm') || ctx.llm, agent })
-      const dag = createMissionDag(mission)
+
+      const toolsService = ctx.get('tools') || ctx.tools
+      const toolNames = await collectToolNames(toolsService)
+      const capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      const dag = bindCapabilitiesToDag(createMissionDag(mission), capabilityBrain)
+
       const finalDag = await runDagLoop(dag, {
         act: async (action) => {
           const goal = action.task?.goal || action.taskId || ''
@@ -1341,12 +1400,20 @@ export function apply(ctx, config = {}) {
         },
         maxSteps,
         maxParallel: Number(args?.maxParallel) || 1,
+        maxTokens: Number(args?.maxTokens) || 0,
+        maxCost: Number(args?.maxCost) || 0,
+        maxToolCalls: Number(args?.maxToolCalls) || 0,
+        maxRepairs: Number(args?.maxRepairs) || 0,
+        maxReplans: Number(args?.maxReplans) || 0,
+        maxWallClockMs: Number(args?.maxWallClockMs) || 0,
       })
 
+      const metrics = finalDag.metrics || {}
       return [
         `Mission run: ${finalDag.status}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
         `Steps: ${finalDag.actions.length}`,
+        `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,
         `Mission: ${task}`,
         '',
         formatMissionDag(finalDag.dag),

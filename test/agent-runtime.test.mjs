@@ -134,3 +134,15 @@ test('runDagLoop respects maxWallClockMs', async () => {
   })
   assert.equal(result.status, 'max_wall_clock')
 })
+
+test('runDagLoop respects maxReplans', async () => {
+  const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
+  const result = await runDagLoop(dag, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'test_failure' }),
+    maxSteps: 100,
+    maxParallel: 1,
+    maxReplans: 1,
+  })
+  assert.equal(result.status, 'max_replans')
+})

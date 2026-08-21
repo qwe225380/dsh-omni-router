@@ -84,9 +84,13 @@ test('reviewer prompt hunts fake progress and dropped requirements', () => {
 })
 
 test('isQaPass requires QA PASS and rejects QA FAIL', () => {
-  assert.equal(isQaPass('QA: PASS\n- criterion 1: PASS'), true)
+  assert.equal(isQaPass('QA: PASS\n- criterion 1: PASS', { requireEvidence: false }), true)
   assert.equal(isQaPass('QA: FAIL\n- criterion 1: FAIL'), false)
   assert.equal(isQaPass('ran tests'), false)
+})
+
+test('isQaPass rejects textual PASS without evidence by default', () => {
+  assert.equal(isQaPass('QA: PASS\n- criterion 1: PASS'), false)
 })
 
 test('isQaPass accepts structured evidence without text PASS', () => {
@@ -145,7 +149,7 @@ test('runAgentChain off does not spawn qa-verifier', async () => {
 
 test('runAgentChain auto direct low risk skips code-reviewer', async () => {
   const { subagents, calls } = fakeSubagents({ builder: 'BUILDER OK', 'qa-verifier': 'QA: PASS' })
-  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'auto', complexity: 'direct', risk: 'low' })
+  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'auto', complexity: 'direct', risk: 'low', requireEvidence: false })
   assert.ok(calls.includes('qa-verifier'))
   assert.ok(!calls.includes('code-reviewer'))
   assert.equal(outcome.status, 'ready')
@@ -158,7 +162,7 @@ test('runAgentChain full runs builder, qa, reviewer, and judge when green', asyn
     'code-reviewer': 'REVIEW: PASS\nno critical findings',
     judge: 'JUDGE: PASS\noverall 0.95',
   })
-  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'full' })
+  const outcome = await runAgentChain({ subagents, parent: {} }, { taskText: 'task', chain: 'full', requireEvidence: false })
   assert.deepEqual(calls, ['builder', 'qa-verifier', 'code-reviewer', 'judge'])
   assert.equal(outcome.status, 'ready')
 })

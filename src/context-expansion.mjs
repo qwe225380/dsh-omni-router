@@ -16,6 +16,7 @@ export function buildProgressiveContext(taskText, entries, files = {}, options =
   const levels = CONTEXT_LEVELS.slice(0, level + 1).map((l) => l.id)
   const text = String(taskText || '')
   const names = new Set((Array.isArray(entries) ? entries : []).map((e) => e.name))
+  const graph = options.graph || {}
   const parts = [`Progressive context (level ${level}):`, `Levels: ${levels.join(' -> ')}`]
 
   if (levels.includes('repo_map')) {
@@ -42,7 +43,12 @@ export function buildProgressiveContext(taskText, entries, files = {}, options =
     }
   }
   if (levels.includes('callers')) {
-    parts.push('', 'Callers / callees: (graph expansion not yet indexed)')
+    const edgeLines = []
+    for (const [file, edges] of Object.entries(graph || {})) {
+      if (!Array.isArray(edges) || edges.length === 0) continue
+      edgeLines.push(`- ${file} -> ${edges.map((e) => `${e.to || e} (${e.kind || 'graph'})`).join(', ')}`)
+    }
+    parts.push('', 'Callers / callees:', edgeLines.length ? edgeLines : ['(no indexed graph edges)'])
   }
   if (levels.includes('tests_configs')) {
     const tests = [...names].filter((n) => /\.(test|spec)\./i.test(n))

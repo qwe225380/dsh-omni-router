@@ -35,6 +35,15 @@ test('buildProgressiveContext higher levels include symbols and implementations'
   assert.match(text, /login/)
 })
 
+test('buildProgressiveContext renders indexed graph edges at callers level', () => {
+  const graph = {
+    'controller.ts': [{ to: 'auth', kind: 'call' }],
+  }
+  const text = buildProgressiveContext('fix login', entries, files, { level: 3, graph })
+  assert.match(text, /Callers \/ callees:/)
+  assert.match(text, /controller\.ts -> auth \(call\)/)
+})
+
 test('shouldExpand triggers above threshold', () => {
   assert.equal(shouldExpand(0.6), true)
   assert.equal(shouldExpand(0.4), false)

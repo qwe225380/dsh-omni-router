@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.46.0] - 2026-08-21
+
+- 按优化5.md 完成 Integration Phase 第一批 P0：
+  - `omni_mission_run` 接入 Capability Brain：自动发现已安装 tools → `bindCapabilitiesToDag` → 进入 DAG Runtime
+  - Project Brain / Hybrid Retrieval 接入默认 Context：`getProjectContext` 使用 `retrieveContext` + Tree-sitter graph，并提高 Context Pack 深度
+  - DAG failure state / retry lineage：失败任务标记 `failed`，新增 Repair → Retry 任务链
+  - `runDagLoop` 统一 ExecutionBudget：支持 tokens/cost/toolCalls/replans/repairs/sameActionRetries/wallClock
+  - `omni_mission_run` 暴露 `maxParallel` / `maxTokens` / `maxCost` / `maxToolCalls` / `maxRepairs` / `maxReplans` / `maxWallClockMs`
+  - Evidence 禁止文本 PASS 绕过：默认必须有结构化 evidence 才判定 QA PASS
+  - TaskDecision 持久化：Resume 后不再重新分类
+
 ## [1.45.0] - 2026-08-21
 
 - 接入真实 OmniBench 双臂数据（10 个 L1-L10 任务）：

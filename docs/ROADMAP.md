@@ -15,6 +15,7 @@
 - [x] Context Graph 完整版（真实依赖图解析：import/call/extends/implements）
 - [x] 降低 false-direct / false-plan（556 任务上均为 0.0%）
 - [x] OmniBench 真实双臂数据（10 个 L1-L10 任务，raw/omni 各 10 次，2026-08-21）
+- [x] Integration Phase P0：Capability Brain 接入 Mission Runtime、Project Brain v3 接入默认 Context、DAG failure/retry lineage、统一 ExecutionBudget、Evidence 禁文本绕过、TaskDecision 持久化、maxParallel 暴露
 - [x] CI 多版本矩阵（Node 20/22/24）
 - [x] 兼容性文档
 

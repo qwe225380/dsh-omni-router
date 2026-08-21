@@ -44,8 +44,10 @@ test('insertAfter inserts a task into the DAG', () => {
 
 test('applyObservationToDag adds a repair task on test failure', () => {
   let dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
-  dag = applyObservationToDag(dag, { type: 'test_failure' })
+  dag = applyObservationToDag(dag, { type: 'test_failure' }, 'T1')
   assert.ok(dag.tasks.some((t) => /repair/i.test(t.goal)))
+  assert.equal(dag.tasks.find((t) => t.id === 'T1').status, 'failed')
+  assert.ok(dag.tasks.some((t) => /^T1-a/.test(t.id) && t.dependencies.some((d) => /^R-/.test(d))))
 })
 
 test('scheduleParallel returns batches of ready tasks', () => {

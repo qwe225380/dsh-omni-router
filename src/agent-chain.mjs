@@ -199,11 +199,14 @@ export function extractEvidenceFromOutput(output) {
   return evidence
 }
 
-export function isQaPass(output) {
+export function isQaPass(output, options = {}) {
   const text = String(output || '')
   if (/QA:\s*FAIL/i.test(text)) return false
-  if (/QA:\s*PASS/i.test(text)) return true
-  return evidencePass(extractEvidenceFromOutput(text))
+  const evidence = extractEvidenceFromOutput(text)
+  const hasEvidence = evidence.commands.length > 0 || evidence.files.length > 0 || evidence.tests.length > 0 || evidence.findings.length > 0
+  if (hasEvidence) return evidencePass(evidence)
+  if (options.requireEvidence === false) return /QA:\s*PASS/i.test(text)
+  return false
 }
 
 export function hasCriticalFindings(output) {
@@ -304,7 +307,7 @@ export async function runAgentChain(deps, options = {}) {
 
   let qa = await runStage(subagents, parent, 'qa-verifier', buildQaPrompt(taskText, { ...plan, builderOutput: builder.output }))
   stages.push(qa)
-  let qaPass = isQaPass(qa.output)
+  let qaPass = isQaPass(qa.output, { requireEvidence: options.requireEvidence })
   let repairs = 0
 
   // 3. Repair loop (only when qa FAIL and plan allows it)
@@ -322,7 +325,7 @@ export async function runAgentChain(deps, options = {}) {
       builderOutput: `${builder.output}\n\nRepair report:\n${repair.output}`,
     }))
     stages.push(qa)
-    qaPass = isQaPass(qa.output)
+    qaPass = isQaPass(qa.output, { requireEvidence: options.requireEvidence })
   }
 
   if (!qaPass) {

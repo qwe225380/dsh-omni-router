@@ -148,21 +148,65 @@ export async function runMissionLoop(state, { act, observe, maxSteps } = {}) {
 
 /**
  * DAG-driven runtime: execute ready tasks from a Mission DAG, optionally in
- * parallel, and mutate the DAG on failures.
+ * parallel, and mutate the DAG on failures. Consumes a unified execution
+ * budget so the production path has the same stop conditions as the legacy
+ * mission loop.
  */
-export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel = 1, maxWallClockMs = 0 } = {}) {
+export async function runDagLoop(dag, {
+  act,
+  observe,
+  maxSteps = 50,
+  maxParallel = 1,
+  maxWallClockMs = 0,
+  maxTokens = 0,
+  maxCost = 0,
+  maxToolCalls = 0,
+  maxReplans = 0,
+  maxRepairs = 0,
+  maxSameActionRetries = 0,
+  budget = {},
+} = {}) {
+  const b = {
+    maxSteps: maxSteps ?? budget.steps ?? 50,
+    maxParallel: maxParallel ?? budget.concurrency ?? 1,
+    maxWallClockMs: maxWallClockMs ?? budget.wallClockMs ?? 0,
+    maxTokens: maxTokens ?? budget.tokens ?? 0,
+    maxCost: maxCost ?? budget.cost ?? 0,
+    maxToolCalls: maxToolCalls ?? budget.toolCalls ?? 0,
+    maxReplans: maxReplans ?? budget.replans ?? 0,
+    maxRepairs: maxRepairs ?? budget.repairs ?? 0,
+    maxSameActionRetries: maxSameActionRetries ?? budget.sameActionRetries ?? 0,
+  }
   let current = dag
   let step = 0
+  let replanCount = 0
+  let repairCount = 0
+  let sameActionCount = 0
+  let tokenUsage = 0
+  let cost = 0
+  let toolCalls = 0
   const actions = []
   const startTime = Date.now()
 
-  while (step < maxSteps) {
-    if (maxWallClockMs > 0 && Date.now() - startTime >= maxWallClockMs) {
-      return { dag: current, status: 'max_wall_clock', actions }
-    }
+  const statusFromBudget = () => {
+    if (b.maxWallClockMs > 0 && Date.now() - startTime >= b.maxWallClockMs) return 'max_wall_clock'
+    if (step >= b.maxSteps) return 'max_steps'
+    if (b.maxTokens > 0 && tokenUsage >= b.maxTokens) return 'max_tokens'
+    if (b.maxCost > 0 && cost >= b.maxCost) return 'max_cost'
+    if (b.maxToolCalls > 0 && toolCalls >= b.maxToolCalls) return 'max_tool_calls'
+    if (b.maxReplans > 0 && replanCount >= b.maxReplans) return 'max_replans'
+    if (b.maxRepairs > 0 && repairCount >= b.maxRepairs) return 'max_repairs'
+    if (b.maxSameActionRetries > 0 && sameActionCount >= b.maxSameActionRetries) return 'max_same_action_retries'
+    return null
+  }
+
+  while (step < b.maxSteps) {
+    const budgetStatus = statusFromBudget()
+    if (budgetStatus) return { dag: current, status: budgetStatus, actions }
+
     const ready = getReadyTasks(current)
     if (ready.length === 0) break
-    const batch = ready.slice(0, maxParallel)
+    const batch = ready.slice(0, b.maxParallel)
     const results = await Promise.all(batch.map(async (task) => {
       const action = { taskId: task.id, task, phase: task.id }
       const result = await act(action, current)
@@ -170,10 +214,18 @@ export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel
       return { task, result, observation }
     }))
 
-    for (const { task, observation } of results) {
-      if (observation?.type === 'test_failure' || observation?.type === 'build_failure') {
-        current = applyObservationToDag(current, observation)
+    for (const { task, result, observation } of results) {
+      tokenUsage += Number(result?.tokenUsage || 0)
+      cost += Number(result?.cost || 0)
+      toolCalls += Number(result?.toolCalls || 0)
+      const isFailure = observation?.type === 'test_failure' || observation?.type === 'build_failure'
+      if (isFailure) {
+        replanCount += 1
+        repairCount += 1
+        sameActionCount = sameActionCount + 1
+        current = applyObservationToDag(current, { ...observation, taskId: task.id }, task.id)
       } else {
+        sameActionCount = 0
         current = markTaskDone(current, task.id, observation)
       }
       actions.push({ taskId: task.id, observation })
@@ -182,9 +234,11 @@ export async function runDagLoop(dag, { act, observe, maxSteps = 50, maxParallel
   }
 
   const done = current.tasks.every((t) => t.status === 'done')
+  const budgetStatus = statusFromBudget()
   return {
     dag: current,
-    status: done ? 'completed' : step >= maxSteps ? 'max_steps' : 'blocked',
+    status: budgetStatus || (done ? 'completed' : step >= b.maxSteps ? 'max_steps' : 'blocked'),
     actions,
+    metrics: { step, replanCount, repairCount, sameActionCount, tokenUsage, cost, toolCalls },
   }
 }

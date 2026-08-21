@@ -99,7 +99,19 @@ test('readStateFromEvents restores the latest persisted omni-router state', () =
     planRequested: false,
     directOverride: true,
     memory: null,
+    taskDecision: null,
+    taskDecisionVersion: null,
   })
+})
+
+test('readStateFromEvents restores persisted taskDecision', () => {
+  const decision = { complexity: 'plan', taskType: 'feature', thinkingMode: 'spec', version: 2 }
+  const events = [
+    { type: 'omni/router', data: { kind: 'plan', taskDecision: decision, taskDecisionVersion: 2 } },
+  ]
+  const state = readStateFromEvents(events)
+  assert.deepEqual(state.taskDecision, decision)
+  assert.equal(state.taskDecisionVersion, 2)
 })
 
 test('readStateFromEvents returns null when no omni-router state exists', () => {

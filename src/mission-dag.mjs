@@ -73,21 +73,49 @@ export function insertAfter(dag, afterId, task) {
   return { ...dag, tasks }
 }
 
-export function applyObservationToDag(dag, observation = {}) {
+export function applyObservationToDag(dag, observation = {}, failedTaskId = null) {
   const type = observation.type || ''
   if (type === 'test_failure' || type === 'build_failure') {
+    const taskId = failedTaskId || observation.taskId || null
+    const failedTask = taskId ? dag.tasks.find((t) => t.id === taskId) : null
+    const baseId = taskId || 'T'
+    const attempt = (failedTask?.attempt || 0) + 1
+    const repairId = `R-${Date.now().toString(36)}`
+    const retryId = `${baseId}-a${attempt + 1}`
+
+    const tasks = (dag.tasks || []).map((t) => t.id === taskId ? { ...t, status: 'failed', attempt, failure: observation } : t)
+    const doneIds = tasks.filter((t) => t.status === 'done').map((t) => t.id)
     const repair = createTask({
-      id: `R-${Date.now().toString(36)}`,
+      id: repairId,
       goal: 'Diagnose and repair the failing verification',
-      dependencies: dag.tasks.filter((t) => t.status === 'done').map((t) => t.id),
+      dependencies: doneIds,
       acceptance: ['verification passes after repair'],
       verification: ['run failing checks again'],
       requiredCapabilities: ['debugging'],
-      forbiddenCapabilities: ['source.write'] ,
+      forbiddenCapabilities: ['source.write'],
     })
     // Repair tasks should be allowed to write; fix forbidden.
     repair.forbiddenCapabilities = []
-    return addTask(dag, repair)
+
+    const retry = failedTask
+      ? {
+          ...failedTask,
+          id: retryId,
+          goal: failedTask.goal || 'Retry the failed task',
+          dependencies: [repairId],
+          status: 'pending',
+          attempt,
+          evidence: [],
+          failure: undefined,
+        }
+      : createTask({
+          id: retryId,
+          goal: 'Retry the failed task',
+          dependencies: [repairId],
+          requiredCapabilities: ['debugging'],
+        })
+
+    return { ...dag, tasks: [...tasks, repair, retry] }
   }
   return dag
 }
