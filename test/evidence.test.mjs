@@ -58,6 +58,8 @@ test('extractHarnessEvidence normalizes structured result evidence', () => {
   assert.equal(evidence.files.length, 1)
   assert.equal(evidence.findings.length, 1)
   assert.equal(evidencePass(evidence), true)
+  assert.equal(evidence.source, 'tool')
+  assert.equal(evidence.trustLevel, 'T3')
 })
 
 test('extractHarnessEvidence reads toolCalls as command evidence', () => {
@@ -73,9 +75,11 @@ test('extractHarnessEvidence reads toolCalls as command evidence', () => {
   assert.equal(evidencePass(evidence), false)
 })
 
-test('extractHarnessEvidence parses embedded EVIDENCE_JSON block', () => {
+test('extractHarnessEvidence parses embedded EVIDENCE_JSON block and downgrades trust', () => {
   const output = 'I ran the checks.\nEVIDENCE_JSON\n{"tests":[{"command":"npm test","exitCode":0,"total":2,"passed":2,"failed":0}]}'
   const evidence = extractHarnessEvidence({ output })
   assert.equal(evidence.tests.length, 1)
   assert.equal(evidencePass(evidence), true)
+  assert.equal(evidence.source, 'model')
+  assert.equal(evidence.trustLevel, 'T1')
 })

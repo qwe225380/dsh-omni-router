@@ -82,11 +82,13 @@ export function evidencePass(evidence = {}) {
 export function extractHarnessEvidence(result = {}) {
   let evidence = createEvidence()
   const source = (result && typeof result === 'object' && result.evidence) || result || {}
+  let hostEvidenceCount = 0
 
   const apply = (key, fn) => {
     for (const item of Array.isArray(source[key]) ? source[key] : []) {
       try {
         evidence = fn(evidence, item)
+        hostEvidenceCount += 1
       } catch {
         // Skip malformed evidence entries; never fail the mission.
       }
@@ -108,6 +110,7 @@ export function extractHarnessEvidence(result = {}) {
             output: call.output || call.stdout || '',
             durationMs: call.durationMs || 0,
           })
+          hostEvidenceCount += 1
         }
       } catch {
         // Ignore malformed tool-call evidence.
@@ -131,6 +134,18 @@ export function extractHarnessEvidence(result = {}) {
     }
   }
 
+  // Trust provenance: EVIDENCE_JSON written by the model is at most T1.
+  // Harness/tool-provided command/test records are T2/T3.
+  if (embedded && !hostEvidenceCount) {
+    evidence.source = 'model'
+    evidence.trustLevel = 'T1'
+  } else if (hostEvidenceCount > 0) {
+    evidence.source = 'tool'
+    evidence.trustLevel = 'T3'
+  } else {
+    evidence.source = 'model'
+    evidence.trustLevel = 'T0'
+  }
   return evidence
 }
 

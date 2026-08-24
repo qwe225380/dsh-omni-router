@@ -7,6 +7,8 @@
  * map into the prompt.
  */
 
+import { normalizeQuery } from './query-tokenizer.mjs'
+
 const STOP_WORDS = new Set([
   'the', 'and', 'for', 'with', 'that', 'this', 'from', 'are', 'was', 'were',
   'not', 'but', 'you', 'your', 'fix', 'add', 'make', 'use', 'should', 'when',
@@ -96,8 +98,9 @@ export function expandContextCapsule(current, request, options = {}) {
 function extractKeywords(texts = []) {
   const words = new Set()
   for (const text of texts) {
-    for (const match of String(text || '').toLowerCase().match(/[a-z0-9_]+/g) || []) {
-      if (match.length > 2 && !STOP_WORDS.has(match)) words.add(match)
+    const normalized = normalizeQuery(text)
+    for (const token of normalized.expanded) {
+      if (token.length > 1 && !STOP_WORDS.has(token)) words.add(token)
     }
   }
   return [...words]

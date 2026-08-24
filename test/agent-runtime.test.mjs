@@ -175,3 +175,16 @@ test('runDagLoop triggers strategy shift after repeated same failure', async () 
   const shiftTasks = result.dag.tasks.filter((t) => /Strategy shift/i.test(t.goal))
   assert.ok(shiftTasks.length > 0)
 })
+
+test('runDagLoop treats non-whitelist observations as failures', async () => {
+  const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
+  const result = await runDagLoop(dag, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'dependency_issue' }),
+    maxSteps: 5,
+    maxParallel: 1,
+    maxReplans: 2,
+  })
+  assert.equal(result.status, 'max_replans')
+  assert.ok(result.dag.tasks.some((t) => /Diagnose and repair/.test(t.goal)))
+})

@@ -35,10 +35,23 @@ const dirs = [
 
 const force = process.argv.includes('--force')
 
-if (fs.existsSync(target) && !force) {
-  console.error(`Preset already exists: ${target}`)
-  console.error('Re-run with --force to overwrite.')
-  process.exit(1)
+function versionOf(dir) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'))
+    return pkg.version || null
+  } catch {
+    return null
+  }
+}
+
+const sourceVersion = versionOf(repoRoot) || 'unknown'
+const targetVersion = versionOf(target)
+const upgrade = targetVersion !== sourceVersion
+
+if (fs.existsSync(target) && !force && !upgrade) {
+  console.log(`Omni Router preset is up to date (${sourceVersion}): ${target}`)
+  console.log('Use --force to reinstall the same version.')
+  process.exit(0)
 }
 
 fs.mkdirSync(path.dirname(target), { recursive: true })
@@ -65,5 +78,11 @@ for (const [from, to] of dirs) {
   }
 }
 
-console.log(`Installed Omni Router preset to:\n  ${target}`)
+fs.writeFileSync(path.join(target, 'version.json'), JSON.stringify({
+  version: sourceVersion,
+  upgradedFrom: upgrade ? targetVersion : null,
+  installedAt: new Date().toISOString(),
+}, null, 2), 'utf8')
+
+console.log(`Installed Omni Router preset ${sourceVersion} to:\n  ${target}`)
 console.log('Restart DSH, then select "Omni Router (experimental)" in a new session.')

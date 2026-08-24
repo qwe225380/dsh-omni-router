@@ -221,8 +221,8 @@ export async function runDagLoop(dag, {
       tokenUsage += Number(result?.tokenUsage || 0)
       cost += Number(result?.cost || 0)
       toolCalls += Number(result?.toolCalls || 0)
-      const isFailure = observation?.type === 'test_failure' || observation?.type === 'build_failure' || observation?.type === 'strategy_shift'
-      if (isFailure) {
+      const isSuccess = ['step_done', 'verified', 'accepted'].includes(observation?.type)
+      if (!isSuccess) {
         replanCount += 1
         repairCount += 1
         sameActionCount = sameActionCount + 1

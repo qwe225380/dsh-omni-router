@@ -7,10 +7,11 @@
  */
 
 import { buildContextGraph, extractSymbolsFromText } from './project-brain.mjs'
+import { normalizeQuery } from './query-tokenizer.mjs'
 
 export function retrieveContext(taskText, entries, files = {}, options = {}) {
   const text = String(taskText || '')
-  const terms = text.toLowerCase().split(/\s+/).filter((t) => t.length >= 2).slice(0, 12)
+  const terms = normalizeQuery(text).expanded.slice(0, 24)
   const candidates = new Map()
 
   // Lexical: file names and paths

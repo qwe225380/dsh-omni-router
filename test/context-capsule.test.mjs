@@ -39,6 +39,24 @@ test('buildContextCapsule includes only relevant files and tests', () => {
   assert.doesNotMatch(capsule, /README\.md/)
 })
 
+test('buildContextCapsule handles Chinese task text', () => {
+  const zhEntries = [
+    { name: 'src/登录.ts', type: 'file' },
+    { name: 'src/支付.ts', type: 'file' },
+  ]
+  const zhFiles = {
+    'src/登录.ts': 'export function login() {}',
+    'src/支付.ts': 'export function pay() {}',
+  }
+  const capsule = buildContextCapsule('修复登录超时问题', {
+    entries: zhEntries,
+    files: zhFiles,
+    maxFiles: 1,
+  })
+  assert.match(capsule, /登录/)
+  assert.doesNotMatch(capsule, /支付/)
+})
+
 test('buildContextCapsule truncates to maxTotalChars', () => {
   const capsule = buildContextCapsule('x', { entries, files, graph, maxTotalChars: 100 })
   assert.ok(capsule.length <= 100 + 64)

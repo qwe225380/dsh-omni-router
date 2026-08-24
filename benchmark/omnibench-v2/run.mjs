@@ -59,18 +59,47 @@ export function ensureRepo(m) {
   return dir
 }
 
-export function runCommand(command, cwd, label) {
+export function prepareRunWorkspace(m, arm, runIndex) {
+  const baseDir = ensureRepo(m)
+  const workDir = path.resolve(process.env.OMNIBENCH_REPOS || path.join(here, 'repos'))
+  const runDir = path.join(workDir, 'runs', m.id, arm, String(runIndex))
+  fs.mkdirSync(path.dirname(runDir), { recursive: true })
+
+  // Fresh workspace per run: remove any previous run dir, then create a
+  // detached worktree at the fixed commit. Fall back to a fresh clone if the
+  // host git cannot manage worktrees.
+  try {
+    execSync(`git -C "${baseDir}" worktree remove --force "${runDir}"`, { stdio: 'ignore' })
+  } catch { /* not a worktree yet */ }
+  fs.rmSync(runDir, { recursive: true, force: true })
+  try {
+    execSync(`git -C "${baseDir}" worktree add --detach "${runDir}" "${m.commit}"`, { stdio: 'inherit' })
+  } catch {
+    fs.mkdirSync(runDir, { recursive: true })
+    execSync(`git clone "${baseDir}" "${runDir}"`, { stdio: 'inherit' })
+    execSync(`git -C "${runDir}" checkout "${m.commit}"`, { stdio: 'inherit' })
+  }
+  execSync(`git -C "${runDir}" reset --hard "${m.commit}"`, { stdio: 'inherit' })
+  execSync(`git -C "${runDir}" clean -fdx`, { stdio: 'inherit' })
+  return runDir
+}
+
+export function runCommand(command, cwd, label, timeoutMs = 0) {
   if (!command) return { skipped: true }
   const start = Date.now()
   try {
-    const output = execSync(command, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })
-    return { skipped: false, exitCode: 0, output, durationMs: Date.now() - start }
+    const options = { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+    if (Number(timeoutMs) > 0) options.timeout = Number(timeoutMs)
+    const output = execSync(command, options)
+    return { skipped: false, exitCode: 0, output, durationMs: Date.now() - start, timedOut: false }
   } catch (error) {
+    const timedOut = error.killed === true || /ETIMEDOUT|timed out/i.test(String(error.message || ''))
     return {
       skipped: false,
-      exitCode: error.status ?? 1,
+      exitCode: timedOut ? 'timeout' : (error.status ?? 1),
       output: String(error.stdout || '') + String(error.stderr || ''),
       durationMs: Date.now() - start,
+      timedOut,
     }
   }
 }
@@ -96,6 +125,55 @@ export function writeResults(results, resultsDir) {
   const file = path.join(resultsDir, `omnibench-v2-${Date.now()}.json`)
   fs.writeFileSync(file, JSON.stringify(results, null, 2), 'utf8')
   return file
+}
+
+export function parseTelemetry(output) {
+  const source = String(output || '')
+  const start = source.indexOf('TELEMETRY_JSON')
+  if (start === -1) return null
+  const jsonStart = source.indexOf('{', start)
+  const jsonEnd = source.lastIndexOf('}')
+  if (jsonStart === -1 || jsonEnd <= jsonStart) return null
+  try {
+    const parsed = JSON.parse(source.slice(jsonStart, jsonEnd + 1))
+    if (parsed && typeof parsed === 'object') return parsed
+  } catch { /* not valid JSON */ }
+  return null
+}
+
+export function extractMetrics(agentOutput) {
+  const telemetry = parseTelemetry(agentOutput)
+  if (!telemetry) {
+    return {
+      metrics: {
+        inputTokens: 0,
+        outputTokens: 0,
+        cachedTokens: 0,
+        toolCalls: 0,
+        agentTurns: 0,
+        subagents: 0,
+        cost: 0,
+        contextTokens: 0,
+        interventions: 0,
+      },
+      telemetryComplete: false,
+    }
+  }
+  const num = (key) => Number(telemetry[key] ?? telemetry.metrics?.[key] ?? 0) || 0
+  return {
+    metrics: {
+      inputTokens: num('inputTokens'),
+      outputTokens: num('outputTokens'),
+      cachedTokens: num('cachedTokens'),
+      toolCalls: num('toolCalls'),
+      agentTurns: num('agentTurns'),
+      subagents: num('subagents'),
+      cost: num('cost'),
+      contextTokens: num('contextTokens'),
+      interventions: num('interventions'),
+    },
+    telemetryComplete: true,
+  }
 }
 
 function main() {
@@ -131,39 +209,41 @@ function main() {
 
   const results = []
   for (const m of list) {
-    const repoDir = ensureRepo(m)
     for (const arm of ['raw', 'omni']) {
       for (let i = 1; i <= (m.runs || 3); i++) {
-        const agentCommand = agentCommandOverride || m.agentCommand
+        const runDir = prepareRunWorkspace(m, arm, i)
+        const agentCommand = agentCommandOverride || (arm === 'raw' ? m.rawAgentCommand : m.omniAgentCommand) || m.agentCommand
         const promptFile = path.join(here, 'prompts', `${m.id}-${arm}-${i}.txt`)
         const prompt = fs.readFileSync(promptFile, 'utf8')
-        console.log(`\n=== ${m.id} ${arm} run ${i} ===`)
+        const timeoutMs = Number(m.timeoutMs) || 0
+        console.log(`\n=== ${m.id} ${arm} run ${i} === workspace=${runDir}`)
         if (m.setupCommand) {
-          const setup = runCommand(m.setupCommand, repoDir, 'setup')
+          const setup = runCommand(m.setupCommand, runDir, 'setup', timeoutMs)
           console.log(`setup exit=${setup.exitCode ?? 'skip'}`)
         }
-        const baseline = m.baselineCommand ? runCommand(m.baselineCommand, repoDir, 'baseline') : null
+        const baseline = m.baselineCommand ? runCommand(m.baselineCommand, runDir, 'baseline', timeoutMs) : null
         if (baseline) console.log(`baseline exit=${baseline.exitCode ?? 'skip'}`)
 
         let agent = null
         if (agentCommand) {
           const command = `${agentCommand} ${JSON.stringify(prompt)}`
-          agent = runCommand(command, repoDir, 'agent')
+          agent = runCommand(command, runDir, 'agent', timeoutMs)
           console.log(`agent exit=${agent.exitCode ?? 'skip'} duration=${agent.durationMs ?? 0}ms`)
         } else {
           console.log(`agentCommand not configured; run prompt manually in DSH Desktop:\n  ${promptFile}`)
         }
 
-        const verify = m.verifyCommand ? runCommand(m.verifyCommand, repoDir, 'verify') : null
+        const verify = m.verifyCommand ? runCommand(m.verifyCommand, runDir, 'verify', timeoutMs) : null
         if (verify) console.log(`verify exit=${verify.exitCode ?? 'skip'}`)
 
+        // Hidden verifier is required for official results. An agent's own
+        // BENCHMARK: PASS is never a success signal.
         let success = null
-        if (verify && verify.skipped !== true) {
+        if (verify && verify.skipped !== true && verify.timedOut !== true) {
           success = verify.exitCode === 0
-        } else if (agent && agent.skipped !== true) {
-          success = agent.exitCode === 0 && /BENCHMARK:\s*PASS/i.test(agent.output || '')
         }
 
+        const telemetry = extractMetrics(agent?.output || '')
         results.push({
           id: m.id,
           arm,
@@ -176,13 +256,13 @@ function main() {
           verifyExitCode: verify?.exitCode ?? null,
           durationMs: (agent?.durationMs || 0) + (verify?.durationMs || 0),
           baselineExitCode: baseline?.exitCode ?? null,
+          agentTimedOut: agent?.timedOut === true,
+          verifyTimedOut: verify?.timedOut === true,
           agentOutput: agent?.output?.slice(0, 4000) || '',
           verifyOutput: verify?.output?.slice(0, 4000) || '',
-          metrics: {
-            tokens: 0,
-            cost: 0,
-            toolCalls: 0,
-          },
+          metrics: telemetry.metrics,
+          telemetryComplete: telemetry.telemetryComplete,
+          workspaceDir: runDir,
           promptFile,
           ranAt: new Date().toISOString(),
         })

@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.0-alpha.1] - 2026-08-21
+
+- 进入 `3.0-convergence` 分支，完成 优化10.md M1 Correctness：
+  - P0-1：`runDagLoop` / `applyObservationToDag` 改为 success-whitelist（step_done/verified/accepted），其余全部按 failure→classify→recovery 处理
+  - P0-2：主链禁止模型自证完成——coding 任务无 T2/T3 harness evidence 返回 `verification_needed`；agent_output 记录 trust=T0 且不算 PASS
+  - P0-2b：`extractHarnessEvidence` 增加 provenance；模型输出 `EVIDENCE_JSON` 最多 T1，Harness/tool 记录 T3
+  - P0-3：`normalizeHostEvent` 未知事件返回 `unknown`；command.completed / approval.requested / approval.completed 独立映射
+  - P0-4：新增 `src/query-tokenizer.mjs`（英文/camel/snake/path + 中文 2/3/4-gram + 语义扩展），并接入 Context Capsule 与 Hybrid Retrieval
+  - P0-5：installer 升级机制——版本变化自动刷新 preset，写入 version.json（`scripts/install-preset.mjs` 与 `lib/installer.js`）
+  - P0-6：OmniBench 实验隔离——每 run 独立 worktree + reset/clean、timeout 真正执行、无 hidden verifier 则 success=null、raw/omni 独立 agentCommand、TELEMETRY_JSON 真实 telemetry 采集
+  - package 定位更新为 Agent Reliability Kernel
+  - 新增 query-tokenizer 测试并扩展 E2E/单元测试，`npm test` 全量通过
+
 ## [2.4.0] - 2026-08-21
 
 - 完成 优化9.md Reliability Kernel 可代码化项：

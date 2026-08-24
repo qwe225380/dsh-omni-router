@@ -33,3 +33,16 @@ test('OMNI_EVENT_TYPES is stable', () => {
   assert.ok(OMNI_EVENT_TYPES.includes('file.changed'))
   assert.ok(OMNI_EVENT_TYPES.includes('approval.completed'))
 })
+
+test('normalizeHostEvent maps command and approval events distinctly', () => {
+  assert.equal(normalizeHostEvent({ type: 'command.completed' }, 'dsh').type, 'command.completed')
+  assert.equal(normalizeHostEvent({ type: 'command.started' }, 'dsh').type, 'tool.started')
+  assert.equal(normalizeHostEvent({ type: 'approval.requested' }, 'dsh').type, 'approval.requested')
+  assert.equal(normalizeHostEvent({ type: 'approval.completed' }, 'dsh').type, 'approval.completed')
+})
+
+test('normalizeHostEvent returns unknown for unrecognized events', () => {
+  const event = normalizeHostEvent({ type: 'something-else-entirely' }, 'codex')
+  assert.equal(event.type, 'unknown')
+  assert.ok(OMNI_EVENT_TYPES.includes('unknown'))
+})

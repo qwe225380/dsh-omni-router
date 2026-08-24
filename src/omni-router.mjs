@@ -1508,6 +1508,7 @@ export function apply(ctx, config = {}) {
 
       const harness = extractHarnessEvidence({ ...result, output })
       const hasStructured = harness.commands.length > 0 || harness.tests.length > 0 || harness.files.length > 0 || harness.findings.length > 0
+      const trustOk = ['T2', 'T3', 'T4'].includes(harness.trustLevel)
       let record
       if (hasStructured) {
         record = {
@@ -1515,7 +1516,8 @@ export function apply(ctx, config = {}) {
           type: 'harness',
           source: action.taskId,
           value: output.slice(0, 2000),
-          ok: evidencePass(harness),
+          ok: trustOk && evidencePass(harness),
+          trustLevel: harness.trustLevel || 'T0',
           evidence: harness,
           at: new Date().toISOString(),
         }
@@ -1524,7 +1526,8 @@ export function apply(ctx, config = {}) {
           type: 'agent_output',
           source: action.taskId,
           value: output.slice(0, 2000),
-          ok: !/FAIL|error|失败|not ok/i.test(output),
+          ok: false,
+          trustLevel: 'T0',
         })
         record = captured.record
       }
@@ -1549,12 +1552,23 @@ export function apply(ctx, config = {}) {
       const hasStructured = result.hasStructuredEvidence === true || harness.commands?.length || harness.tests?.length || harness.files?.length || harness.findings?.length
       if (hasStructured) {
         const passed = evidencePass(harness)
-        if (!passed) {
+        const trustOk = ['T2', 'T3', 'T4'].includes(harness.trustLevel)
+        if (!passed || !trustOk) {
           brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], false)
-          return { type: 'test_failure', reason: 'structured harness evidence failed', evidence: harness }
+          return {
+            type: passed ? 'verification_needed' : 'test_failure',
+            reason: passed ? `evidence trust ${harness.trustLevel || 'T0'} insufficient for completion` : 'structured harness evidence failed',
+            evidence: harness,
+          }
         }
         brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], true)
         return { type: 'step_done', evidence: harness }
+      }
+
+      // Coding tasks never accept model self-reported PASS: T2/T3 evidence is required.
+      if (['bugfix', 'feature', 'refactor', 'test'].includes(taskType)) {
+        brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], false)
+        return { type: 'verification_needed', reason: 'coding task requires T2/T3 harness evidence' }
       }
 
       if (/FAIL|error|失败|not ok/i.test(result.output || '')) {

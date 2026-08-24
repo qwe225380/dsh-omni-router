@@ -15,9 +15,20 @@ test('copyPresetTo copies the bundled preset files into a target directory', () 
     assert.ok(fs.existsSync(path.join(target, 'agent.cordis.yml')))
     assert.ok(fs.existsSync(path.join(target, 'preset.yml')))
     assert.ok(fs.existsSync(path.join(target, 'src', 'omni-router.mjs')))
+    assert.ok(fs.existsSync(path.join(target, 'package.json')))
+    assert.ok(fs.existsSync(path.join(target, 'version.json')))
 
     const second = copyPresetTo(target)
-    assert.equal(second, false, 'second install should be skipped when target exists')
+    assert.equal(second, false, 'same-version install should be skipped')
+
+    // Simulate a package upgrade: older version in target must trigger refresh.
+    const pkgPath = path.join(target, 'package.json')
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
+    pkg.version = '0.0.1-old'
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2))
+    const upgraded = copyPresetTo(target)
+    assert.equal(upgraded, true, 'version change should refresh the preset')
+    assert.notEqual(JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version, '0.0.1-old')
   } finally {
     fs.rmSync(base, { recursive: true, force: true })
   }

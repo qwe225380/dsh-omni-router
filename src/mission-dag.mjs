@@ -103,7 +103,7 @@ export function insertAfter(dag, afterId, task) {
 
 export function applyObservationToDag(dag, observation = {}, failedTaskId = null) {
   const type = observation.type || ''
-  if (type === 'test_failure' || type === 'build_failure' || type === 'strategy_shift') {
+  if (!['step_done', 'verified', 'accepted'].includes(type)) {
     const taskId = failedTaskId || observation.taskId || null
     const failedTask = taskId ? dag.tasks.find((t) => t.id === taskId) : null
     const baseId = taskId || 'T'

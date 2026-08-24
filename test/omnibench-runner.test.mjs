@@ -6,6 +6,8 @@ import path from 'node:path'
 
 import {
   buildPrompt,
+  extractMetrics,
+  parseTelemetry,
   readManifests,
   runCommand,
   validateManifests,
@@ -65,4 +67,21 @@ test('writeResults writes JSON result file', () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
+})
+
+test('parseTelemetry extracts TELEMETRY_JSON block', () => {
+  const output = 'done\nTELEMETRY_JSON\n{"inputTokens":10,"outputTokens":2,"toolCalls":3}'
+  const telemetry = parseTelemetry(output)
+  assert.equal(telemetry.inputTokens, 10)
+  assert.equal(parseTelemetry('no telemetry'), null)
+})
+
+test('extractMetrics marks incomplete telemetry as incomplete', () => {
+  const empty = extractMetrics('nothing here')
+  assert.equal(empty.telemetryComplete, false)
+  assert.equal(empty.metrics.inputTokens, 0)
+  const full = extractMetrics('TELEMETRY_JSON\n{"inputTokens":10,"outputTokens":2,"cachedTokens":1,"toolCalls":3,"agentTurns":2,"subagents":1,"cost":0.01,"contextTokens":500,"interventions":2}')
+  assert.equal(full.telemetryComplete, true)
+  assert.equal(full.metrics.toolCalls, 3)
+  assert.equal(full.metrics.interventions, 2)
 })

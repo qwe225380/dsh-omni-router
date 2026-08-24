@@ -18,6 +18,7 @@ export const OMNI_EVENT_TYPES = [
   'approval.completed',
   'agent.started',
   'agent.completed',
+  'unknown',
 ]
 
 export function createOmniEvent({
@@ -56,15 +57,17 @@ export function normalizeHostEvent(hostEvent = {}, host = 'unknown', context = {
 function mapHostEventType(raw, host) {
   const value = String(raw).toLowerCase()
   if (host === 'dsh') {
-    if (/tool|command/.test(value) && /start/.test(value)) return 'tool.started'
-    if (/tool|command/.test(value) && /end|done|complete/.test(value)) return 'tool.completed'
+    if (/command/.test(value)) return value.includes('start') ? 'tool.started' : 'command.completed'
+    if (/approval/.test(value)) return value.includes('completed') || value.includes('done') ? 'approval.completed' : 'approval.requested'
+    if (/tool/.test(value)) return value.includes('start') ? 'tool.started' : 'tool.completed'
     if (/test/.test(value)) return 'test.completed'
     if (/file|change/.test(value)) return 'file.changed'
-    if (/approval/.test(value)) return 'approval.requested'
     if (/agent|subagent/.test(value) && /start/.test(value)) return 'agent.started'
     if (/agent|subagent/.test(value) && /end|done|complete/.test(value)) return 'agent.completed'
   }
+  if (/^model\./.test(value) && OMNI_EVENT_TYPES.includes(value)) return value
+  if (/^(tool|command|test|file|approval|agent)\./.test(value) && OMNI_EVENT_TYPES.includes(value)) return value
   if (/start|begin/.test(value)) return 'model.started'
   if (/end|done|complete|finish/.test(value)) return 'model.completed'
-  return OMNI_EVENT_TYPES.includes(raw) ? raw : 'model.completed'
+  return 'unknown'
 }
