@@ -35,6 +35,8 @@ import { generateMissionDag, roleForTask } from './planner-dag.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain, recordCapabilityOutcome } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
+import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capability-auditor.mjs'
+import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
@@ -1467,6 +1469,136 @@ export function apply(ctx, config = {}) {
 
     return { act, observe, saveProgress, getCapabilityBrain: () => brain }
   }
+
+  registerTool({
+    name: 'omni_capability_audit',
+    description: 'Audit current Harness capabilities against the Omni Coding Baseline or task requirements.',
+    parameters: {
+      type: 'object',
+      properties: {
+        requirements: { type: 'array', items: { type: 'string' }, description: 'Optional task capability requirements' },
+        baseline: { type: 'boolean', description: 'Run baseline audit when no requirements are given (default true)' },
+      },
+    },
+    async execute(args) {
+      const session = currentSession()
+      const toolsService = ctx.get('tools') || ctx.tools
+      const toolNames = await collectToolNames(toolsService)
+      let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
+      const requirements = Array.isArray(args?.requirements) ? args.requirements.map(String).filter(Boolean) : []
+      const audit = requirements.length ? taskTimeAudit(brain, requirements) : baselineAudit(brain)
+      return formatCapabilityAudit(audit)
+    },
+  })
+
+  registerTool({
+    name: 'omni_capability_provision',
+    description: 'Detect missing capabilities, discover candidate plugins/skills, evaluate a minimal set, and optionally provision after approval/dry-run.',
+    parameters: {
+      type: 'object',
+      properties: {
+        requirements: { type: 'array', items: { type: 'string' }, description: 'Task capability requirements (preferred)' },
+        missing: { type: 'array', items: { type: 'string' }, description: 'Explicit missing capabilities (alternative to requirements)' },
+        mode: { type: 'string', enum: ['recommend', 'auto-trusted', 'manual'], description: 'Provisioning trust mode (default auto-trusted)' },
+        dryRun: { type: 'boolean', description: 'Only evaluate and print the plan (default true)' },
+        maxPlugins: { type: 'number', description: 'Maximum plugins to install for this task (default 2)' },
+        profile: { type: 'string', description: 'DSH profile to provision into (default web)' },
+      },
+      required: [],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const toolsService = ctx.get('tools') || ctx.tools
+      const toolNames = await collectToolNames(toolsService)
+      let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
+      const provisioning = config.capabilityProvisioning || {}
+      const requirements = Array.isArray(args?.requirements) ? args.requirements.map(String).filter(Boolean) : []
+      const explicitMissing = Array.isArray(args?.missing) ? args.missing.map(String).filter(Boolean) : []
+      const missing = explicitMissing.length
+        ? explicitMissing
+        : requirements.length
+          ? taskTimeAudit(brain, requirements).missing
+          : baselineAudit(brain).missing
+
+      if (!missing.length) return 'No missing capabilities detected.'
+
+      const adapters = [
+        createStaticRegistryAdapter(provisioning.registry || []),
+        ...(Array.isArray(provisioning.adapters) ? provisioning.adapters : []),
+      ]
+      const candidates = await discoverCandidates(missing, adapters)
+      if (!candidates.length) {
+        return `No candidate providers found for: ${missing.join(', ')}`
+      }
+
+      const mode = args?.mode || provisioning.mode || 'auto-trusted'
+      const plan = evaluateProvisionPlan(missing, candidates, brain, {
+        mode,
+        maxPlugins: Number(args?.maxPlugins ?? provisioning.maxTaskPlugins ?? 2),
+        trustedSources: provisioning.trustedSources || [],
+      })
+
+      const lines = [
+        `Missing (${missing.length}): ${missing.join(', ')}`,
+        `Candidates (${candidates.length}):`,
+        ...candidates.map((c) => `- ${c.id || c.package}: ${(c.provides || []).join(', ')}${c.verified ? ' [verified]' : ''}`),
+        '',
+        `Selected minimal set (${plan.selected.length}):`,
+        ...plan.selected.map((s) => `- ${s.candidate.id} score=${s.score}`),
+        `Requires approval: ${plan.requiresApproval.map((s) => s.candidate.id).join(', ') || '(none)'}`,
+        `Still missing: ${plan.solution.missing.join(', ') || '(none)'}`,
+      ]
+
+      if (args?.dryRun !== false) {
+        lines.push('', 'Dry run: no changes made. Set dryRun:false to provision (requires trusted mode + executor).')
+        return lines.join('\n')
+      }
+
+      const result = await provisionCapabilities(plan, {
+        mode,
+        profile: args?.profile || provisioning.profile || 'web',
+        trustedSources: provisioning.trustedSources || [],
+        execute: provisioning.execute,
+        probeTools: toolNames,
+        probeSkills: provisioning.probeSkills || [],
+      })
+      lines.push('', 'Provision result:')
+      lines.push(formatProvisionResult(result))
+      return lines.join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_capability_probe',
+    description: 'Probe whether an installed provider actually exposes its expected tools/skills.',
+    parameters: {
+      type: 'object',
+      properties: {
+        provider: { type: 'string', description: 'Provider id in the Capability Brain' },
+        expectedTools: { type: 'array', items: { type: 'string' }, description: 'Tool names the provider should expose' },
+        expectedSkills: { type: 'array', items: { type: 'string' }, description: 'Skill names the provider should expose' },
+      },
+      required: ['provider'],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const toolsService = ctx.get('tools') || ctx.tools
+      const toolNames = await collectToolNames(toolsService)
+      let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
+      const provider = (brain.capabilities || []).find((c) => c.id === args?.provider)
+      if (!provider) return `Provider "${args?.provider}" not found in Capability Brain.`
+      const probe = await probeCapability(
+        { ...provider, expectedTools: args?.expectedTools || [], expectedSkills: args?.expectedSkills || [] },
+        { tools: toolNames, skills: config.capabilityProvisioning?.probeSkills || [] },
+      )
+      const lines = [`Probe ${args.provider}: ${probe.ok ? 'READY' : 'BROKEN'}`]
+      for (const check of probe.checks) lines.push(`- ${check.ok ? '✓' : '✗'} ${check.type} ${check.name}`)
+      return lines.join('\n')
+    },
+  })
 
   registerTool({
     name: 'omni_mission_run',

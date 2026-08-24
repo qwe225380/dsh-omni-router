@@ -73,6 +73,7 @@
 - **Stage 4（部分）**：`compileDagToWorkflow` 将 Mission DAG 编译为 DSH-native workflow outline。
 - **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 runner（manifest schema + prepare + prompt generation + `--exec` 本地执行/结果采集 + DAG-to-plan compile）。
 - **2.1 收敛增强**：Mission Resume（`omni_mission_resume` 跨 session 继续 DAG，`runDagLoop` 支持 `onProgress` 周期保存）、Harness evidence extraction（`extractHarnessEvidence` 从 commands/tests/toolCalls/EVIDENCE_JSON 提取机器可验证证据）、context token budget（`maxContextTokens` 真正限制检索输出）、semantic failure retrieval + evidence-backed skill distillation、OmniBench v2 real runner。
+- **2.2 Capability Auto-Provisioning（优化7）**：Capability Auditor（baseline/task-time audit）、Gap Detection、Plugin/Skill Quality Scoring、Minimal Capability Set Solver、Discovery Adapters（marketplace/hub/static registry）、Trusted Auto Provisioning（recommend/auto-trusted/manual）、Post-install probe、Install rollback transaction、Capability performance learning / redundancy detection。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。
 - **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。
@@ -154,7 +155,7 @@ Then restart DSH and select **Omni Router** in a new session.
 - `/omni direct` — enter direct mode.
 - `/omni mode spec|react|balanced` — set thinking mode.
 - `/omni reroute plan|direct` — adaptively reroute current task.
-- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`, `omni_mission_resume`, `omni_visual_check`.
+- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`, `omni_mission_resume`, `omni_capability_audit`, `omni_capability_provision`, `omni_capability_probe`, `omni_visual_check`.
 
 ## Configuration
 

@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.0] - 2026-08-21
+
+- 完成 优化7.md Capability Auto-Provisioning：
+  - 新增 `src/capability-auditor.mjs`：baseline / task-time audit、gap detection、`OMNI_CODING_BASELINE`
+  - 新增 `src/capability-quality.mjs`：Plugin/Skill Quality Score（fit/reliability/trust/maintenance/community/performance + overlap penalty）
+  - 新增 `src/capability-solver.mjs`：Minimal Capability Set Solver（weighted set cover）、冗余检测
+  - 新增 `src/capability-provisioner.mjs`：discovery adapters（marketplace/hub/static registry）、trust modes、post-install probe、rollback transaction
+  - 新增 `src/capability-performance.mjs`：安装前后效果学习、demote/remove 建议
+  - 新增工具：`omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe`
+  - 新增 5 个测试文件，`npm test` 全量通过
+
 ## [2.1.0] - 2026-08-21
 
 - 完成 优化6.md 剩余可代码化项：
