@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { compileDagToPlan, generateMissionDag } from '../src/planner-dag.mjs'
+import { compileDagToPlan, compileDagToWorkflow, generateMissionDag } from '../src/planner-dag.mjs'
 import { buildMission } from '../src/mission-planner.mjs'
 import { getReadyTasks, markTaskDone } from '../src/mission-dag.mjs'
 
@@ -36,4 +36,12 @@ test('compileDagToPlan emits ordered parallel groups', () => {
   assert.equal(plan.groups[0][0], 'T1')
   assert.ok(plan.groups[1].includes('T2a'))
   assert.ok(plan.groups[1].includes('T2b'))
+})
+
+test('compileDagToWorkflow emits DSH-native steps with roles', () => {
+  const dag = generateMissionDag(buildMission('实现用户通知页', { taskType: 'feature' }))
+  const workflow = compileDagToWorkflow(dag)
+  assert.ok(workflow.steps.length >= 2)
+  assert.ok(workflow.steps[0].tasks[0].role)
+  assert.ok(workflow.steps[0].tasks[0].prompt.startsWith('[T1]'))
 })

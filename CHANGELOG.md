@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.58.0] - 2026-08-21
+
+- Stage 4（部分）：
+  - 新增 `compileDagToWorkflow`：把 Mission DAG 编译为 DSH-native workflow outline（step / parallel / role / prompt）
+  - 为 DSH workflow/goal 执行集成提供更直接的接口
+
 ## [1.57.0] - 2026-08-21
 
 - Stage 3/5 继续：

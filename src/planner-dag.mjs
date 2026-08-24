@@ -107,3 +107,28 @@ export function compileDagToPlan(dag) {
     })),
   }
 }
+
+/**
+ * Compile a Mission DAG into a DSH-native workflow outline. Each group is a
+ * parallel step with explicit roles and prompts; this is the integration
+ * surface for DSH workflow/goal execution.
+ */
+export function compileDagToWorkflow(dag) {
+  const plan = compileDagToPlan(dag)
+  return {
+    objective: plan.objective,
+    steps: plan.groups.map((ids, index) => ({
+      step: index + 1,
+      parallel: ids,
+      tasks: ids.map((id) => {
+        const t = dag.tasks.find((x) => x.id === id)
+        return {
+          id,
+          role: roleForTask(t),
+          goal: t.goal,
+          prompt: `[${t.id}] ${t.goal}`,
+        }
+      }),
+    })),
+  }
+}
