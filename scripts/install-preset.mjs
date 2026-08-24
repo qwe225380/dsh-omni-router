@@ -23,6 +23,7 @@ const files = [
   'preset.yml',
   'LICENSE',
   'README.md',
+  'README.en.md',
   'README.zh-CN.md',
   'package.json',
 ]

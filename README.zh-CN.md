@@ -1,5 +1,7 @@
 # Omni
 
+> [English](./README.en.md)
+
 DeepSeek Harness 的 Agent Reliability Kernel（智能可靠性内核）。
 
 **默认快。必要时聪明。完成必须有证据。**

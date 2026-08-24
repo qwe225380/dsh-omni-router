@@ -1,24 +1,26 @@
 # Omni
 
-Agent Reliability Kernel for DeepSeek Harness.
+> [English](./README.en.md)
 
-**Fast by default. Smart when needed. Proven when done.**
+DeepSeek Harness 的 Agent Reliability Kernel（智能可靠性内核）。
 
-Omni does three things:
+**默认快。必要时聪明。完成必须有证据。**
 
-1. **Decide** when intervention helps
-2. **Prepare** focused context and constraints
-3. **Verify** that the work is actually complete
+Omni 只做三件事：
 
-> DeepSeek Harness owns execution. Omni owns reliability.
+1. **Decide** — 判断是否值得介入
+2. **Prepare** — 准备精准上下文与约束
+3. **Verify** — 证明工作真的完成了
 
-## Install
+> DeepSeek Harness 负责执行。Omni 负责可靠性。
+
+## 安装
 
 ```bash
 dsh plugin --profile web add dsh-omni-router
 ```
 
-Or from npm:
+或通过 npm：
 
 ```bash
 npm i dsh-omni-router
@@ -26,49 +28,49 @@ cd node_modules/dsh-omni-router
 node scripts/install-preset.mjs
 ```
 
-Restart DSH and select **Omni Router** in a new session.
+重启 DSH，新建会话时选择 **Omni Router**。
 
-## How it works
+## 工作方式
 
 ```
-User task
+用户任务
    ↓
 Intervention Gate
-   ├─ NOOP  → raw DSH (Omni exits)
+   ├─ NOOP   → 原始 DSH（Omni 完全退出）
    ├─ ASSIST → Task Contract + Context + Verify
-   └─ GUARD  → approval + independent evidence (high risk)
+   └─ GUARD  → 审批 + 独立证据（高风险）
    ↓
-DeepSeek Harness executes
+DeepSeek Harness 执行
    ↓
-Evidence (T0–T4 trust levels)
+Evidence（T0–T4 信任等级）
    ↓
 Proof of Completion
 ```
 
-- Simple tasks stay simple: L0 is a true no-op with near-zero overhead.
-- Complex tasks get a Task Contract, focused Context Capsule, and Recovery Policy.
-- Missing capabilities are provisioned only when an acceptance criterion requires them.
+- 简单任务保持简单：L0 是真正的 no-op，开销接近 0。
+- 复杂任务获得 Task Contract、精准 Context Capsule 与 Recovery Policy。
+- 只有当验收标准要求时才补齐缺失能力。
 
-## Proof of Completion
+## 完成证明
 
-Each acceptance criterion has an id, e.g. `C1`, `C2`. Every criterion must have at
-least one fresh evidence record meeting its required trust level:
+每个验收标准都有 id（如 `C1`、`C2`）。每个标准必须至少有一条 fresh evidence
+记录并满足要求的信任等级：
 
-| Trust | Source |
+| 信任 | 来源 |
 |---|---|
-| T0 | model claim |
-| T1 | agent observation / model-written JSON |
-| T2 | host/tool output |
-| T3 | deterministic command/test execution |
-| T4 | independent/hidden verifier |
+| T0 | 模型声称 |
+| T1 | Agent 观察 / 模型自己写的 JSON |
+| T2 | Host/tool 输出 |
+| T3 | 确定性 command/test 执行 |
+| T4 | 独立 / hidden verifier |
 
-Final result:
+最终输出：
 
 ```text
 Completed.
-✓ C1 Root cause fixed
-✓ C2 Regression test added
-✓ C3 143 tests passed
+✓ C1 根因已修复
+✓ C2 已添加回归测试
+✓ C3 143 个测试通过
 Proof: 3/3
 ```
 
@@ -81,24 +83,24 @@ node benchmark/omnibench-v2/matrix.mjs <results.json>
 node benchmark/omnibench-v2/gates.mjs <results.json>
 ```
 
-3.0 release gates: ≥50 repos, ≥100 tasks, ≥3 paired runs/task, hidden verifier
-100%, Medium/Hard uplift ≥10pp, false completion <3%, cost ≤2.5×.
+3.0 Release Gate：≥50 repo、≥100 task、每 task ≥3 paired runs、hidden verifier
+100%、Medium/Hard uplift ≥10pp、false completion <3%、成本 ≤2.5×。
 
-## Architecture
+## 架构
 
 ```
 kernel/          task-contract · intervention-gate · omni-event · evidence-trust
 context/         query-tokenizer · capsule · freshness
 recovery/        failure-taxonomy · strategy-shift · recovery-policy
 capability/      auditor · quality · solver · provisioner · performance
-mission/         mission-ir · planner-dag · mission-dag (compatibility)
+mission/         mission-ir · planner-dag · mission-dag（兼容层）
 host/            interface · dsh-adapter
 benchmark/       omnibench-v2 runner · matrix · gates
 ```
 
-## Advanced / Developer
+## 高级 / 开发者
 
-- Model-visible tools by default: `omni_status`, `omni_explain`, `omni_doctor`.
-- Set `developerMode: true` (or `exposeDeveloperTools: true`) to expose the
-  legacy runtime / benchmark / capability tools during migration.
-- Historical architecture notes: [docs/architecture-history.md](./docs/architecture-history.md).
+- 默认模型可见工具只有：`omni_status`、`omni_explain`、`omni_doctor`。
+- 设置 `developerMode: true`（或 `exposeDeveloperTools: true`）才暴露旧的
+  runtime / benchmark / capability 工具。
+- 历史架构说明：[docs/architecture-history.zh-CN.md](./docs/architecture-history.zh-CN.md)。

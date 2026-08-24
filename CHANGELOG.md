@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.2] - 2026-08-21
+
+- README 默认改为中文，支持中英文切换：
+  - `README.md` 默认中文
+  - 新增 `README.en.md` 英文版
+  - `README.zh-CN.md` 保留中文并统一指向英文
+  - npm/installer 文件清单加入 `README.en.md`
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.1] - 2026-08-21
 
 - Core Feature Freeze 收尾（core feature freeze.md 五项）：
