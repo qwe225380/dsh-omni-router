@@ -15,7 +15,9 @@ export function buildKernelPrompt({ contract = {}, contextCapsule = '' } = {}) {
   if (contract.constraints?.length) lines.push(`Constraints: ${contract.constraints.join('; ')}`)
   if (contract.acceptance?.length) {
     lines.push('Acceptance:')
-    for (const criterion of contract.acceptance) lines.push(`- ${criterion}`)
+    for (const criterion of contract.acceptance) {
+      lines.push(`- ${criterion.id || 'C?'}: ${criterion.text || criterion}`)
+    }
   }
   lines.push(`Risk: ${contract.risk || 'low'}`)
   lines.push('')

@@ -39,7 +39,7 @@ import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capabilit
 import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
-import { buildTaskContract, formatTaskContract } from './task-contract.mjs'
+import { buildTaskContract, formatTaskContract, verifyCompletion } from './task-contract.mjs'
 import { buildKernelPrompt } from './kernel-prompt.mjs'
 import { decideIntervention, formatInterventionGate, interventionForIntelligenceLevel } from './intervention-gate.mjs'
 import { createOmniTaskState, formatOmniTaskState } from './omni-task-state.mjs'
@@ -557,6 +557,8 @@ export function apply(ctx, config = {}) {
     'omni_status', 'omni_plan', 'omni_direct',
     'browser_snapshot', 'browser_elements', 'browser_status', 'browser_tabs', 'browser_cookies',
   ])
+  // Core Feature Freeze: default model-visible Omni surface is three tools.
+  const PUBLIC_OMNI_TOOLS = new Set(['omni_status', 'omni_explain', 'omni_doctor'])
   const states = new Map() // session.id -> { kind, planRequested, directOverride }
   const agents = new Map() // session.id -> Agent
 
@@ -904,17 +906,23 @@ export function apply(ctx, config = {}) {
         text: routerStandardNotice(),
       })
     } else {
-      // Final Kernel Prompt: one section, three parts.
+      // Final Kernel Prompt: one section, three parts. NOOP truly exits.
       const omniState = state.omniTaskState || buildCanonicalOmniState(state)
       const contract = omniState.contract
-      if (state.context === undefined && contract.intelligenceLevel !== 'L0') {
-        state.context = await getProjectContext(agent.session, taskType, state.firstText || '')
+      const manualPlanGate = state.kind === 'plan' && state.planRequested
+      if (omniState.intervention.mode === 'noop' && !manualPlanGate) {
+        return result
       }
-      sections.push({
-        name: 'omni:task-contract',
-        order: 38,
-        text: buildKernelPrompt({ contract, contextCapsule: state.context || '' }),
-      })
+      if (omniState.intervention.mode !== 'noop') {
+        if (state.context === undefined && contract.intelligenceLevel !== 'L0') {
+          state.context = await getProjectContext(agent.session, taskType, state.firstText || '')
+        }
+        sections.push({
+          name: 'omni:task-contract',
+          order: 38,
+          text: buildKernelPrompt({ contract, contextCapsule: state.context || '' }),
+        })
+      }
     }
 
     if (state.kind === 'plan' && state.planRequested) {
@@ -936,6 +944,8 @@ export function apply(ctx, config = {}) {
   // ---- model-facing manual controls -------------------------------------
 
   function registerTool(tool) {
+    const developerMode = config.developerMode === true || config.exposeDeveloperTools === true
+    if (!developerMode && !PUBLIC_OMNI_TOOLS.has(tool.name)) return
     ctx.effect(() => ctx.tools.register({
       ...tool,
       parameters: normalizeParameters(tool.parameters),
@@ -1375,7 +1385,7 @@ export function apply(ctx, config = {}) {
     },
   })
 
-  async function createMissionExecutor({ session, agent, subagents, task, taskType, frontend, brief, capabilityBrain, evidenceRecords, resumeKey }) {
+  async function createMissionExecutor({ session, agent, subagents, task, taskType, frontend, brief, capabilityBrain, evidenceRecords, resumeKey, contract: contractArg }) {
     const cwd = session?.meta?.cwd || session?.header?.cwd
     let brain = capabilityBrain
 
@@ -1395,7 +1405,7 @@ export function apply(ctx, config = {}) {
       })
     }
 
-    const contract = buildTaskContract({
+    const contract = contractArg || buildTaskContract({
       taskText: task,
       decision: createTaskDecision({ taskText: task, taskType, complexity: 'plan', risk: 'low' }),
       acceptance: brief.acceptanceCriteria,
@@ -1430,12 +1440,16 @@ export function apply(ctx, config = {}) {
       const harness = extractHarnessEvidence({ ...result, output })
       const hasStructured = harness.commands.length > 0 || harness.tests.length > 0 || harness.files.length > 0 || harness.findings.length > 0
       const trustOk = ['T2', 'T3', 'T4'].includes(harness.trustLevel)
+      const taskAcceptanceText = action.task?.acceptance?.[0]
+      const criterion = contract.acceptance?.find((c) => c.text === taskAcceptanceText || c.id === taskAcceptanceText) || contract.acceptance?.[0]
+      const criterionId = criterion?.id || action.taskId
       let record
       if (hasStructured) {
         record = {
           id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
           type: 'harness',
           source: action.taskId,
+          criterionId,
           value: output.slice(0, 2000),
           ok: trustOk && evidencePass(harness),
           trustLevel: harness.trustLevel || 'T0',
@@ -1446,6 +1460,7 @@ export function apply(ctx, config = {}) {
         const captured = captureEvidence({ entries: evidenceRecords }, {
           type: 'agent_output',
           source: action.taskId,
+          criterionId,
           value: output.slice(0, 2000),
           ok: false,
           trustLevel: 'T0',
@@ -1731,6 +1746,11 @@ export function apply(ctx, config = {}) {
       const evidenceRecords = []
       const cwd = session?.meta?.cwd || session?.header?.cwd
       const resumeKey = cwd ? `mission-${Date.now().toString(36)}` : null
+      const contract = buildTaskContract({
+        taskText: task,
+        decision: createTaskDecision({ taskText: task, taskType, complexity: 'plan', risk: 'low' }),
+        acceptance: brief.acceptanceCriteria,
+      })
       const executor = await createMissionExecutor({
         session,
         agent,
@@ -1742,6 +1762,7 @@ export function apply(ctx, config = {}) {
         capabilityBrain,
         evidenceRecords,
         resumeKey,
+        contract,
       })
 
       const finalDag = await runDagLoop(dag, {
@@ -1776,8 +1797,10 @@ export function apply(ctx, config = {}) {
         })
         resumeInfo = `\nSaved mission state: ${saved}`
       }
+      const proof = verifyCompletion(contract, evidenceRecords)
       return [
         `Mission run: ${finalDag.status}`,
+        `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
         `Steps: ${finalDag.actions.length}`,
         `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,
@@ -1837,6 +1860,11 @@ export function apply(ctx, config = {}) {
       const toolsService = ctx.get('tools') || ctx.tools
       let capabilityBrain = saved.capabilityBrain || autoPopulateCapabilityBrain(createCapabilityBrain(), await collectToolNames(toolsService))
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
+      const contract = buildTaskContract({
+        taskText: task,
+        decision: createTaskDecision({ taskText: task, taskType, complexity: 'plan', risk: 'low' }),
+        acceptance: brief.acceptanceCriteria,
+      })
 
       const executor = await createMissionExecutor({
         session,
@@ -1849,6 +1877,7 @@ export function apply(ctx, config = {}) {
         capabilityBrain,
         evidenceRecords,
         resumeKey: key,
+        contract,
       })
 
       const finalDag = await runDagLoop(saved.dag, {
@@ -1878,8 +1907,10 @@ export function apply(ctx, config = {}) {
         savedAt: new Date().toISOString(),
       })
       const evSummary = evidenceSummary({ entries: evidenceRecords })
+      const proof = verifyCompletion(contract, evidenceRecords)
       return [
         `Mission resume: ${finalDag.status}`,
+        `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
         `Additional steps: ${finalDag.actions.length}`,
         `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,

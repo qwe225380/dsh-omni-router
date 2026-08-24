@@ -18,8 +18,9 @@ export function evaluateReleaseGates(results = [], options = {}) {
   const summary = summarizeBenchmark(results)
   const pairs = compareArms(results)
 
-  const mediumHardUplift = summary.omni.mediumHardRate !== null && summary.raw.mediumHardRate !== null
-    ? summary.omni.mediumHardRate - summary.raw.mediumHardRate
+  const mediumHardPairs = pairs.filter((p) => ['medium', 'hard', 'long'].includes(p.difficulty))
+  const mediumHardUplift = mediumHardPairs.length
+    ? mediumHardPairs.reduce((s, p) => s + p.uplift, 0) / mediumHardPairs.length
     : null
   const falseCompletion = summary.omni.falseCompletionRate
   const telemetryCompleteRate = summary.omni.telemetryCompleteRate
@@ -34,8 +35,8 @@ export function evaluateReleaseGates(results = [], options = {}) {
   }
   const perTaskCounts = Object.values(byTask).map((list) => list.length)
   const minPairedPerTask = perTaskCounts.length ? Math.min(...perTaskCounts) : 0
-  const repos = new Set(results.map((r) => r.id)).size
-  const tasks = new Set(results.map((r) => `${r.id}:${r.task}`)).size
+  const repos = new Set(results.map((r) => r.repo)).size
+  const tasks = new Set(results.map((r) => `${r.repo}:${r.task}`)).size
 
   const gates = [
     {

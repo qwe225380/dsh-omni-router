@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.1] - 2026-08-21
+
+- Core Feature Freeze 收尾（core feature freeze.md 五项）：
+  - L0 NOOP 真正退出：`intervention.mode === 'noop'` 时不再注入任何 Omni prompt（manual plan gate 除外）
+  - 默认模型 surface 只注册 `omni_status` / `omni_explain` / `omni_doctor`；旧 runtime/benchmark/capability 工具需 `developerMode: true`
+  - Acceptance Criterion ↔ Evidence 最小绑定：`buildTaskContract` 自动生成 C1/C2/... id；新增 `verifyCompletion()`；mission run/resume 输出 `Proof: x/y`
+  - OmniBench 修复：repo 数按 `repo` 字段统计；Medium/Hard uplift 改为 paired medium/hard runs 平均差值
+  - README 极简重写；历史架构移入 `docs/architecture-history.md` / `docs/architecture-history.zh-CN.md`
+  - `npm test` 全量通过
+
 ## [3.0.0-alpha.3] - 2026-08-21
 
 - Final Convergence（3.0-final-convergence.md 六 Blocker）：

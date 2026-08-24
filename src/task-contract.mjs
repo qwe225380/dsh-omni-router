@@ -6,6 +6,7 @@
  */
 
 import { decideIntelligenceLevel } from './progressive-intelligence.mjs'
+import { TRUST_VALUES } from './evidence.mjs'
 
 export function buildTaskContract({
   taskText = '',
@@ -16,11 +17,12 @@ export function buildTaskContract({
   requiredCapabilities = [],
 } = {}) {
   const intelligence = decideIntelligenceLevel(decision)
+  const rawAcceptance = Array.isArray(acceptance) && acceptance.length ? acceptance : [`${taskText} is complete`]
   return {
     objective: taskText,
     constraints: Array.isArray(constraints) ? constraints : [],
     nonGoals: Array.isArray(nonGoals) ? nonGoals : [],
-    acceptance: Array.isArray(acceptance) && acceptance.length ? acceptance : [`${taskText} is complete`],
+    acceptance: normalizeAcceptance(rawAcceptance),
     risk: decision.risk || 'low',
     uncertainty: decision.uncertainty ?? 0.1,
     intelligenceLevel: intelligence.level,
@@ -37,6 +39,63 @@ export function buildTaskContract({
   }
 }
 
+export function normalizeAcceptance(acceptance = []) {
+  let index = 0
+  return (Array.isArray(acceptance) ? acceptance : []).map((criterion) => {
+    if (criterion && typeof criterion === 'object') {
+      index += 1
+      return {
+        id: criterion.id || `C${index}`,
+        text: criterion.text || criterion.id || `C${index}`,
+        requiredTrust: criterion.requiredTrust || 'T2',
+      }
+    }
+    index += 1
+    return { id: `C${index}`, text: String(criterion), requiredTrust: 'T2' }
+  })
+}
+
+export function verifyCompletion(contract = {}, evidenceRecords = [], options = {}) {
+  const criteria = normalizeAcceptance(contract.acceptance)
+  const fingerprint = options.workspaceFingerprint || ''
+  const records = Array.isArray(evidenceRecords) ? evidenceRecords : []
+
+  const isFresh = (record) => {
+    if (!fingerprint) return true
+    return !(record.workspaceFingerprint && record.workspaceFingerprint !== fingerprint)
+  }
+
+  const criteriaResult = criteria.map((criterion) => {
+    const requiredValue = TRUST_VALUES[criterion.requiredTrust] ?? 0
+    const match = records.find((record) => {
+      const ids = record.criterionId ? [record.criterionId] : (record.criterionIds || [])
+      const matchesCriterion = ids.includes(criterion.id)
+      if (!matchesCriterion) return false
+      if (!isFresh(record)) return false
+      if (record.stale === true) return false
+      if (record.ok === false) return false
+      const trust = TRUST_VALUES[record.trustLevel] ?? record.trustValue ?? 0
+      return trust >= requiredValue
+    })
+    return {
+      id: criterion.id,
+      text: criterion.text,
+      requiredTrust: criterion.requiredTrust,
+      verified: !!match,
+      evidenceId: match?.evidenceId || match?.id || null,
+    }
+  })
+
+  const missing = criteriaResult.filter((c) => !c.verified).map((c) => c.id)
+  return {
+    completed: missing.length === 0 && criteriaResult.length > 0,
+    criteria: criteriaResult,
+    missing,
+    verifiedCount: criteriaResult.filter((c) => c.verified).length,
+    requiredCount: criteriaResult.length,
+  }
+}
+
 export function formatTaskContract(contract = {}) {
   const lines = [
     `Objective: ${contract.objective || ''}`,
@@ -45,7 +104,7 @@ export function formatTaskContract(contract = {}) {
     `Verification: ${contract.verificationPolicy?.level}${contract.verificationPolicy?.independentVerify ? ' + independent' : ''}${contract.verificationPolicy?.approvalRequired ? ' + approval' : ''}`,
     `Context budget: ${contract.contextBudget}`,
   ]
-  if (contract.acceptance?.length) lines.push(`Acceptance:\n${contract.acceptance.map((c) => `- ${c}`).join('\n')}`)
+  if (contract.acceptance?.length) lines.push(`Acceptance:\n${contract.acceptance.map((c) => `- ${c.id}: ${c.text || c}`).join('\n')}`)
   if (contract.requiredCapabilities?.length) lines.push(`Required capabilities: ${contract.requiredCapabilities.join(', ')}`)
   return lines.join('\n')
 }
