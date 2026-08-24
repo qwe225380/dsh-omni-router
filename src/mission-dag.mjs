@@ -188,12 +188,18 @@ export function scheduleParallel(dag, maxParallel = 2) {
 export function bindCapabilitiesToDag(dag, capabilityBrain) {
   return {
     ...dag,
-    tasks: dag.tasks.map((t) => ({
-      ...t,
-      allowedTools: (t.requiredCapabilities || [])
-        .flatMap((req) => resolveCapabilityV2(capabilityBrain, req).slice(0, 1))
-        .map((c) => c.id),
-    })),
+    tasks: dag.tasks.map((t) => {
+      const missing = (t.requiredCapabilities || []).filter((req) => resolveCapabilityV2(capabilityBrain, req).length === 0)
+      if (missing.length) {
+        return { ...t, status: 'blocked', blockedReason: `missing capability: ${missing.join(', ')}` }
+      }
+      return {
+        ...t,
+        allowedTools: (t.requiredCapabilities || [])
+          .flatMap((req) => resolveCapabilityV2(capabilityBrain, req).slice(0, 1))
+          .map((c) => c.id),
+      }
+    }),
   }
 }
 

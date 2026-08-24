@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.57.0] - 2026-08-21
+
+- Stage 3/5 继续：
+  - Recursive Project Index：`getProjectContext` 自动扫描嵌套源码目录，不再只读 root
+  - contextBudget 真接入：按 `buildContextBudget` 的 retrievalBudget 决定 maxFiles
+  - Per-task Context：`omni_mission_run` 每个 DAG 任务生成自己的 Context Pack
+  - Missing capability handling：`bindCapabilitiesToDag` 对缺失必需能力标记 `blocked`
+  - OmniBench v2 prompt generator：`npm run omnibench:v2:generate` 生成 raw/omni 每 run prompt
+
 ## [1.56.0] - 2026-08-21
 
 - Stage 2/3 继续：

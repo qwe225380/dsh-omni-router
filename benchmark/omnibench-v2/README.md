@@ -38,6 +38,16 @@ See `manifest.example.json`.
 manifest and prints a run plan. Actual execution will be driven by DSH
 subagents in a future integration.
 
+## Generate DSH prompts
+
+```bash
+npm run omnibench:v2:generate -- benchmark/omnibench-v2/manifest.local.example.json
+```
+
+This writes one prompt per repo/arm/run under `benchmark/omnibench-v2/prompts/`.
+Open each prompt in a DSH Desktop session with the Omni Router preset to
+execute, then collect the results.
+
 ## Local / offline usage
 
 If you don't have real GitHub repos or network access, you can use a local git

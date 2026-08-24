@@ -633,12 +633,26 @@ export function apply(ctx, config = {}) {
     if (!cwd) return ''
     try {
       const root = await fs.resolve('.', { cwd })
-      const entries = await fs.listDir(root)
+      const rootEntries = await fs.listDir(root)
+      // Recursive scan: seed nested source files so context is not limited to
+      // root entries (real projects keep code under src/packages/tests).
+      const nestedFiles = collectSourceFiles(cwd, { limit: 100 })
+      const nestedEntries = Object.keys(nestedFiles).map((abs) => ({
+        name: path.relative(cwd, abs).replace(/\\/g, '/'),
+        type: 'file',
+      }))
+      const entries = [...rootEntries]
+      for (const e of nestedEntries) {
+        if (!entries.some((x) => x.name === e.name)) entries.push(e)
+      }
+      const files = {}
+      for (const [abs, content] of Object.entries(nestedFiles)) {
+        files[path.relative(cwd, abs).replace(/\\/g, '/')] = content
+      }
       const initialGraph = taskText
         ? buildContextGraph(entries, taskText)
         : { relevant: selectKeyFilesForTask(taskType, entries), tests: [], symbols: [] }
       const fileNames = new Set((entries || []).filter((entry) => entry.type === 'file').map((entry) => entry.name))
-      const files = {}
       const readFile = async (name) => {
         if (files[name] !== undefined) return
         try {
@@ -648,7 +662,7 @@ export function apply(ctx, config = {}) {
           // Ignore unreadable files; context collection is best-effort.
         }
       }
-      const keyFiles = initialGraph.relevant.filter((name) => fileNames.has(name)).slice(0, 8)
+      const keyFiles = initialGraph.relevant.filter((name) => fileNames.has(name)).slice(0, 12)
       for (const name of keyFiles) await readFile(name)
 
       if (taskText) {
@@ -672,17 +686,19 @@ export function apply(ctx, config = {}) {
         for (const name of ranked) await readFile(name)
         await buildGraphAdj()
 
+        const ctxBudget = buildContextBudget(classifyComplexity(taskText, config), estimateRisk(taskText).level)
+        const maxFiles = Math.max(8, Math.min(30, Math.floor((ctxBudget.retrievalBudget || 5000) / 2000)))
         if (config.progressiveContext !== false) {
           const dynamic = buildDynamicContext(taskText, entries, files, {
             level: Number(config.contextExpansionLevel) || 2,
             uncertainty: Number(config.contextUncertainty) || 0.6,
-            maxFiles: 8,
+            maxFiles,
             maxFileChars: 2000,
             graph: graphAdj,
           })
           return dynamic.context
         }
-        return buildTaskContext(taskText, entries, files, { maxTotalChars: 8000 })
+        return buildTaskContext(taskText, entries, files, { maxTotalChars: Math.max(8000, ctxBudget.retrievalBudget) })
       }
       return buildContextSummary(entries, files, { maxTotalChars: 5000 })
     } catch {
@@ -1388,7 +1404,8 @@ export function apply(ctx, config = {}) {
             ? `\n\n${buildVisualQaStepRequirement()}`
             : ''
           const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
-          const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
+          const taskContext = await getProjectContext(session, taskType, goal).catch(() => '')
+          const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${taskContext ? `\n\nContext:\n${taskContext}` : ''}${visualQa}`
           const role = roleForTask(action.task || {})
           const sandbox = capabilityToolFilter(capabilityBrain, action.task?.requiredCapabilities || [], role)
           const run = await subagents.start('spawn', {
