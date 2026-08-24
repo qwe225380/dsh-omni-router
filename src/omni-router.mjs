@@ -37,6 +37,7 @@ import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capability-auditor.mjs'
 import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
+import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
@@ -1597,6 +1598,63 @@ export function apply(ctx, config = {}) {
       const lines = [`Probe ${args.provider}: ${probe.ok ? 'READY' : 'BROKEN'}`]
       for (const check of probe.checks) lines.push(`- ${check.ok ? '✓' : '✗'} ${check.type} ${check.name}`)
       return lines.join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_capability_performance',
+    description: 'Track and inspect whether provisioned plugins/skills measurably improve task success, false completion, tokens, or tool errors.',
+    parameters: {
+      type: 'object',
+      properties: {
+        action: { type: 'string', enum: ['list', 'record', 'recommend'], description: 'Action (default list)' },
+        provider: { type: 'string', description: 'Provider id' },
+        successBefore: { type: 'number', description: 'Task success before provisioning' },
+        successAfter: { type: 'number', description: 'Task success after provisioning' },
+        falseCompletionBefore: { type: 'number', description: 'False completion rate before' },
+        falseCompletionAfter: { type: 'number', description: 'False completion rate after' },
+        tokensBefore: { type: 'number', description: 'Token usage before' },
+        tokensAfter: { type: 'number', description: 'Token usage after' },
+        toolErrorsBefore: { type: 'number', description: 'Tool errors before' },
+        toolErrorsAfter: { type: 'number', description: 'Tool errors after' },
+        usageDays: { type: 'number', description: 'Days since last use (for recommend)' },
+        uniqueCapabilities: { type: 'number', description: 'Number of unique capabilities (for recommend)' },
+        coveredBy: { type: 'array', items: { type: 'string' }, description: 'Other providers covering the same capabilities (for recommend)' },
+      },
+      required: [],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const action = args?.action || 'list'
+      let registry = loadPerformanceRegistry(cwd)
+      if (action === 'record') {
+        if (!args?.provider) return 'provider is required for record.'
+        registry = recordProvisionOutcome(registry, args.provider, {
+          successBefore: args.successBefore,
+          successAfter: args.successAfter,
+          falseCompletionBefore: args.falseCompletionBefore,
+          falseCompletionAfter: args.falseCompletionAfter,
+          tokensBefore: args.tokensBefore,
+          tokensAfter: args.tokensAfter,
+          toolErrorsBefore: args.toolErrorsBefore,
+          toolErrorsAfter: args.toolErrorsAfter,
+        })
+        const file = savePerformanceRegistry(cwd, registry)
+        const value = evaluateProviderValue(registry.providers[args.provider])
+        return `Recorded ${args.provider}: ${value.label} (${value.value})\nSaved: ${file}`
+      }
+      if (action === 'recommend') {
+        if (!args?.provider) return 'provider is required for recommend.'
+        const rec = recommendDemotion(registry, args.provider, {
+          usageDays: Number(args.usageDays) || 0,
+          uniqueCapabilities: Number(args.uniqueCapabilities) || 0,
+          coveredBy: Array.isArray(args.coveredBy) ? args.coveredBy : [],
+        })
+        return `${rec.providerId}: ${rec.recommendation} — ${rec.reason}`
+      }
+      return formatPerformanceRegistry(registry)
     },
   })
 

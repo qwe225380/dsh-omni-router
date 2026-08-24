@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1] - 2026-08-21
+
+- Capability Performance 补齐：
+  - `capability-performance` 新增 `.omni/capability-performance.json` 持久化
+  - 新增 `omni_capability_performance` 工具：list / record / recommend
+  - 更新 README / README.zh-CN 工具列表与本地 preset
+
 ## [2.2.0] - 2026-08-21
 
 - 完成 优化7.md Capability Auto-Provisioning：
@@ -8,7 +15,8 @@
   - 新增 `src/capability-solver.mjs`：Minimal Capability Set Solver（weighted set cover）、冗余检测
   - 新增 `src/capability-provisioner.mjs`：discovery adapters（marketplace/hub/static registry）、trust modes、post-install probe、rollback transaction
   - 新增 `src/capability-performance.mjs`：安装前后效果学习、demote/remove 建议
-  - 新增工具：`omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe`
+  - 新增工具：`omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` / `omni_capability_performance`
+  - `capability-performance` 支持持久化到 `.omni/capability-performance.json`，可记录安装前后指标并给出 demote/remove 建议
   - 新增 5 个测试文件，`npm test` 全量通过
 
 ## [2.1.0] - 2026-08-21

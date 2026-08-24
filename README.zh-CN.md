@@ -155,7 +155,7 @@ node scripts/install-preset.mjs
 - `/omni direct` — 进入直接执行模式。
 - `/omni mode spec|react|balanced` — 设置思维模式。
 - `/omni reroute plan|direct` — 动态切换当前任务路由。
-- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_mission_resume` / `omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` / `omni_visual_check`。
+- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_mission_resume` / `omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` / `omni_capability_performance` / `omni_visual_check`。
 
 ## 配置
 

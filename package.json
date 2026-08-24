@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Omni - a reliability and orchestration control plane for DeepSeek Harness, designed to turn fast models into dependable long-horizon software-engineering agents.",
   "type": "module",
   "main": "./lib/index.js",

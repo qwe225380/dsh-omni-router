@@ -1,12 +1,17 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
 import {
   createPerformanceRegistry,
   evaluateProviderValue,
   formatPerformanceRegistry,
+  loadPerformanceRegistry,
   recommendDemotion,
   recordProvisionOutcome,
+  savePerformanceRegistry,
 } from '../src/capability-performance.mjs'
 
 test('recordProvisionOutcome stores before/after metrics', () => {
@@ -61,4 +66,19 @@ test('formatPerformanceRegistry renders entries', () => {
   let registry = createPerformanceRegistry()
   registry = recordProvisionOutcome(registry, 'p', { successBefore: 0.5, successAfter: 0.9 })
   assert.match(formatPerformanceRegistry(registry), /p/)
+})
+
+test('loadPerformanceRegistry and savePerformanceRegistry persist outcomes', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cap-perf-'))
+  try {
+    let registry = createPerformanceRegistry()
+    registry = recordProvisionOutcome(registry, 'plugin-x', { successBefore: 0.7, successAfter: 0.9 })
+    const file = savePerformanceRegistry(cwd, registry)
+    assert.ok(fs.existsSync(file))
+    const loaded = loadPerformanceRegistry(cwd)
+    assert.ok(loaded.providers['plugin-x'])
+    assert.equal(evaluateProviderValue(loaded.providers['plugin-x']).label, 'high')
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true })
+  }
 })

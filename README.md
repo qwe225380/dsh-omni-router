@@ -155,7 +155,7 @@ Then restart DSH and select **Omni Router** in a new session.
 - `/omni direct` — enter direct mode.
 - `/omni mode spec|react|balanced` — set thinking mode.
 - `/omni reroute plan|direct` — adaptively reroute current task.
-- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`, `omni_mission_resume`, `omni_capability_audit`, `omni_capability_provision`, `omni_capability_probe`, `omni_visual_check`.
+- Model tools: `omni_status`, `omni_plan`, `omni_direct`, `omni_mode`, `omni_reroute`, `omni_delegate`, `omni_memory`, `omni_benchmark`, `omni_mission_run`, `omni_mission_resume`, `omni_capability_audit`, `omni_capability_provision`, `omni_capability_probe`, `omni_capability_performance`, `omni_visual_check`.
 
 ## Configuration
 

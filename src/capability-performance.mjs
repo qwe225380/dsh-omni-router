@@ -6,10 +6,34 @@
  * demotion/removal decisions and benchmark plugin-contribution analysis.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
+
 export function createPerformanceRegistry(initial = {}) {
   return {
     providers: { ...(initial.providers || {}) },
   }
+}
+
+export function performanceRegistryPath(cwd) {
+  return path.join(cwd, '.omni', 'capability-performance.json')
+}
+
+export function loadPerformanceRegistry(cwd) {
+  const file = performanceRegistryPath(cwd)
+  if (!fs.existsSync(file)) return createPerformanceRegistry()
+  try {
+    return createPerformanceRegistry(JSON.parse(fs.readFileSync(file, 'utf8')))
+  } catch {
+    return createPerformanceRegistry()
+  }
+}
+
+export function savePerformanceRegistry(cwd, registry) {
+  const file = performanceRegistryPath(cwd)
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(registry, null, 2), 'utf8')
+  return file
 }
 
 export function recordProvisionOutcome(registry, providerId, outcome = {}) {
