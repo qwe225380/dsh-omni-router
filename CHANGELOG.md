@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.4.0] - 2026-08-21
+
+- 完成 优化9.md Reliability Kernel 可代码化项：
+  - 新增 `src/task-contract.mjs`：统一 TaskContract（objective/acceptance/risk/intelligenceLevel/verificationPolicy/capabilities）
+  - 新增 `src/intervention-gate.mjs`：默认 NOOP，Expected Utility 决定是否介入；No-op Precision / Intervention Efficiency
+  - 新增 `src/omni-event.mjs`：宿主无关 OmniEvent 事件模型与 normalize
+  - 新增 `src/host-interface.mjs`：OmniHost 接口、describeHost、Capability Negotiation
+  - 新增 `src/evidence-trust.mjs`：T0-T4 信任等级、workspace fingerprint、Evidence Invalidation
+  - 新增 `src/context-freshness.mjs`：上下文 freshness 指纹与 stale 检测
+  - 新增 `src/recovery-policy.mjs`：retry/repair/expand_context/change_hypothesis/replan/escalate/stop
+  - `omni_status` 显示 Intervention Gate；`omni_explain` 显示 TaskContract/trust；`omni_doctor` 显示 Host negotiation
+  - 新增 7 个测试文件，`npm test` 全量通过
+
 ## [2.3.0] - 2026-08-21
 
 - 完成 优化8.md 可代码化项（Progressive Intelligence）：

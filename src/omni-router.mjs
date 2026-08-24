@@ -39,6 +39,10 @@ import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capabilit
 import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
+import { buildTaskContract, formatTaskContract } from './task-contract.mjs'
+import { decideIntervention, formatInterventionGate } from './intervention-gate.mjs'
+import { negotiateHost, formatHostNegotiation } from './host-interface.mjs'
+import { requiredTrustForRisk } from './evidence-trust.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
@@ -1020,12 +1024,18 @@ export function apply(ctx, config = {}) {
         thinkingMode: state.thinkingMode || 'balanced',
       })
       const intelligence = decideIntelligenceLevel(taskDecision)
+      const contract = buildTaskContract({ taskText: state.firstText || '', decision: taskDecision })
+      const intervention = decideIntervention({
+        successGain: intelligence.level === 'L0' ? 0 : 0.15,
+        tokenOverhead: intelligence.level === 'L0' ? 0.05 : 0.2,
+      })
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
         `thinkingMode=${state.thinkingMode || 'balanced'}`,
         `riskLevel=${state.riskLevel || 'unknown'}`,
         `intelligenceLevel=${formatIntelligenceLevel(intelligence)}`,
+        `intervention=${formatInterventionGate(intervention)}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
         `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
@@ -1054,6 +1064,8 @@ export function apply(ctx, config = {}) {
         thinkingMode: state.thinkingMode || 'balanced',
       })
       const intelligence = decideIntelligenceLevel(decision)
+      const contract = buildTaskContract({ taskText: state.firstText || '', decision })
+      const trust = requiredTrustForRisk(decision.risk)
       const topic = String(args?.topic || '').toLowerCase()
       const lines = [
         `Mode: ${intelligence.level} ${intelligence.label}`,
@@ -1061,8 +1073,9 @@ export function apply(ctx, config = {}) {
         `Reasoning effort: ${intelligence.reasoningEffort}`,
         `Verification: ${intelligence.verification}`,
         `Approval required: ${intelligence.approvalRequired ? 'yes' : 'no'}`,
-        `Capabilities needed: ${(decision.evidenceRequirements || []).join(', ') || 'native tools'}`,
-        `Completion requires: ${decision.evidenceRequirements?.length ? 'harness evidence for ' + decision.evidenceRequirements.join(', ') : 'light verification'}`,
+        `Capabilities needed: ${(contract.requiredCapabilities || []).join(', ') || 'native tools'}`,
+        `Evidence trust required: ${trust.label}`,
+        `Completion requires: ${contract.acceptance?.join('; ') || 'light verification'}`,
       ]
       if (topic === 'mode' || topic === 'capabilities' || topic === 'verification' || topic === 'completion') {
         const idx = lines.findIndex((l) => l.toLowerCase().startsWith(topic))
@@ -1084,6 +1097,17 @@ export function apply(ctx, config = {}) {
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
       const baseline = baselineAudit(brain)
       const fs = ctx.get('fs') || ctx.fs
+      const hostCaps = {
+        workflow: !!(ctx.get('workflow') || ctx.workflow),
+        approvals: !!(ctx.get('approvals') || ctx.approvals),
+        skills: !!(ctx.get('skills') || ctx.skills),
+        plugins: !!(ctx.get('plugins') || ctx.plugins),
+        subagents: !!(ctx.get('subagents') || ctx.subagents),
+        toolEvents: !!(ctx.get('events') || ctx.events),
+        testEvents: false,
+        fileEvents: !!fs,
+      }
+      const host = negotiateHost(hostCaps)
       const lines = [
         `DSH session: ${session ? 'ok' : 'missing'}`,
         `Tools registered: ${toolNames.length}`,
@@ -1091,6 +1115,7 @@ export function apply(ctx, config = {}) {
         `Missing baseline: ${baseline.missing.join(', ') || '(none)'}`,
         `ProjectIndex: ${fs ? 'available' : 'unavailable'}`,
         `Evidence hooks: ${ctx.get('evidence') || ctx.evidence ? 'available' : 'not-detected'}`,
+        `Host negotiation: ${host.mode} (degraded: ${host.degraded.join(', ') || 'none'})`,
       ]
       return lines.join('\n')
     },
