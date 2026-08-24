@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-alpha.3] - 2026-08-21
+
+- Final Convergence（3.0-final-convergence.md 六 Blocker）：
+  - OmniTaskState 进入主链：分类后生成 canonical `omniTaskState`，`omni_status` / `omni_explain` 消费同一对象
+  - 旧多段 system prompt 停用：普通任务只注入 `omni:task-contract`（Task Contract / Relevant Context / Completion Rule）
+  - Intervention Gate 冷启动规则：L0→noop、L1/L2→assist、L3→guard（`interventionForIntelligenceLevel`）
+  - Evidence Trust 改为 per-record：tool result T2、deterministic command/test T3、embedded model JSON T1；无 exitCode 的 toolCall 不再自动升级为 T3
+  - DSH Adapter 进入主链：`omni_doctor` 使用 `createDshHostAdapter().describeHost()` 做能力协商
+  - OmniBench 统计修复：falseCompletion 独立指标、Medium/Hard 单独计算、unverified pair 剔除、每 task ≥3 paired runs、新增 ≥50 repo / ≥100 task gate；结果记录增加 difficulty/model/falseCompletion
+  - `npm test` 全量通过
+
 ## [3.0.0-alpha.2] - 2026-08-21
 
 - M2 One Kernel / M3 Host Boundary / M5 Benchmark 工具链：

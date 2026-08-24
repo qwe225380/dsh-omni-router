@@ -20,10 +20,16 @@ export function summarizeBenchmark(results = []) {
   const summarize = (list) => {
     const executed = list.filter((r) => r.success !== null)
     const passed = executed.filter((r) => r.success === true)
+    const mediumHard = executed.filter((r) => ['medium', 'hard', 'long'].includes(r.difficulty))
+    const mediumHardPassed = mediumHard.filter((r) => r.success === true)
+    const falseCompletions = list.filter((r) => r.falseCompletion === true).length
     return {
       runs: list.length,
       executed: executed.length,
       successRate: executed.length ? passed.length / executed.length : null,
+      mediumHardRate: mediumHard.length ? mediumHardPassed.length / mediumHard.length : null,
+      falseCompletionCount: falseCompletions,
+      falseCompletionRate: executed.length ? falseCompletions / executed.length : null,
       avgCost: list.length ? list.reduce((s, r) => s + (r.metrics?.cost || 0), 0) / list.length : 0,
       avgWallMs: list.length ? list.reduce((s, r) => s + (r.durationMs || 0), 0) / list.length : 0,
       telemetryCompleteRate: list.length ? list.filter((r) => r.telemetryComplete === true).length / list.length : 0,
@@ -48,11 +54,13 @@ export function compareArms(results = []) {
     const raw = pair.raw
     const omni = pair.omni
     if (!raw || !omni) continue
+    if (raw.success === null || omni.success === null) continue
     const rawSuccess = raw.success === true
     const omniSuccess = omni.success === true
     pairs.push({
       id: raw.id,
       run: raw.run,
+      difficulty: raw.difficulty || omni.difficulty || 'medium',
       rawSuccess,
       omniSuccess,
       uplift: (omniSuccess ? 1 : 0) - (rawSuccess ? 1 : 0),

@@ -6,6 +6,7 @@ import {
   expectedInterventionUtility,
   formatInterventionGate,
   interventionEfficiency,
+  interventionForIntelligenceLevel,
   noOpPrecision,
   shouldIntervene,
 } from '../src/intervention-gate.mjs'
@@ -41,4 +42,11 @@ test('interventionEfficiency computes gain per overhead', () => {
   const result = interventionEfficiency({ rawSuccess: 0.6, omniSuccess: 0.78, tokenOverhead: 0.3 })
   assert.equal(result.gain, 0.18)
   assert.equal(result.efficiency, 0.6)
+})
+
+test('interventionForIntelligenceLevel maps L0-L3 to noop/assist/guard', () => {
+  assert.equal(interventionForIntelligenceLevel({ level: 'L0' }).mode, 'noop')
+  assert.equal(interventionForIntelligenceLevel({ level: 'L1' }).mode, 'assist')
+  assert.equal(interventionForIntelligenceLevel({ level: 'L2' }).mode, 'assist')
+  assert.equal(interventionForIntelligenceLevel({ level: 'L3' }).mode, 'guard')
 })

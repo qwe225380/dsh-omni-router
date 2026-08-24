@@ -9,6 +9,7 @@ import {
   createEvidence,
   evidencePass,
   extractHarnessEvidence,
+  maxEvidenceTrust,
   summarizeEvidence,
 } from '../src/evidence.mjs'
 
@@ -82,4 +83,22 @@ test('extractHarnessEvidence parses embedded EVIDENCE_JSON block and downgrades 
   assert.equal(evidencePass(evidence), true)
   assert.equal(evidence.source, 'model')
   assert.equal(evidence.trustLevel, 'T1')
+  assert.equal(evidence.tests[0].trustLevel, 'T1')
+})
+
+test('per-record trust: plain toolCalls without exitCode never auto-upgrade to T3', () => {
+  const evidence = extractHarnessEvidence({
+    toolCalls: [{ name: 'npm test', output: 'looks fine' }],
+  })
+  assert.equal(evidence.commands.length, 0)
+  assert.equal(evidence.trustLevel, 'T0')
+  assert.equal(maxEvidenceTrust(evidence), 0)
+})
+
+test('per-record trust: deterministic command records are T3', () => {
+  const evidence = extractHarnessEvidence({
+    commands: [{ command: 'npm test', exitCode: 0 }],
+  })
+  assert.equal(evidence.commands[0].trustLevel, 'T3')
+  assert.equal(evidence.commands[0].source, 'tool')
 })

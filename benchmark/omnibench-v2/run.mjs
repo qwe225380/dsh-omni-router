@@ -244,14 +244,20 @@ function main() {
         }
 
         const telemetry = extractMetrics(agent?.output || '')
+        const agentClaimedPass = /BENCHMARK:\s*PASS/i.test(agent?.output || '')
+        const falseCompletion = agentClaimedPass && success === false
         results.push({
           id: m.id,
           arm,
           run: i,
+          difficulty: m.difficulty || 'medium',
+          model: m.model || 'fast',
           repo: m.repo,
           commit: m.commit,
           task: m.task,
           success,
+          falseCompletion,
+          agentClaimedPass,
           agentExitCode: agent?.exitCode ?? null,
           verifyExitCode: verify?.exitCode ?? null,
           durationMs: (agent?.durationMs || 0) + (verify?.durationMs || 0),

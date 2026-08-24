@@ -17,19 +17,25 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 export function evaluateReleaseGates(results = [], options = {}) {
   const summary = summarizeBenchmark(results)
   const pairs = compareArms(results)
-  const executedPairs = pairs.filter((p) => p.rawSuccess !== null && p.omniSuccess !== null)
-  const avgUplift = executedPairs.length
-    ? executedPairs.reduce((s, p) => s + p.uplift, 0) / executedPairs.length
+
+  const mediumHardUplift = summary.omni.mediumHardRate !== null && summary.raw.mediumHardRate !== null
+    ? summary.omni.mediumHardRate - summary.raw.mediumHardRate
     : null
-  const omniRate = summary.omni.successRate
-  const rawRate = summary.raw.successRate
-  const mediumHardUplift = omniRate !== null && rawRate !== null ? omniRate - rawRate : null
-  const falseCompletion = omniRate !== null ? 1 - omniRate : null // proxy until hidden verifier records false-completion explicitly
+  const falseCompletion = summary.omni.falseCompletionRate
   const telemetryCompleteRate = summary.omni.telemetryCompleteRate
-  const costRatio = pairs
-    .map((p) => p.costRatio)
-    .filter((v) => v !== null && v !== undefined)
-    .reduce((s, v) => s + v, 0) / Math.max(1, pairs.filter((p) => p.costRatio !== null && p.costRatio !== undefined).length)
+
+  const costValues = pairs.map((p) => p.costRatio).filter((v) => v !== null && v !== undefined)
+  const costRatio = costValues.length ? costValues.reduce((s, v) => s + v, 0) / costValues.length : null
+
+  const byTask = {}
+  for (const pair of pairs) {
+    if (!byTask[pair.id]) byTask[pair.id] = []
+    byTask[pair.id].push(pair)
+  }
+  const perTaskCounts = Object.values(byTask).map((list) => list.length)
+  const minPairedPerTask = perTaskCounts.length ? Math.min(...perTaskCounts) : 0
+  const repos = new Set(results.map((r) => r.id)).size
+  const tasks = new Set(results.map((r) => `${r.id}:${r.task}`)).size
 
   const gates = [
     {
@@ -39,7 +45,7 @@ export function evaluateReleaseGates(results = [], options = {}) {
       pass: mediumHardUplift !== null && mediumHardUplift >= 0.1,
     },
     {
-      name: 'False completion < 3% (proxy)',
+      name: 'False completion < 3%',
       value: falseCompletion,
       target: 0.03,
       pass: falseCompletion !== null && falseCompletion < 0.03,
@@ -54,16 +60,30 @@ export function evaluateReleaseGates(results = [], options = {}) {
       name: 'Cost ratio <= 2.5x',
       value: costRatio,
       target: 2.5,
-      pass: costRatio !== 0 && costRatio <= 2.5,
+      pass: costRatio !== null && costRatio <= 2.5,
     },
     {
-      name: 'Paired runs >= 3',
-      value: executedPairs.length,
+      name: 'Every task has >= 3 paired runs',
+      value: minPairedPerTask,
       target: 3,
-      pass: executedPairs.length >= 3,
+      pass: minPairedPerTask >= 3,
+    },
+    {
+      name: 'Repositories >= 50',
+      value: repos,
+      target: 50,
+      pass: repos >= 50,
+    },
+    {
+      name: 'Tasks >= 100',
+      value: tasks,
+      target: 100,
+      pass: tasks >= 100,
     },
   ]
-  if (options.verbose) gates.push({ name: 'Raw success', value: rawRate, target: null, pass: null })
+  if (options.verbose) {
+    gates.push({ name: 'Raw success', value: summary.raw.successRate, target: null, pass: null })
+  }
   return {
     gates,
     summary,

@@ -79,6 +79,20 @@ export function interventionEfficiency({ rawSuccess = 0, omniSuccess = 0, tokenO
   }
 }
 
+export function interventionForIntelligenceLevel(intelligence = {}) {
+  const level = intelligence.level || 'L0'
+  if (level === 'L0') {
+    return { mode: 'noop', utility: 0, expectedGain: 0, confidence: 1, reasons: ['simple task: host can handle it'] }
+  }
+  if (level === 'L1') {
+    return { mode: 'assist', utility: 0.1, expectedGain: 0.05, confidence: 0.8, reasons: ['focused context + verification only'] }
+  }
+  if (level === 'L2') {
+    return { mode: 'assist', utility: 0.2, expectedGain: 0.1, confidence: 0.8, reasons: ['complex task: contract + recovery'] }
+  }
+  return { mode: 'guard', utility: 0.3, expectedGain: 0.15, confidence: 0.9, reasons: ['high risk: approval + independent evidence'] }
+}
+
 export function formatInterventionGate(result = {}) {
   return `${result.intervene ? 'INTERVENE' : 'NOOP'} (utility=${result.utility}, threshold=${result.threshold})`
 }

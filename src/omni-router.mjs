@@ -41,7 +41,10 @@ import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegist
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
 import { buildTaskContract, formatTaskContract } from './task-contract.mjs'
 import { buildKernelPrompt } from './kernel-prompt.mjs'
-import { decideIntervention, formatInterventionGate } from './intervention-gate.mjs'
+import { decideIntervention, formatInterventionGate, interventionForIntelligenceLevel } from './intervention-gate.mjs'
+import { createOmniTaskState, formatOmniTaskState } from './omni-task-state.mjs'
+import { compileMissionToHost, toMissionIR } from './mission-ir.mjs'
+import { createDshHostAdapter } from './host/dsh-adapter.mjs'
 import { negotiateHost, formatHostNegotiation } from './host-interface.mjs'
 import { requiredTrustForRisk } from './evidence-trust.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
@@ -622,6 +625,34 @@ export function apply(ctx, config = {}) {
     return []
   }
 
+  function buildCanonicalOmniState(state) {
+    const decision = state.taskDecision || createTaskDecision({
+      taskText: state.firstText || '',
+      taskType: state.taskType || 'other',
+      complexity: state.kind === 'plan' ? 'plan' : state.kind === 'direct' ? 'direct' : 'balanced',
+      risk: state.riskLevel || 'low',
+      thinkingMode: state.thinkingMode || 'balanced',
+    })
+    const intelligence = decideIntelligenceLevel(decision)
+    const contract = buildTaskContract({ taskText: state.firstText || '', decision })
+    const intervention = interventionForIntelligenceLevel(intelligence)
+    const hostCaps = {
+      workflow: !!(ctx.get('workflow') || ctx.workflow),
+      approvals: !!(ctx.get('approvals') || ctx.approvals),
+      skills: !!(ctx.get('skills') || ctx.skills),
+      plugins: !!(ctx.get('plugins') || ctx.plugins),
+      subagents: !!(ctx.get('subagents') || ctx.subagents),
+      toolEvents: !!(ctx.get('events') || ctx.events),
+      testEvents: false,
+      fileEvents: !!(ctx.get('fs') || ctx.fs),
+    }
+    return createOmniTaskState({
+      contract,
+      intervention,
+      host: negotiateHost(hostCaps),
+    })
+  }
+
   function planMode() {
     return ctx.get('planMode') || ctx.planMode || undefined
   }
@@ -818,6 +849,7 @@ export function apply(ctx, config = {}) {
           risk: state.riskLevel,
           thinkingMode: state.thinkingMode,
         })
+        state.omniTaskState = buildCanonicalOmniState(state)
         if (shouldEnterPlanMode(state.kind, config)) {
           state.planRequested = setPlanMode(agent, true) || true
         }
@@ -853,6 +885,7 @@ export function apply(ctx, config = {}) {
         risk: state.riskLevel,
         thinkingMode: state.thinkingMode,
       })
+      state.omniTaskState = buildCanonicalOmniState(state)
       delete state.pendingText
       if (shouldEnterPlanMode(state.kind, config)) {
         state.planRequested = setPlanMode(agent, true) || true
@@ -871,108 +904,20 @@ export function apply(ctx, config = {}) {
         text: routerStandardNotice(),
       })
     } else {
-      sections.push({
-        name: 'omni-router:thinking-mode',
-        order: 38,
-        text: thinkingModeHint(state.thinkingMode || 'balanced'),
-      })
-    }
-    if (state.riskLevel) {
-      sections.push({
-        name: 'omni-router:risk',
-        order: 37,
-        text: `Risk level: ${state.riskLevel}. High or critical risk requires plan approval before mutation.`,
-      })
-    }
-    const policyDecision = buildPolicyDecision(state.firstText || '', config, state.taskDecision || undefined)
-    sections.push({
-      name: 'omni-router:policy-decision',
-      order: 37,
-      text: `Policy decision: ${JSON.stringify(policyDecision)}`,
-    })
-    const policy = workflowPolicy(taskType, state.kind || 'direct', state.riskLevel || 'low')
-    sections.push({
-      name: 'omni-router:policy',
-      order: 36,
-      text: `Workflow policy: ${JSON.stringify(policy)}`,
-    })
-    sections.push({
-      name: 'omni-router:agent',
-      order: 35,
-      text: `Suggested agent: ${selectAgentForTask(taskType, state.firstText || '')}`,
-    })
-
-    if (config.skillSuggestions !== false) {
-      const skillsService = ctx.get('skills') || ctx.skills
-      let skillCandidates = suggestSkillsForTask(taskType, state.firstText || '')
-      if (skillsService?.list) {
-        try {
-          const available = await skillsService.list({ cwd: agent.session.header.cwd, scope: agent })
-          skillCandidates = filterAvailableSkills(skillCandidates, available)
-        } catch {
-          // Keep static candidates if the skill service is temporarily unavailable.
-        }
-      }
-      const skillText = buildSkillSuggestionText(skillCandidates)
-      if (skillText) {
-        sections.push({ name: 'omni-router:skills', order: 34, text: skillText })
-      }
-    }
-
-    if (config.methodologyDirectives !== false) {
-      const methodologyText = buildMethodologyDirective(taskType)
-      if (methodologyText) {
-        sections.push({ name: 'omni-router:methodology', order: 33, text: methodologyText })
-      }
-    }
-
-    if (state.memory) {
-      const memoryText = summarizeMemory(state.memory)
-      if (memoryText) {
-        sections.push({ name: 'omni-router:memory', order: 32, text: `Session memory:\n${memoryText}` })
-      }
-    }
-
-    if (state.kind === 'plan' && state.planRequested) {
-      if (state.context === undefined) {
+      // Final Kernel Prompt: one section, three parts.
+      const omniState = state.omniTaskState || buildCanonicalOmniState(state)
+      const contract = omniState.contract
+      if (state.context === undefined && contract.intelligenceLevel !== 'L0') {
         state.context = await getProjectContext(agent.session, taskType, state.firstText || '')
       }
       sections.push({
-        name: 'omni-router:plan-template',
-        order: 40,
-        text: `Produce a structured plan with these sections:\n\n${planTemplateForType(taskType)}`,
+        name: 'omni:task-contract',
+        order: 38,
+        text: buildKernelPrompt({ contract, contextCapsule: state.context || '' }),
       })
-      const mission = buildMission(state.firstText || '', { taskType })
-      sections.push({
-        name: 'omni-router:mission',
-        order: 41,
-        text: `Mission skeleton (use it to organize phases; detailed planning belongs to writing-plans):\n\n${formatMissionPlan(mission)}`,
-      })
-      if (state.context) {
-        sections.push({
-          name: 'omni-router:project-context',
-          order: 39,
-          text: state.context,
-        })
-      }
-      const tdd = tddHintForType(taskType)
-      if (tdd) {
-        sections.push({ name: 'omni-router:tdd', order: 42, text: tdd })
-      }
-      const gate = deliveryGateHint(taskType)
-      if (gate) {
-        sections.push({ name: 'omni-router:delivery-gate', order: 43, text: gate })
-      }
-      const git = gitWorkflowHint(taskType)
-      if (git) {
-        sections.push({ name: 'omni-router:git-workflow', order: 44, text: git })
-      }
-      sections.push({
-        name: 'omni-router:acceptance-checklist',
-        order: 45,
-        text: acceptanceChecklistHint(),
-      })
+    }
 
+    if (state.kind === 'plan' && state.planRequested) {
       const pm = planMode()
       if (pm) return { ...result, sections } // hard gate is active; no tool filtering
 
@@ -985,16 +930,7 @@ export function apply(ctx, config = {}) {
       return { ...result, sections, tools }
     }
 
-    if (state.kind === 'direct') {
-      sections.push({
-        name: 'omni-router:light-verification',
-        order: 40,
-        text: lightVerificationHint(),
-      })
-      return { ...result, sections }
-    }
-
-    return result
+    return { ...result, sections }
   })
 
   // ---- model-facing manual controls -------------------------------------
@@ -1017,26 +953,17 @@ export function apply(ctx, config = {}) {
       const agent = agentFor(session)
       const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
       const routerStandard = agent ? isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent) : false
-      const taskDecision = createTaskDecision({
-        taskText: state.firstText || '',
-        taskType: state.taskType || 'other',
-        complexity: state.kind === 'plan' ? 'plan' : state.kind === 'direct' ? 'direct' : 'balanced',
-        risk: state.riskLevel || 'low',
-        thinkingMode: state.thinkingMode || 'balanced',
-      })
-      const intelligence = decideIntelligenceLevel(taskDecision)
-      const contract = buildTaskContract({ taskText: state.firstText || '', decision: taskDecision })
-      const intervention = decideIntervention({
-        successGain: intelligence.level === 'L0' ? 0 : 0.15,
-        tokenOverhead: intelligence.level === 'L0' ? 0.05 : 0.2,
-      })
+      const omniState = state.omniTaskState || buildCanonicalOmniState(state)
+      const contract = omniState.contract
+      const intervention = omniState.intervention
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
         `thinkingMode=${state.thinkingMode || 'balanced'}`,
         `riskLevel=${state.riskLevel || 'unknown'}`,
-        `intelligenceLevel=${formatIntelligenceLevel(intelligence)}`,
-        `intervention=${formatInterventionGate(intervention)}`,
+        `intelligenceLevel=${contract.intelligenceLevel || 'L0'}`,
+        `intervention=${intervention.mode || 'noop'} (utility=${intervention.utility ?? 0})`,
+        `hostMode=${omniState.host?.mode || 'unknown'}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
         `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
@@ -1057,23 +984,17 @@ export function apply(ctx, config = {}) {
       const session = currentSession()
       if (!session) return 'no agent session'
       const state = states.get(session.id) || {}
-      const decision = createTaskDecision({
-        taskText: state.firstText || '',
-        taskType: state.taskType || 'other',
-        complexity: state.kind === 'plan' ? 'plan' : state.kind === 'direct' ? 'direct' : 'balanced',
-        risk: state.riskLevel || 'low',
-        thinkingMode: state.thinkingMode || 'balanced',
-      })
-      const intelligence = decideIntelligenceLevel(decision)
-      const contract = buildTaskContract({ taskText: state.firstText || '', decision })
-      const trust = requiredTrustForRisk(decision.risk)
+      const omniState = state.omniTaskState || buildCanonicalOmniState(state)
+      const contract = omniState.contract
+      const intervention = omniState.intervention
+      const trust = requiredTrustForRisk(contract.risk)
       const topic = String(args?.topic || '').toLowerCase()
       const lines = [
-        `Mode: ${intelligence.level} ${intelligence.label}`,
-        `Why: complexity=${decision.complexity}, risk=${decision.risk}, taskType=${decision.type}`,
-        `Reasoning effort: ${intelligence.reasoningEffort}`,
-        `Verification: ${intelligence.verification}`,
-        `Approval required: ${intelligence.approvalRequired ? 'yes' : 'no'}`,
+        `Mode: ${contract.intelligenceLevel} (${intervention.mode})`,
+        `Why: risk=${contract.risk}, uncertainty=${contract.uncertainty}`,
+        `Reasoning effort: ${contract.reasoningEffort}`,
+        `Verification: ${contract.verificationPolicy?.level}`,
+        `Approval required: ${contract.verificationPolicy?.approvalRequired ? 'yes' : 'no'}`,
         `Capabilities needed: ${(contract.requiredCapabilities || []).join(', ') || 'native tools'}`,
         `Evidence trust required: ${trust.label}`,
         `Completion requires: ${contract.acceptance?.join('; ') || 'light verification'}`,
@@ -1098,17 +1019,8 @@ export function apply(ctx, config = {}) {
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
       const baseline = baselineAudit(brain)
       const fs = ctx.get('fs') || ctx.fs
-      const hostCaps = {
-        workflow: !!(ctx.get('workflow') || ctx.workflow),
-        approvals: !!(ctx.get('approvals') || ctx.approvals),
-        skills: !!(ctx.get('skills') || ctx.skills),
-        plugins: !!(ctx.get('plugins') || ctx.plugins),
-        subagents: !!(ctx.get('subagents') || ctx.subagents),
-        toolEvents: !!(ctx.get('events') || ctx.events),
-        testEvents: false,
-        fileEvents: !!fs,
-      }
-      const host = negotiateHost(hostCaps)
+      const dshAdapter = createDshHostAdapter(ctx)
+      const host = negotiateHost(dshAdapter.describeHost())
       const lines = [
         `DSH session: ${session ? 'ok' : 'missing'}`,
         `Tools registered: ${toolNames.length}`,
