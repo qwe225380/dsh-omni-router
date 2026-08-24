@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.0] - 2026-08-21
+
+- 完成 优化8.md 可代码化项（Progressive Intelligence）：
+  - 新增 `src/progressive-intelligence.mjs`：L0 Direct / L1 Assisted / L2 Orchestrated / L3 Guarded 四级渐进智能
+  - 新增 `src/context-capsule.mjs`：最小相关上下文 Capsule + 动态 needs 扩展
+  - 新增 `src/strategy-shift.mjs`：相同失败策略连续失败后自动 Strategy Shift，不再盲目 retry；`runDagLoop` 已接入
+  - `omni_status` 显示当前 Intelligence Level
+  - 新增用户入口：`omni_explain` / `omni_doctor`
+  - README 增加产品原则：Fast by default. Smart when needed. Proven when done.
+  - 新增 3 个测试文件，`npm test` 全量通过
+
 ## [2.2.1] - 2026-08-21
 
 - Capability Performance 补齐：

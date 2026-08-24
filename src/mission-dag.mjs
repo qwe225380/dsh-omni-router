@@ -103,7 +103,7 @@ export function insertAfter(dag, afterId, task) {
 
 export function applyObservationToDag(dag, observation = {}, failedTaskId = null) {
   const type = observation.type || ''
-  if (type === 'test_failure' || type === 'build_failure') {
+  if (type === 'test_failure' || type === 'build_failure' || type === 'strategy_shift') {
     const taskId = failedTaskId || observation.taskId || null
     const failedTask = taskId ? dag.tasks.find((t) => t.id === taskId) : null
     const baseId = taskId || 'T'
@@ -114,13 +114,16 @@ export function applyObservationToDag(dag, observation = {}, failedTaskId = null
     const tasks = (dag.tasks || []).map((t) => t.id === taskId ? { ...t, status: 'failed', attempt, failure: observation } : t)
     const doneIds = tasks.filter((t) => t.status === 'done').map((t) => t.id)
     const failure = classifyFailure(observation)
+    const isShift = type === 'strategy_shift'
     const repair = createTask({
       id: repairId,
-      goal: `Diagnose and repair: ${failure.category} — ${failure.recovery}`,
+      goal: isShift
+        ? `Strategy shift: ${observation.reason || 're-investigate with broader context and fresh capabilities'}`
+        : `Diagnose and repair: ${failure.category} — ${failure.recovery}`,
       dependencies: doneIds,
-      acceptance: ['verification passes after repair'],
+      acceptance: ['root cause is re-diagnosed and verification passes'],
       verification: ['run failing checks again'],
-      requiredCapabilities: ['debugging'],
+      requiredCapabilities: isShift ? ['debugging', 'repository.search'] : ['debugging'],
       forbiddenCapabilities: ['source.write'],
     })
     // Repair tasks should be allowed to write; fix forbidden.

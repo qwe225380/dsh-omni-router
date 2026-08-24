@@ -38,6 +38,7 @@ import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capability-auditor.mjs'
 import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
+import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
@@ -1011,15 +1012,87 @@ export function apply(ctx, config = {}) {
       const agent = agentFor(session)
       const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
       const routerStandard = agent ? isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent) : false
+      const taskDecision = createTaskDecision({
+        taskText: state.firstText || '',
+        taskType: state.taskType || 'other',
+        complexity: state.kind === 'plan' ? 'plan' : state.kind === 'direct' ? 'direct' : 'balanced',
+        risk: state.riskLevel || 'low',
+        thinkingMode: state.thinkingMode || 'balanced',
+      })
+      const intelligence = decideIntelligenceLevel(taskDecision)
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
         `thinkingMode=${state.thinkingMode || 'balanced'}`,
         `riskLevel=${state.riskLevel || 'unknown'}`,
+        `intelligenceLevel=${formatIntelligenceLevel(intelligence)}`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
         `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
       ].join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_explain',
+    description: 'Explain why Omni chose the current mode, capabilities, verification level, and what is needed for completion.',
+    parameters: {
+      type: 'object',
+      properties: {
+        topic: { type: 'string', description: 'Optional topic to focus on: mode, capabilities, verification, completion' },
+      },
+    },
+    execute(args) {
+      const session = currentSession()
+      if (!session) return 'no agent session'
+      const state = states.get(session.id) || {}
+      const decision = createTaskDecision({
+        taskText: state.firstText || '',
+        taskType: state.taskType || 'other',
+        complexity: state.kind === 'plan' ? 'plan' : state.kind === 'direct' ? 'direct' : 'balanced',
+        risk: state.riskLevel || 'low',
+        thinkingMode: state.thinkingMode || 'balanced',
+      })
+      const intelligence = decideIntelligenceLevel(decision)
+      const topic = String(args?.topic || '').toLowerCase()
+      const lines = [
+        `Mode: ${intelligence.level} ${intelligence.label}`,
+        `Why: complexity=${decision.complexity}, risk=${decision.risk}, taskType=${decision.type}`,
+        `Reasoning effort: ${intelligence.reasoningEffort}`,
+        `Verification: ${intelligence.verification}`,
+        `Approval required: ${intelligence.approvalRequired ? 'yes' : 'no'}`,
+        `Capabilities needed: ${(decision.evidenceRequirements || []).join(', ') || 'native tools'}`,
+        `Completion requires: ${decision.evidenceRequirements?.length ? 'harness evidence for ' + decision.evidenceRequirements.join(', ') : 'light verification'}`,
+      ]
+      if (topic === 'mode' || topic === 'capabilities' || topic === 'verification' || topic === 'completion') {
+        const idx = lines.findIndex((l) => l.toLowerCase().startsWith(topic))
+        return idx >= 0 ? lines[idx] : lines.join('\n')
+      }
+      return lines.join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_doctor',
+    description: 'Run a quick environment/capability/project-index health check.',
+    parameters: {},
+    async execute() {
+      const session = currentSession()
+      const toolsService = ctx.get('tools') || ctx.tools
+      const toolNames = await collectToolNames(toolsService)
+      let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
+      brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
+      const baseline = baselineAudit(brain)
+      const fs = ctx.get('fs') || ctx.fs
+      const lines = [
+        `DSH session: ${session ? 'ok' : 'missing'}`,
+        `Tools registered: ${toolNames.length}`,
+        `Baseline capability coverage: ${baseline.available.length}/${baseline.required.length}`,
+        `Missing baseline: ${baseline.missing.join(', ') || '(none)'}`,
+        `ProjectIndex: ${fs ? 'available' : 'unavailable'}`,
+        `Evidence hooks: ${ctx.get('evidence') || ctx.evidence ? 'available' : 'not-detected'}`,
+      ]
+      return lines.join('\n')
     },
   })
 

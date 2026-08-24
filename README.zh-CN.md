@@ -3,6 +3,10 @@
 > GitHub：https://github.com/qwe225380/dsh-omni-router
 > [English](./README.md)
 
+> **默认快，必要时聪明，完成必须有证据。**
+> **Decide · Compose · Verify**
+> 安装即可使用，继续写代码。
+
 **Omni** 是一个 DeepSeek Harness 的 **reliability and orchestration control plane**，定位为 Intelligence Runtime：把复杂度路由、任务编译、项目上下文、能力编排、Mission DAG、Runtime 预算、证据验证、Memory/Learning、Benchmark 组合成一个统一的、自动运行的工程闭环。
 
 ## 为什么需要 Omni Router？
@@ -74,6 +78,7 @@
 - **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 runner（manifest schema + prepare + prompt generation + `--exec` 本地执行/结果采集 + DAG-to-plan compile）。
 - **2.1 收敛增强**：Mission Resume（`omni_mission_resume` 跨 session 继续 DAG，`runDagLoop` 支持 `onProgress` 周期保存）、Harness evidence extraction（`extractHarnessEvidence` 从 commands/tests/toolCalls/EVIDENCE_JSON 提取机器可验证证据）、context token budget（`maxContextTokens` 真正限制检索输出）、semantic failure retrieval + evidence-backed skill distillation、OmniBench v2 real runner。
 - **2.2 Capability Auto-Provisioning（优化7）**：Capability Auditor（baseline/task-time audit）、Gap Detection、Plugin/Skill Quality Scoring、Minimal Capability Set Solver、Discovery Adapters（marketplace/hub/static registry）、Trusted Auto Provisioning（recommend/auto-trusted/manual）、Post-install probe、Install rollback transaction、Capability performance learning / redundancy detection。
+- **2.3 Progressive Intelligence（优化8）**：L0 Direct / L1 Assisted / L2 Orchestrated / L3 Guarded 四级渐进智能；Context Capsule（最小相关上下文 + 动态 needs）；Strategy Shift（相同失败策略自动换策略，不再盲目 retry）；`omni_explain` / `omni_doctor` 用户入口。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。
 - **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。
@@ -155,7 +160,7 @@ node scripts/install-preset.mjs
 - `/omni direct` — 进入直接执行模式。
 - `/omni mode spec|react|balanced` — 设置思维模式。
 - `/omni reroute plan|direct` — 动态切换当前任务路由。
-- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_mission_resume` / `omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` / `omni_capability_performance` / `omni_visual_check`。
+- 模型工具：`omni_status` / `omni_explain` / `omni_doctor` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_mission_resume` / `omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` / `omni_capability_performance` / `omni_visual_check`。
 
 ## 配置
 

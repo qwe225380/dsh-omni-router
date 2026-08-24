@@ -163,3 +163,15 @@ test('runDagLoop calls onProgress after each batch', async () => {
   assert.ok(snapshots.length >= dag.tasks.length)
   assert.ok(snapshots.every((s) => s.dag && Array.isArray(s.actions)))
 })
+
+test('runDagLoop triggers strategy shift after repeated same failure', async () => {
+  const dag = createMissionDag(buildMission('修复 bug', { taskType: 'bugfix' }))
+  const result = await runDagLoop(dag, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'test_failure', reason: 'same root cause' }),
+    maxSteps: 30,
+    maxParallel: 1,
+  })
+  const shiftTasks = result.dag.tasks.filter((t) => /Strategy shift/i.test(t.goal))
+  assert.ok(shiftTasks.length > 0)
+})

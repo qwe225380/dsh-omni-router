@@ -11,6 +11,7 @@
 
 import { buildPhaseTasks, decideReplan } from './mission-planner.mjs'
 import { applyObservationToDag, getReadyTasks, isMissionDagComplete, markTaskDone, selectReadyBatch } from './mission-dag.mjs'
+import { nextStrategy, shouldShiftStrategy } from './strategy-shift.mjs'
 
 export function createRuntimeState(mission, options = {}) {
   const phases = mission?.phases || []
@@ -187,6 +188,7 @@ export async function runDagLoop(dag, {
   let cost = 0
   let toolCalls = 0
   const actions = []
+  const failureHistory = new Map()
   const startTime = Date.now()
 
   const statusFromBudget = () => {
@@ -219,12 +221,21 @@ export async function runDagLoop(dag, {
       tokenUsage += Number(result?.tokenUsage || 0)
       cost += Number(result?.cost || 0)
       toolCalls += Number(result?.toolCalls || 0)
-      const isFailure = observation?.type === 'test_failure' || observation?.type === 'build_failure'
+      const isFailure = observation?.type === 'test_failure' || observation?.type === 'build_failure' || observation?.type === 'strategy_shift'
       if (isFailure) {
         replanCount += 1
         repairCount += 1
         sameActionCount = sameActionCount + 1
-        current = applyObservationToDag(current, { ...observation, taskId: task.id }, task.id)
+        const logicalKey = task.logicalId || task.id
+        const history = failureHistory.get(logicalKey) || []
+        history.push({ category: observation.type, reason: observation.reason, hypothesis: observation.hypothesis })
+        failureHistory.set(logicalKey, history)
+        let appliedObservation = { ...observation, taskId: task.id }
+        if (shouldShiftStrategy(history)) {
+          appliedObservation = { type: 'strategy_shift', reason: nextStrategy(history), taskId: task.id }
+          failureHistory.delete(logicalKey)
+        }
+        current = applyObservationToDag(current, appliedObservation, task.id)
       } else {
         sameActionCount = 0
         current = markTaskDone(current, task.id, observation)
