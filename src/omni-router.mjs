@@ -39,7 +39,8 @@ import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
-import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
+import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
+import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
@@ -555,7 +556,7 @@ export function apply(ctx, config = {}) {
       state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: null, taskDecision: null }
       if (!state.memory) {
         const cwd = session.meta?.cwd || session.header?.cwd
-        state.memory = cwd ? loadMemoryFile(cwd) : createMemory()
+        state.memory = cwd ? loadMemoryEngine(cwd) : createMemoryEngine()
       }
       states.set(session.id, state)
     }
@@ -581,7 +582,7 @@ export function apply(ctx, config = {}) {
     }
     try {
       const cwd = session.meta?.cwd || session.header?.cwd
-      if (cwd && state.memory) saveMemoryFile(cwd, state.memory)
+      if (cwd && state.memory) saveMemoryEngine(cwd, state.memory)
     } catch {
       // Disk persistence is best-effort.
     }
@@ -1018,7 +1019,7 @@ export function apply(ctx, config = {}) {
       const state = stateFor(session)
       const action = String(args?.action || 'status').toLowerCase()
       if (action === 'clear') {
-        state.memory = createMemory()
+        state.memory = createMemoryEngine()
         persistState(session, state)
         return 'Memory cleared.'
       }

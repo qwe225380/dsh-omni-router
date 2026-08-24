@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.55.0] - 2026-08-21
+
+- Stage 2 Unification（部分）：
+  - 新增 `src/memory-engine.mjs`：统一 Memory v1/v2/v3 为单一 Memory Engine API
+  - 主 Runtime 的 `state.memory` 改为使用 Memory Engine（load/save/create）
+  - 新增 `test/memory-engine.test.mjs`
+
 ## [1.54.0] - 2026-08-21
 
 - 按优化6.md Stage 1 Correctness：
