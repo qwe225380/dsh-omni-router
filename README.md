@@ -81,6 +81,7 @@
 - **2.3 Progressive Intelligence（优化8）**：L0 Direct / L1 Assisted / L2 Orchestrated / L3 Guarded 四级渐进智能；Context Capsule（最小相关上下文 + 动态 needs）；Strategy Shift（相同失败策略自动换策略，不再盲目 retry）；`omni_explain` / `omni_doctor` 用户入口。
 - **2.4 Reliability Kernel（优化9）**：TaskContract 统一任务契约；Intervention Gate（默认 NOOP，按 Expected Utility 决定是否介入）；OmniEvent / Host Interface（宿主无关事件与能力协商）；Evidence Trust（T0-T4）与 Invalidation；Context Freshness（workspace fingerprint）；Recovery Policy（retry/repair/expand/replan/escalate/stop）。
 - **3.0-convergence M1（优化10）**：success-whitelist 失败处理；主链禁止模型自证（coding 任务需 T2/T3 evidence）；EVIDENCE_JSON 降权 T1；OmniEvent unknown；中文 QueryTokenizer；installer 自动升级；OmniBench fresh worktree/timeout/hidden verifier/raw-omni 分离/真实 telemetry。
+- **3.0-convergence M2/M3/M5 工具链**：Kernel Prompt（Contract/Context/Completion 三节）；OmniTaskState 单状态对象；Mission IR + DSH Adapter；OmniBench matrix/gates（KPI 聚合与 3.0 Release Gate）。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。
 - **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。

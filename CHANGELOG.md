@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-alpha.2] - 2026-08-21
+
+- M2 One Kernel / M3 Host Boundary / M5 Benchmark 工具链：
+  - 新增 `src/kernel-prompt.mjs`：执行 prompt 只保留 Task Contract / Relevant Context / Completion Rule 三节
+  - `omni_mission_run` 改为使用 Kernel Prompt 执行任务
+  - 新增 `src/omni-task-state.mjs`：单任务状态对象（contract/intervention/context/capabilityGaps/evidence/recovery/host）
+  - 新增 `src/mission-ir.mjs`：DAG → Mission IR → Host Compiler
+  - 新增 `src/host/dsh-adapter.mjs`：OmniHost 的 DSH 实现（describeHost / listCapabilities / compileMission）
+  - 新增 `benchmark/omnibench-v2/matrix.mjs` 与 `gates.mjs`：结果聚合、raw/omni 对比、3.0 Release Gate 检查
+  - 新增 5 个测试文件，`npm test` 全量通过
+
 ## [3.0.0-alpha.1] - 2026-08-21
 
 - 进入 `3.0-convergence` 分支，完成 优化10.md M1 Correctness：

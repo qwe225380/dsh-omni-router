@@ -31,7 +31,22 @@ const dirs = [
   ['src', 'src'],
   ['test', 'test'],
   ['docs', 'docs'],
+  ['benchmark', 'benchmark'],
 ]
+
+function copyDir(srcDir, dstDir) {
+  fs.mkdirSync(dstDir, { recursive: true })
+  for (const entry of fs.readdirSync(srcDir)) {
+    const srcFile = path.join(srcDir, entry)
+    const dstFile = path.join(dstDir, entry)
+    const stat = fs.statSync(srcFile)
+    if (stat.isDirectory()) {
+      copyDir(srcFile, dstFile)
+    } else if (stat.isFile()) {
+      fs.copyFileSync(srcFile, dstFile)
+    }
+  }
+}
 
 const force = process.argv.includes('--force')
 
@@ -68,14 +83,7 @@ for (const [from, to] of dirs) {
   const srcDir = path.join(repoRoot, from)
   const dstDir = path.join(target, to)
   if (!fs.existsSync(srcDir)) continue
-  fs.mkdirSync(dstDir, { recursive: true })
-  for (const entry of fs.readdirSync(srcDir)) {
-    const srcFile = path.join(srcDir, entry)
-    const stat = fs.statSync(srcFile)
-    if (stat.isFile()) {
-      fs.copyFileSync(srcFile, path.join(dstDir, entry))
-    }
-  }
+  copyDir(srcDir, dstDir)
 }
 
 fs.writeFileSync(path.join(target, 'version.json'), JSON.stringify({

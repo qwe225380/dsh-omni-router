@@ -15,6 +15,8 @@ test('copyPresetTo copies the bundled preset files into a target directory', () 
     assert.ok(fs.existsSync(path.join(target, 'agent.cordis.yml')))
     assert.ok(fs.existsSync(path.join(target, 'preset.yml')))
     assert.ok(fs.existsSync(path.join(target, 'src', 'omni-router.mjs')))
+    assert.ok(fs.existsSync(path.join(target, 'src', 'host', 'dsh-adapter.mjs')))
+    assert.ok(fs.existsSync(path.join(target, 'benchmark', 'omnibench-v2', 'matrix.mjs')))
     assert.ok(fs.existsSync(path.join(target, 'package.json')))
     assert.ok(fs.existsSync(path.join(target, 'version.json')))
 

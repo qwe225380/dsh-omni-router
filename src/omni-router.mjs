@@ -40,6 +40,7 @@ import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan,
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
 import { buildTaskContract, formatTaskContract } from './task-contract.mjs'
+import { buildKernelPrompt } from './kernel-prompt.mjs'
 import { decideIntervention, formatInterventionGate } from './intervention-gate.mjs'
 import { negotiateHost, formatHostNegotiation } from './host-interface.mjs'
 import { requiredTrustForRisk } from './evidence-trust.mjs'
@@ -1482,14 +1483,22 @@ export function apply(ctx, config = {}) {
       })
     }
 
+    const contract = buildTaskContract({
+      taskText: task,
+      decision: createTaskDecision({ taskText: task, taskType, complexity: 'plan', risk: 'low' }),
+      acceptance: brief.acceptanceCriteria,
+    })
+
     const act = async (action) => {
       const goal = action.task?.goal || action.taskId || ''
       const visualQa = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
         ? `\n\n${buildVisualQaStepRequirement()}`
         : ''
-      const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
       const taskContext = await getProjectContext(session, taskType, goal).catch(() => '')
-      const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${taskContext ? `\n\nContext:\n${taskContext}` : ''}${visualQa}`
+      const prompt = `${buildKernelPrompt({
+        contract: { ...contract, objective: `${task} — Task ${action.taskId}: ${goal}` },
+        contextCapsule: taskContext || '',
+      })}${visualQa}`
       const role = roleForTask(action.task || {})
       const sandbox = capabilityToolFilter(brain, action.task?.requiredCapabilities || [], role)
       const run = await subagents.start('spawn', {
