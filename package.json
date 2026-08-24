@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "1.55.0",
+  "version": "1.56.0",
   "description": "Omni Router - auto-routing DeepSeek Harness preset: simple tasks run directly, complex tasks plan first with approval gate, coding tasks get TDD/delivery-gate guidance.",
   "type": "module",
   "main": "./lib/index.js",
@@ -41,7 +41,7 @@
     }
   },
   "scripts": {
-    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/skill-suggest.test.mjs && node test/methodology.test.mjs && node test/compat.test.mjs && node test/project-brain.test.mjs && node test/mission-planner.test.mjs && node test/agent-runtime.test.mjs && node test/judge.test.mjs && node test/memory.test.mjs && node test/memory-v3.test.mjs && node test/memory-engine.test.mjs && node test/engineering-benchmark.test.mjs && node test/benchmark-runner.test.mjs && node test/benchmark-results.test.mjs && node test/continuous-eval.test.mjs && node --no-warnings test/project-brain-v2.test.mjs && node --no-warnings test/project-brain-v3.test.mjs && node test/visual-qa.test.mjs && node test/evidence.test.mjs && node test/evidence-store.test.mjs && node test/task-decision.test.mjs && node test/task-compiler.test.mjs && node test/capability-brain.test.mjs && node test/capability-manifest.test.mjs && node test/capability-sandbox.test.mjs && node test/planner-dag.test.mjs && node test/dynamic-context.test.mjs && node test/mission-dag.test.mjs && node test/failure-taxonomy.test.mjs && node test/context-expansion.test.mjs && node test/hybrid-retrieval.test.mjs && node test/dependency-graph.test.mjs && node test/ast-provider.test.mjs && node test/experience-router.test.mjs && node test/benchmark-tasks.test.mjs && node test/bundle-installer.test.mjs",
+    "test": "node test/omni-router.test.mjs && node test/agent-chain.test.mjs && node test/skill-suggest.test.mjs && node test/methodology.test.mjs && node test/compat.test.mjs && node test/project-brain.test.mjs && node test/mission-planner.test.mjs && node test/agent-runtime.test.mjs && node test/judge.test.mjs && node test/memory.test.mjs && node test/memory-v3.test.mjs && node test/memory-engine.test.mjs && node test/engineering-benchmark.test.mjs && node test/benchmark-runner.test.mjs && node test/benchmark-results.test.mjs && node test/continuous-eval.test.mjs && node --no-warnings test/project-brain-v2.test.mjs && node --no-warnings test/project-brain-v3.test.mjs && node test/visual-qa.test.mjs && node test/evidence.test.mjs && node test/evidence-store.test.mjs && node test/evidence-engine.test.mjs && node test/task-decision.test.mjs && node test/task-compiler.test.mjs && node test/capability-brain.test.mjs && node test/capability-manifest.test.mjs && node test/capability-sandbox.test.mjs && node test/planner-dag.test.mjs && node test/dynamic-context.test.mjs && node test/mission-dag.test.mjs && node test/failure-taxonomy.test.mjs && node test/context-expansion.test.mjs && node test/hybrid-retrieval.test.mjs && node test/dependency-graph.test.mjs && node test/ast-provider.test.mjs && node test/experience-router.test.mjs && node test/benchmark-tasks.test.mjs && node test/bundle-installer.test.mjs",
     "benchmark": "node benchmark/run.mjs",
     "benchmark:engineering": "node benchmark/engineering-run.mjs",
     "benchmark:compare": "node benchmark/compare.mjs",

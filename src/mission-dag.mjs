@@ -156,13 +156,29 @@ export function applyObservationToDag(dag, observation = {}, failedTaskId = null
   return dag
 }
 
+export function hasWriteOverlap(a = {}, b = {}) {
+  const aScopes = Array.isArray(a.writeScope) ? a.writeScope : (a.resourceLocks || [])
+  const bScopes = Array.isArray(b.writeScope) ? b.writeScope : (b.resourceLocks || [])
+  return aScopes.some((s) => bScopes.includes(s))
+}
+
+export function selectReadyBatch(ready = [], maxParallel = 1) {
+  const batch = []
+  for (const task of ready) {
+    if (batch.length >= maxParallel) break
+    if (batch.some((sel) => hasWriteOverlap(sel, task))) continue
+    batch.push(task)
+  }
+  return batch
+}
+
 export function scheduleParallel(dag, maxParallel = 2) {
   const batches = []
   let current = dag
   while (true) {
     const ready = getReadyTasks(current)
     if (ready.length === 0) break
-    const batch = ready.slice(0, maxParallel)
+    const batch = selectReadyBatch(ready, maxParallel)
     batches.push(batch.map((t) => t.id))
     for (const t of batch) current = markTaskDone(current, t.id)
   }

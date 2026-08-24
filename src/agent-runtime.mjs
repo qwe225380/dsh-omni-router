@@ -10,7 +10,7 @@
  */
 
 import { buildPhaseTasks, decideReplan } from './mission-planner.mjs'
-import { applyObservationToDag, getReadyTasks, isMissionDagComplete, markTaskDone } from './mission-dag.mjs'
+import { applyObservationToDag, getReadyTasks, isMissionDagComplete, markTaskDone, selectReadyBatch } from './mission-dag.mjs'
 
 export function createRuntimeState(mission, options = {}) {
   const phases = mission?.phases || []
@@ -206,7 +206,7 @@ export async function runDagLoop(dag, {
 
     const ready = getReadyTasks(current)
     if (ready.length === 0) break
-    const batch = ready.slice(0, b.maxParallel)
+    const batch = selectReadyBatch(ready, b.maxParallel)
     const results = await Promise.all(batch.map(async (task) => {
       const action = { taskId: task.id, task, phase: task.id }
       const result = await act(action, current)

@@ -68,6 +68,7 @@
 - **P1 能力**：Planner-generated DAG（可并行分支）、Dynamic Context Expansion（按 uncertainty 自动升级）、Capability Manifest（插件/skill 声明式能力）、Failure-aware DAG mutation（按失败分类生成 repair）。
 - **P1/P2 能力**：Evidence Store（harness-captured 证据记录，`omni_mission_run` 自动采集）、Memory v3（skill distillation、execution policies、historical failures、cross-session strategies）。
 - **Memory Engine**：`src/memory-engine.mjs` 统一 Memory v1/v2/v3，主 Runtime 已切换为单一 Memory Engine API。
+- **Evidence Engine / Write Locks**：`src/evidence-engine.mjs` 统一证据协议与存储；DAG scheduler 通过 `selectReadyBatch` 避免 write overlap 并行冲突。
 - **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 scaffold（manifest schema + runner stub + prepare script + DAG-to-plan compile）。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。

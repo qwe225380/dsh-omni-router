@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.56.0] - 2026-08-21
+
+- Stage 2/3 继续：
+  - 新增 `src/evidence-engine.mjs`：统一 Evidence Protocol + Evidence Store 为单一引擎
+  - Write Conflict Locks：`selectReadyBatch` 避免 writeScope/resourceLocks 重叠任务并行
+  - `runDagLoop` 使用 conflict-aware batch selection
+
 ## [1.55.0] - 2026-08-21
 
 - Stage 2 Unification（部分）：

@@ -13,6 +13,7 @@ import {
   isMissionDagComplete,
   markTaskDone,
   scheduleParallel,
+  selectReadyBatch,
 } from '../src/mission-dag.mjs'
 import { buildMission } from '../src/mission-planner.mjs'
 import { createCapabilityBrain, registerCapability } from '../src/capability-brain.mjs'
@@ -80,6 +81,16 @@ test('scheduleParallel returns batches of ready tasks', () => {
   const batches = scheduleParallel(dag, 2)
   assert.ok(batches.length > 0)
   assert.equal(batches[0].length, 1)
+})
+
+test('selectReadyBatch avoids write conflicts', () => {
+  const tasks = [
+    createTask({ id: 'A', goal: 'a', writeScope: ['x'] }),
+    createTask({ id: 'B', goal: 'b', writeScope: ['x'] }),
+    createTask({ id: 'C', goal: 'c', writeScope: ['y'] }),
+  ]
+  const batch = selectReadyBatch(tasks, 2)
+  assert.deepEqual(batch.map((t) => t.id), ['A', 'C'])
 })
 
 test('formatMissionDag renders tasks and dependencies', () => {
