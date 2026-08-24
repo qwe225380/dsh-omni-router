@@ -8,6 +8,7 @@ import {
   addTestEvidence,
   createEvidence,
   evidencePass,
+  extractHarnessEvidence,
   summarizeEvidence,
 } from '../src/evidence.mjs'
 
@@ -43,4 +44,38 @@ test('summarizeEvidence renders sections', () => {
   const text = summarizeEvidence(e)
   assert.match(text, /Commands/)
   assert.match(text, /Tests/)
+})
+
+test('extractHarnessEvidence normalizes structured result evidence', () => {
+  const evidence = extractHarnessEvidence({
+    commands: [{ command: 'npm test', exitCode: 0, output: 'ok' }],
+    tests: [{ command: 'npm test', exitCode: 0, total: 3, passed: 3, failed: 0 }],
+    files: [{ file: 'src/a.ts', lines: [1], beforeHash: 'a', afterHash: 'b', diffHash: 'c' }],
+    findings: [{ finding: 'nit', severity: 'low', file: 'src/a.ts', line: 2 }],
+  })
+  assert.equal(evidence.commands.length, 1)
+  assert.equal(evidence.tests.length, 1)
+  assert.equal(evidence.files.length, 1)
+  assert.equal(evidence.findings.length, 1)
+  assert.equal(evidencePass(evidence), true)
+})
+
+test('extractHarnessEvidence reads toolCalls as command evidence', () => {
+  const evidence = extractHarnessEvidence({
+    toolCalls: [
+      { name: 'npm test', exitCode: 0, output: 'all pass' },
+      { name: 'node run.js', exitCode: 1, output: 'boom' },
+    ],
+  })
+  assert.equal(evidence.commands.length, 2)
+  assert.equal(evidence.commands[0].exitCode, 0)
+  assert.equal(evidence.commands[1].exitCode, 1)
+  assert.equal(evidencePass(evidence), false)
+})
+
+test('extractHarnessEvidence parses embedded EVIDENCE_JSON block', () => {
+  const output = 'I ran the checks.\nEVIDENCE_JSON\n{"tests":[{"command":"npm test","exitCode":0,"total":2,"passed":2,"failed":0}]}'
+  const evidence = extractHarnessEvidence({ output })
+  assert.equal(evidence.tests.length, 1)
+  assert.equal(evidencePass(evidence), true)
 })

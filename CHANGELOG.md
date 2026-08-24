@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.1.0] - 2026-08-21
+
+- 完成 优化6.md 剩余可代码化项：
+  - Mission Resume：`runDagLoop` 新增 `onProgress` 周期保存；新增 `omni_mission_resume` 工具可跨 session 继续 DAG
+  - Harness Evidence：`extractHarnessEvidence` 从 commands / tests / toolCalls / `EVIDENCE_JSON` 提取机器可验证证据，`omni_mission_run` 优先使用结构化证据判定 PASS/FAIL
+  - Context token budget：`buildProgressiveContext` / `buildDynamicContext` 支持 `maxContextTokens`，真正限制检索输出
+  - Memory：`retrieveHistoricalFailures` 改为语义 token-overlap 排序；`distillSkill` 支持 `requireEvidence` 只从验证成功学习
+  - Capability outcome learning：`omni_mission_run` 每次任务后用 `recordCapabilityOutcome` 更新能力成功率
+  - OmniBench v2 runner：`run.mjs` 从 prompt generator 升级为可执行 runner（`--exec` + `agentCommand` + setup/baseline/verify + JSON 结果采集）
+
 ## [2.0.0] - 2026-08-21
 
 - Omni 2.0 收敛发布：

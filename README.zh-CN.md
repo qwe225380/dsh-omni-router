@@ -71,7 +71,8 @@
 - **Evidence Engine / Write Locks**：`src/evidence-engine.mjs` 统一证据协议与存储；DAG scheduler 通过 `selectReadyBatch` 避免 write overlap 并行冲突。
 - **Stage 3/5**：Recursive Project Index、contextBudget 接入、Per-task Context、Missing capability handling、OmniBench v2 prompt generator。
 - **Stage 4（部分）**：`compileDagToWorkflow` 将 Mission DAG 编译为 DSH-native workflow outline。
-- **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 scaffold（manifest schema + runner stub + prepare script + DAG-to-plan compile）。
+- **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 runner（manifest schema + prepare + prompt generation + `--exec` 本地执行/结果采集 + DAG-to-plan compile）。
+- **2.1 收敛增强**：Mission Resume（`omni_mission_resume` 跨 session 继续 DAG，`runDagLoop` 支持 `onProgress` 周期保存）、Harness evidence extraction（`extractHarnessEvidence` 从 commands/tests/toolCalls/EVIDENCE_JSON 提取机器可验证证据）、context token budget（`maxContextTokens` 真正限制检索输出）、semantic failure retrieval + evidence-backed skill distillation、OmniBench v2 real runner。
 - **TaskDecision**：`createTaskDecision` 生成唯一决策对象，Policy/Runtime 统一消费，避免重复 classify 分叉。
 - **Evidence Protocol**：`src/evidence.mjs` 用结构化 command/file/test/finding 证据判定 PASS/FAIL；`isQaPass` 已支持从 QA 输出解析 JSON evidence，不再只信文本。
 - **Task Compiler**：`compileTask` 生成 objective / constraints / non-goals / acceptance / hidden assumptions / ambiguities / invariants / risk / artifacts；`compileTaskWithLLM` 可用 LLM 增强。
@@ -153,7 +154,7 @@ node scripts/install-preset.mjs
 - `/omni direct` — 进入直接执行模式。
 - `/omni mode spec|react|balanced` — 设置思维模式。
 - `/omni reroute plan|direct` — 动态切换当前任务路由。
-- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_visual_check`。
+- 模型工具：`omni_status` / `omni_plan` / `omni_direct` / `omni_mode` / `omni_reroute` / `omni_delegate` / `omni_memory` / `omni_benchmark` / `omni_mission_run` / `omni_mission_resume` / `omni_visual_check`。
 
 ## 配置
 

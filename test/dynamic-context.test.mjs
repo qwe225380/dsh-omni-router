@@ -36,3 +36,14 @@ test('buildDynamicContext expands when uncertainty is high', () => {
   assert.equal(result.level, 2)
   assert.match(result.context, /Implementations:/)
 })
+
+test('buildDynamicContext enforces maxContextTokens budget', () => {
+  const result = buildDynamicContext('fix login', entries, files, {
+    level: 4,
+    uncertainty: 0.8,
+    threshold: 0.5,
+    maxContextTokens: 10,
+  })
+  assert.ok(result.context.length <= 10 * 4 + 64)
+  assert.match(result.context, /truncated by context budget/)
+})

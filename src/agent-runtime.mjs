@@ -165,6 +165,7 @@ export async function runDagLoop(dag, {
   maxRepairs = 0,
   maxSameActionRetries = 0,
   budget = {},
+  onProgress = null,
 } = {}) {
   const b = {
     maxSteps: maxSteps ?? budget.steps ?? 50,
@@ -231,6 +232,18 @@ export async function runDagLoop(dag, {
       actions.push({ taskId: task.id, observation })
     }
     step += 1
+    if (typeof onProgress === 'function') {
+      try {
+        await onProgress({
+          dag: current,
+          step,
+          actions,
+          metrics: { step, replanCount, repairCount, sameActionCount, tokenUsage, cost, toolCalls },
+        })
+      } catch {
+        // Progress callbacks are best-effort; they must never abort the mission.
+      }
+    }
   }
 
   const done = isMissionDagComplete(current)

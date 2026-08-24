@@ -54,7 +54,15 @@ export function buildProgressiveContext(taskText, entries, files = {}, options =
     const tests = [...names].filter((n) => /\.(test|spec)\./i.test(n))
     if (tests.length) parts.push('', 'Tests:', ...tests.map((t) => `- ${t}`))
   }
-  return parts.join('\n')
+  return applyContextBudget(parts.join('\n'), options)
+}
+
+function applyContextBudget(text, options = {}) {
+  const maxTokens = Number(options.maxContextTokens) || 0
+  if (maxTokens <= 0) return text
+  const maxChars = Math.max(32, maxTokens * 4)
+  if (text.length <= maxChars) return text
+  return `${text.slice(0, maxChars)}\n… (truncated by context budget ${maxTokens} tokens)`
 }
 
 export function shouldExpand(uncertainty = 0, threshold = 0.5) {

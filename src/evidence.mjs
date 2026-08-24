@@ -70,6 +70,92 @@ export function evidencePass(evidence = {}) {
   return true
 }
 
+/**
+ * Extract machine-checkable evidence from a subagent/tool result.
+ *
+ * Accepts either a structured `result.evidence` object, top-level arrays on the
+ * result (`commands`, `tests`, `files`, `findings`), tool-call records, or an
+ * embedded `EVIDENCE_JSON` block in the result text. This lets the runtime
+ * prefer Harness-captured facts over agent prose whenever the Harness provides
+ * them.
+ */
+export function extractHarnessEvidence(result = {}) {
+  let evidence = createEvidence()
+  const source = (result && typeof result === 'object' && result.evidence) || result || {}
+
+  const apply = (key, fn) => {
+    for (const item of Array.isArray(source[key]) ? source[key] : []) {
+      try {
+        evidence = fn(evidence, item)
+      } catch {
+        // Skip malformed evidence entries; never fail the mission.
+      }
+    }
+  }
+
+  apply('commands', addCommandEvidence)
+  apply('tests', addTestEvidence)
+  apply('files', addFileEvidence)
+  apply('findings', addFindingEvidence)
+
+  if (Array.isArray(result?.toolCalls)) {
+    for (const call of result.toolCalls) {
+      try {
+        if (call?.command || call?.name) {
+          evidence = addCommandEvidence(evidence, {
+            command: call.command || call.name,
+            exitCode: call.exitCode ?? (call.ok === false ? 1 : 0),
+            output: call.output || call.stdout || '',
+            durationMs: call.durationMs || 0,
+          })
+        }
+      } catch {
+        // Ignore malformed tool-call evidence.
+      }
+    }
+  }
+
+  const embedded = parseEmbeddedEvidence(result?.output || result?.text || '')
+  if (embedded) {
+    for (const item of embedded.commands || []) {
+      try { evidence = addCommandEvidence(evidence, item) } catch { /* ignore */ }
+    }
+    for (const item of embedded.tests || []) {
+      try { evidence = addTestEvidence(evidence, item) } catch { /* ignore */ }
+    }
+    for (const item of embedded.files || []) {
+      try { evidence = addFileEvidence(evidence, item) } catch { /* ignore */ }
+    }
+    for (const item of embedded.findings || []) {
+      try { evidence = addFindingEvidence(evidence, item) } catch { /* ignore */ }
+    }
+  }
+
+  return evidence
+}
+
+function parseEmbeddedEvidence(text) {
+  const source = String(text || '')
+  const markers = ['EVIDENCE_JSON', 'EVIDENCE:']
+  for (const marker of markers) {
+    const start = source.indexOf(marker)
+    if (start === -1) continue
+    const jsonStart = source.indexOf('{', start)
+    if (jsonStart === -1) continue
+    const jsonEnd = source.lastIndexOf('}')
+    if (jsonEnd === -1 || jsonEnd <= jsonStart) continue
+    try {
+      const parsed = JSON.parse(source.slice(jsonStart, jsonEnd + 1))
+      if (parsed && (Array.isArray(parsed.commands) || Array.isArray(parsed.tests) || Array.isArray(parsed.files) || Array.isArray(parsed.findings))) {
+        return parsed
+      }
+    } catch {
+      // Not valid JSON; fall through to prose-based heuristics.
+    }
+  }
+  return null
+}
+
 export function summarizeEvidence(evidence = {}) {
   const lines = []
   if (evidence.commands?.length) {

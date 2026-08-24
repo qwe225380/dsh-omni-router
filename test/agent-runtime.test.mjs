@@ -146,3 +146,20 @@ test('runDagLoop respects maxReplans', async () => {
   })
   assert.equal(result.status, 'max_replans')
 })
+
+test('runDagLoop calls onProgress after each batch', async () => {
+  const dag = createMissionDag(buildMission('实现退款', { taskType: 'feature' }))
+  const snapshots = []
+  const result = await runDagLoop(dag, {
+    act: async () => ({ ok: true }),
+    observe: async () => ({ type: 'step_done' }),
+    maxSteps: 100,
+    maxParallel: 1,
+    onProgress: async (snapshot) => {
+      snapshots.push(snapshot)
+    },
+  })
+  assert.equal(result.status, 'completed')
+  assert.ok(snapshots.length >= dag.tasks.length)
+  assert.ok(snapshots.every((s) => s.dag && Array.isArray(s.actions)))
+})

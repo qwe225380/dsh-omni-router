@@ -17,10 +17,11 @@ export function createMemoryV3(base = {}) {
   }
 }
 
-function countOutcomes(trajectories = []) {
+function countOutcomes(trajectories = [], options = {}) {
   let successCount = 0
   let failureCount = 0
   for (const t of trajectories || []) {
+    if (options.requireEvidence && !hasEvidenceBacking(t)) continue
     const text = String(t?.text || t?.outcome || '').toLowerCase()
     if (/success|done|pass|完成|ok/.test(text)) successCount += 1
     else if (/fail|error|blocked|失败|错误/.test(text)) failureCount += 1
@@ -28,13 +29,28 @@ function countOutcomes(trajectories = []) {
   return { successCount, failureCount }
 }
 
+function hasEvidenceBacking(t = {}) {
+  const evidence = t.evidence || t.verification || t.verified
+  if (evidence === true) return true
+  if (evidence && typeof evidence === 'object') {
+    const e = evidence
+    return Boolean(
+      (Array.isArray(e.commands) && e.commands.length) ||
+      (Array.isArray(e.tests) && e.tests.length) ||
+      (Array.isArray(e.files) && e.files.length) ||
+      (Array.isArray(e.findings) && e.findings.length),
+    )
+  }
+  return false
+}
+
 export function distillSkill(memory, trajectories = [], options = {}) {
   const minSuccesses = Number(options.minSuccesses) || 3
-  const { successCount, failureCount } = countOutcomes(trajectories)
+  const { successCount, failureCount } = countOutcomes(trajectories, options)
   if (successCount < minSuccesses) return { memory, promoted: false, reason: `need ${minSuccesses} successes, got ${successCount}` }
 
   const successfulSteps = (trajectories || [])
-    .filter((t) => /success|done|pass|完成|ok/i.test(String(t?.text || t?.outcome || '')))
+    .filter((t) => (!options.requireEvidence || hasEvidenceBacking(t)) && /success|done|pass|完成|ok/i.test(String(t?.text || t?.outcome || '')))
     .map((t) => t?.text || t?.step || '')
     .filter(Boolean)
 
@@ -78,11 +94,27 @@ export function recordSkillOutcome(memory, skillName, success) {
   return { ...memory, learnedSkills: skills }
 }
 
-export function retrieveHistoricalFailures(memory, taskText = '') {
+export function retrieveHistoricalFailures(memory, taskText = '', options = {}) {
   const text = String(taskText || '').toLowerCase()
   const failures = memory.failures || []
   if (!text) return failures
-  return failures.filter((f) => String(f.text || f.reason || '').toLowerCase().includes(text))
+  const minScore = options.minScore === undefined ? 0.1 : Number(options.minScore) || 0
+  const tokens = tokenize(text)
+  return failures
+    .map((f) => {
+      const hay = `${f.text || ''} ${f.reason || ''} ${f.category || ''} ${f.type || ''}`.toLowerCase()
+      const hayTokens = tokenize(hay)
+      const overlap = hayTokens.filter((t) => tokens.includes(t)).length
+      const score = overlap / Math.max(1, Math.min(tokens.length, hayTokens.length))
+      return { ...f, _score: Math.round(score * 1000) / 1000 }
+    })
+    .filter((f) => f._score >= minScore || String(f.text || f.reason || '').toLowerCase().includes(text))
+    .sort((a, b) => b._score - a._score)
+    .map(({ _score, ...f }) => f)
+}
+
+function tokenize(text) {
+  return String(text || '').toLowerCase().match(/[a-z0-9_]+/g) || []
 }
 
 export function recordExecutionPolicy(memory, policy = {}) {

@@ -33,6 +33,7 @@ export function buildDynamicContext(taskText, entries, files = {}, options = {})
       level,
       maxFiles: options.maxFiles || 8,
       maxFileChars: options.maxFileChars || 2000,
+      maxContextTokens: options.maxContextTokens || 0,
       graph: options.graph,
     }),
   }

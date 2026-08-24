@@ -30,9 +30,9 @@ import { runDagLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTaskWithLLM } from './task-compiler.mjs'
-import { bindCapabilitiesToDag, createMissionDag, formatMissionDag } from './mission-dag.mjs'
+import { bindCapabilitiesToDag, createMissionDag, formatMissionDag, isMissionDagComplete } from './mission-dag.mjs'
 import { generateMissionDag, roleForTask } from './planner-dag.mjs'
-import { autoPopulateCapabilityBrain, createCapabilityBrain } from './capability-brain.mjs'
+import { autoPopulateCapabilityBrain, createCapabilityBrain, recordCapabilityOutcome } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
@@ -42,7 +42,8 @@ import { retrieveContext } from './hybrid-retrieval.mjs'
 import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
 import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
-import { saveMissionState } from './mission-resume.mjs'
+import { evidencePass, extractHarnessEvidence } from './evidence.mjs'
+import { listMissionStates, loadMissionState, saveMissionState } from './mission-resume.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
 
@@ -695,6 +696,7 @@ export function apply(ctx, config = {}) {
             uncertainty: Number(config.contextUncertainty) || 0.6,
             maxFiles,
             maxFileChars: 2000,
+            maxContextTokens: ctxBudget.retrievalBudget,
             graph: graphAdj,
           })
           return dynamic.context
@@ -1359,6 +1361,113 @@ export function apply(ctx, config = {}) {
     },
   })
 
+  async function createMissionExecutor({ session, agent, subagents, task, taskType, frontend, brief, capabilityBrain, evidenceRecords, resumeKey }) {
+    const cwd = session?.meta?.cwd || session?.header?.cwd
+    let brain = capabilityBrain
+
+    const saveProgress = async (snapshot = {}) => {
+      if (!cwd || !resumeKey) return
+      const dag = snapshot.dag
+      saveMissionState(cwd, resumeKey, {
+        status: dag ? (isMissionDagComplete(dag) ? 'completed' : 'active') : 'active',
+        dag,
+        evidence: evidenceRecords,
+        metrics: snapshot.metrics || {},
+        capabilityBrain: brain,
+        brief,
+        task,
+        taskType,
+        savedAt: new Date().toISOString(),
+      })
+    }
+
+    const act = async (action) => {
+      const goal = action.task?.goal || action.taskId || ''
+      const visualQa = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
+        ? `\n\n${buildVisualQaStepRequirement()}`
+        : ''
+      const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
+      const taskContext = await getProjectContext(session, taskType, goal).catch(() => '')
+      const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${taskContext ? `\n\nContext:\n${taskContext}` : ''}${visualQa}`
+      const role = roleForTask(action.task || {})
+      const sandbox = capabilityToolFilter(brain, action.task?.requiredCapabilities || [], role)
+      const run = await subagents.start('spawn', {
+        label: `mission-${action.taskId}`,
+        prompt: [{ type: 'text', text: prompt }],
+        parent: agent,
+        maxDepth: 1,
+        ...(sandbox.allow.length || sandbox.deny.length ? { toolFilter: sandbox } : {}),
+      })
+      const result = await run.result
+      const output = (Array.isArray(result.output) ? result.output : [])
+        .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+        .map((block) => block.text)
+        .join('')
+      try { await run.dispose() } catch { /* best-effort */ }
+
+      const harness = extractHarnessEvidence({ ...result, output })
+      const hasStructured = harness.commands.length > 0 || harness.tests.length > 0 || harness.files.length > 0 || harness.findings.length > 0
+      let record
+      if (hasStructured) {
+        record = {
+          id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+          type: 'harness',
+          source: action.taskId,
+          value: output.slice(0, 2000),
+          ok: evidencePass(harness),
+          evidence: harness,
+          at: new Date().toISOString(),
+        }
+      } else {
+        const captured = captureEvidence({ entries: evidenceRecords }, {
+          type: 'agent_output',
+          source: action.taskId,
+          value: output.slice(0, 2000),
+          ok: !/FAIL|error|失败|not ok/i.test(output),
+        })
+        record = captured.record
+      }
+      evidenceRecords.push(record)
+      return {
+        output,
+        evidenceId: record.id,
+        evidence: harness,
+        hasStructuredEvidence: hasStructured,
+        tokenUsage: result?.tokenUsage ?? result?.usage?.totalTokens ?? 0,
+        cost: result?.cost ?? 0,
+        toolCalls: result?.toolCalls ?? result?.usage?.toolCalls ?? 0,
+      }
+    }
+
+    const observe = async (result, _current, action) => {
+      const goal = action?.task?.goal || ''
+      const needsVisual = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
+      if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure', reason: 'visual QA failed' }
+
+      const harness = result.evidence || {}
+      const hasStructured = result.hasStructuredEvidence === true || harness.commands?.length || harness.tests?.length || harness.files?.length || harness.findings?.length
+      if (hasStructured) {
+        const passed = evidencePass(harness)
+        if (!passed) {
+          brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], false)
+          return { type: 'test_failure', reason: 'structured harness evidence failed', evidence: harness }
+        }
+        brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], true)
+        return { type: 'step_done', evidence: harness }
+      }
+
+      if (/FAIL|error|失败|not ok/i.test(result.output || '')) {
+        const failure = classifyFailure({ type: 'unknown', reason: result.output || '' })
+        brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], false)
+        return { type: failure.category, reason: failure.recovery, detail: String(result.output || '').slice(0, 500) }
+      }
+      brain = recordCapabilityOutcome(brain, action?.task?.allowedTools?.[0], true)
+      return { type: 'step_done' }
+    }
+
+    return { act, observe, saveProgress, getCapabilityBrain: () => brain }
+  }
+
   registerTool({
     name: 'omni_mission_run',
     description: 'Run a Mission Planner loop with real subagents: Observe → Think → Act → Replan until completed or maxSteps.',
@@ -1397,56 +1506,25 @@ export function apply(ctx, config = {}) {
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
       const dag = bindCapabilitiesToDag(generateMissionDag(mission, brief, { taskType }), capabilityBrain)
       const evidenceRecords = []
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      const resumeKey = cwd ? `mission-${Date.now().toString(36)}` : null
+      const executor = await createMissionExecutor({
+        session,
+        agent,
+        subagents,
+        task,
+        taskType,
+        frontend,
+        brief,
+        capabilityBrain,
+        evidenceRecords,
+        resumeKey,
+      })
 
       const finalDag = await runDagLoop(dag, {
-        act: async (action) => {
-          const goal = action.task?.goal || action.taskId || ''
-          const visualQa = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
-            ? `\n\n${buildVisualQaStepRequirement()}`
-            : ''
-          const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
-          const taskContext = await getProjectContext(session, taskType, goal).catch(() => '')
-          const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${taskContext ? `\n\nContext:\n${taskContext}` : ''}${visualQa}`
-          const role = roleForTask(action.task || {})
-          const sandbox = capabilityToolFilter(capabilityBrain, action.task?.requiredCapabilities || [], role)
-          const run = await subagents.start('spawn', {
-            label: `mission-${action.taskId}`,
-            prompt: [{ type: 'text', text: prompt }],
-            parent: agent,
-            maxDepth: 1,
-            ...(sandbox.allow.length || sandbox.deny.length ? { toolFilter: sandbox } : {}),
-          })
-          const result = await run.result
-          const output = (Array.isArray(result.output) ? result.output : [])
-            .filter((block) => block?.type === 'text' && typeof block.text === 'string')
-            .map((block) => block.text)
-            .join('')
-          try { await run.dispose() } catch { /* best-effort */ }
-          const captured = captureEvidence({ entries: evidenceRecords }, {
-            type: 'agent_output',
-            source: action.taskId,
-            value: output.slice(0, 2000),
-            ok: !/FAIL|error|失败|not ok/i.test(output),
-          })
-          evidenceRecords.push(captured.record)
-          return {
-            output,
-            evidenceId: captured.record.id,
-            tokenUsage: result?.tokenUsage ?? result?.usage?.totalTokens ?? 0,
-            cost: result?.cost ?? 0,
-            toolCalls: result?.toolCalls ?? result?.usage?.toolCalls ?? 0,
-          }
-        },
-        observe: async (result, _current, action) => {
-          const goal = action?.task?.goal || ''
-          const needsVisual = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
-          if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure', reason: 'visual QA failed' }
-          if (/FAIL|error|失败|not ok/i.test(result.output || '')) {
-            const failure = classifyFailure({ type: 'unknown', reason: result.output || '' })
-            return { type: failure.category, reason: failure.recovery, detail: String(result.output || '').slice(0, 500) }
-          }
-          return { type: 'step_done' }
-        },
+        act: executor.act,
+        observe: executor.observe,
+        onProgress: executor.saveProgress,
         maxSteps,
         maxParallel: Number(args?.maxParallel) || 1,
         maxTokens: Number(args?.maxTokens) || 0,
@@ -1456,19 +1534,21 @@ export function apply(ctx, config = {}) {
         maxReplans: Number(args?.maxReplans) || 0,
         maxWallClockMs: Number(args?.maxWallClockMs) || 0,
       })
+      capabilityBrain = executor.getCapabilityBrain()
 
       const metrics = finalDag.metrics || {}
       const evSummary = evidenceSummary({ entries: evidenceRecords })
-      const cwd = session?.meta?.cwd || session?.header?.cwd
       let resumeInfo = ''
-      if (cwd) {
-        const resumeKey = `mission-${Date.now().toString(36)}`
+      if (cwd && resumeKey) {
         const saved = saveMissionState(cwd, resumeKey, {
           status: finalDag.status,
           dag: finalDag.dag,
           evidence: evidenceRecords,
           metrics,
+          capabilityBrain,
+          brief,
           task,
+          taskType,
           savedAt: new Date().toISOString(),
         })
         resumeInfo = `\nSaved mission state: ${saved}`
@@ -1481,6 +1561,107 @@ export function apply(ctx, config = {}) {
         `Evidence captured: ${evSummary.total} (failed=${evSummary.failed})`,
         `Mission: ${task}`,
         resumeInfo,
+        '',
+        formatMissionDag(finalDag.dag),
+      ].join('\n')
+    },
+  })
+
+  registerTool({
+    name: 'omni_mission_resume',
+    description: 'Resume a saved Mission DAG from .omni/missions/<key>.json. Without a key, lists saved missions.',
+    parameters: {
+      type: 'object',
+      properties: {
+        key: { type: 'string', description: 'Saved mission state key (from omni_mission_run output)' },
+        maxSteps: { type: 'number', description: 'Max additional loop steps (default 20)' },
+        maxParallel: { type: 'number', description: 'Max tasks to run concurrently (default 1)' },
+        maxTokens: { type: 'number', description: 'Max token budget for the resumed portion (0 = unlimited)' },
+        maxCost: { type: 'number', description: 'Max cost budget for the resumed portion (0 = unlimited)' },
+        maxToolCalls: { type: 'number', description: 'Max tool calls for the resumed portion (0 = unlimited)' },
+        maxRepairs: { type: 'number', description: 'Max repairs before blocking (0 = unlimited)' },
+        maxReplans: { type: 'number', description: 'Max replans before blocking (0 = unlimited)' },
+        maxWallClockMs: { type: 'number', description: 'Max wall-clock time in ms (0 = unlimited)' },
+      },
+      required: [],
+    },
+    async execute(args) {
+      const session = currentSession()
+      const agent = session && agentFor(session)
+      const subagents = ctx.get('subagents') || ctx.subagents
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      if (!cwd) return 'No workspace cwd found.'
+      const key = String(args?.key || '').trim()
+      if (!key) {
+        const keys = listMissionStates(cwd)
+        return keys.length
+          ? `Saved missions:\n${keys.map((k) => `- ${k}`).join('\n')}\n\nPass "key" to resume one.`
+          : 'No saved missions found in .omni/missions.'
+      }
+      const saved = loadMissionState(cwd, key)
+      if (!saved) {
+        const keys = listMissionStates(cwd)
+        return `No saved mission found for key "${key}". Available: ${keys.join(', ') || '(none)'}`
+      }
+      if (saved.status === 'completed') return `Mission "${key}" is already completed.`
+      if (!session || !agent || !subagents?.start) return 'Mission resume requires an active session with subagents.'
+
+      const task = saved.task || saved.dag?.mission?.task || ''
+      const taskType = saved.taskType || classifyTaskType(task)
+      const frontend = isFrontendTask(task)
+      const brief = saved.brief || { objective: task, acceptanceCriteria: [] }
+      const evidenceRecords = Array.isArray(saved.evidence) ? saved.evidence : []
+      const toolsService = ctx.get('tools') || ctx.tools
+      let capabilityBrain = saved.capabilityBrain || autoPopulateCapabilityBrain(createCapabilityBrain(), await collectToolNames(toolsService))
+      capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
+
+      const executor = await createMissionExecutor({
+        session,
+        agent,
+        subagents,
+        task,
+        taskType,
+        frontend,
+        brief,
+        capabilityBrain,
+        evidenceRecords,
+        resumeKey: key,
+      })
+
+      const finalDag = await runDagLoop(saved.dag, {
+        act: executor.act,
+        observe: executor.observe,
+        onProgress: executor.saveProgress,
+        maxSteps: Number(args?.maxSteps) || 20,
+        maxParallel: Number(args?.maxParallel) || 1,
+        maxTokens: Number(args?.maxTokens) || 0,
+        maxCost: Number(args?.maxCost) || 0,
+        maxToolCalls: Number(args?.maxToolCalls) || 0,
+        maxRepairs: Number(args?.maxRepairs) || 0,
+        maxReplans: Number(args?.maxReplans) || 0,
+        maxWallClockMs: Number(args?.maxWallClockMs) || 0,
+      })
+
+      const metrics = finalDag.metrics || {}
+      saveMissionState(cwd, key, {
+        status: finalDag.status,
+        dag: finalDag.dag,
+        evidence: evidenceRecords,
+        metrics,
+        capabilityBrain: executor.getCapabilityBrain(),
+        brief,
+        task,
+        taskType,
+        savedAt: new Date().toISOString(),
+      })
+      const evSummary = evidenceSummary({ entries: evidenceRecords })
+      return [
+        `Mission resume: ${finalDag.status}`,
+        `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
+        `Additional steps: ${finalDag.actions.length}`,
+        `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,
+        `Evidence captured: ${evSummary.total} (failed=${evSummary.failed})`,
+        `Mission: ${task}`,
         '',
         formatMissionDag(finalDag.dag),
       ].join('\n')
