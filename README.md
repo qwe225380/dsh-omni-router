@@ -1,9 +1,9 @@
-# Omni Router
+# Omni
 
 > GitHub: https://github.com/qwe225380/dsh-omni-router
 > [中文说明](./README.zh-CN.md)
 
-**Omni Router** 是一个 DeepSeek Harness Agent 预设，它不是一个“单一功能插件”，而是一层**智能编排层**：把复杂度路由、思维模式路由、任务类型识别、Plan Mode、项目上下文、TDD、交付门、Git 工作流等能力组合成一个统一的、自动运行的工程闭环。
+**Omni** 是一个 DeepSeek Harness 的 **reliability and orchestration control plane**，定位为 Intelligence Runtime：把复杂度路由、任务编译、项目上下文、能力编排、Mission DAG、Runtime 预算、证据验证、Memory/Learning、Benchmark 组合成一个统一的、自动运行的工程闭环。
 
 ## Why Omni Router?
 

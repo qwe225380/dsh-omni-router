@@ -42,6 +42,7 @@ import { retrieveContext } from './hybrid-retrieval.mjs'
 import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
 import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
+import { saveMissionState } from './mission-resume.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
 
@@ -1458,6 +1459,20 @@ export function apply(ctx, config = {}) {
 
       const metrics = finalDag.metrics || {}
       const evSummary = evidenceSummary({ entries: evidenceRecords })
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      let resumeInfo = ''
+      if (cwd) {
+        const resumeKey = `mission-${Date.now().toString(36)}`
+        const saved = saveMissionState(cwd, resumeKey, {
+          status: finalDag.status,
+          dag: finalDag.dag,
+          evidence: evidenceRecords,
+          metrics,
+          task,
+          savedAt: new Date().toISOString(),
+        })
+        resumeInfo = `\nSaved mission state: ${saved}`
+      }
       return [
         `Mission run: ${finalDag.status}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,
@@ -1465,6 +1480,7 @@ export function apply(ctx, config = {}) {
         `Replans: ${metrics.replanCount || 0}, Repairs: ${metrics.repairCount || 0}, ToolCalls: ${metrics.toolCalls || 0}, Tokens: ${metrics.tokenUsage || 0}, Cost: ${metrics.cost || 0}`,
         `Evidence captured: ${evSummary.total} (failed=${evSummary.failed})`,
         `Mission: ${task}`,
+        resumeInfo,
         '',
         formatMissionDag(finalDag.dag),
       ].join('\n')

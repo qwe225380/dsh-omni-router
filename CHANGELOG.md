@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.0] - 2026-08-21
+
+- Omni 2.0 收敛发布：
+  - 新增 `src/mission-resume.mjs`：持久化 Mission DAG + Evidence 到 `.omni/missions/`
+  - `omni_mission_run` 运行后自动保存 mission state
+  - package 定位更新为 Control Plane / Intelligence Runtime
+  - 完成 优化6.md 中所有可在代码层收敛的 Stage 1~4 项（外部真实 DSH/repos 数据采集除外）
+
 ## [1.58.0] - 2026-08-21
 
 - Stage 4（部分）：

@@ -20,13 +20,14 @@
 - [x] P1/P2：Evidence Store、Memory v3（skill distillation / execution policies / historical failures / cross-session strategies）
 - [x] P1/P3：Real capability sandbox、OmniBench v2 scaffold
 - [x] Omni 2.0 Stage 1 Correctness：Evidence 写回、DAG retry completion、role separation、Resolver V2 主链、event-based failure taxonomy、完整 CI（Node 22 + npm test）
+- [x] Omni 2.0 Stage 2/3/4（代码层）：Memory Engine、Evidence Engine、Write Locks、Recursive Context、Per-task Context、Missing capability、DAG→Workflow、Mission Resume
+- [x] Omni 2.0 收敛发布（v2.0.0）
 - [x] 兼容性文档
 
-## 下一步（按优先级）
+## 下一步（按优先级，外部依赖）
 
 - [ ] 多模型实测（DeepSeek / Qwen / 其它）
-- [ ] 发布正式版 1.0.0
-- [ ] 设置面板（Web UI）
+- [ ] OmniBench v2 真实 DSH 执行（需要 DSH Desktop + 真实 repos）
 - [ ] 插件市场收录确认
 
 ## 长期方向
