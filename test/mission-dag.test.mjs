@@ -10,6 +10,7 @@ import {
   formatMissionDag,
   getReadyTasks,
   insertAfter,
+  isMissionDagComplete,
   markTaskDone,
   scheduleParallel,
 } from '../src/mission-dag.mjs'
@@ -48,6 +49,30 @@ test('applyObservationToDag adds a repair task on test failure', () => {
   assert.ok(dag.tasks.some((t) => /repair/i.test(t.goal)))
   assert.equal(dag.tasks.find((t) => t.id === 'T1').status, 'failed')
   assert.ok(dag.tasks.some((t) => /^T1-a/.test(t.id) && t.dependencies.some((d) => /^R-/.test(d))))
+})
+
+test('failed -> repair -> retry rewires downstream and can complete', () => {
+  let dag = {
+    mission: { task: 'x' },
+    tasks: [
+      createTask({ id: 'T1', goal: 'one' }),
+      createTask({ id: 'T2', goal: 'two', dependencies: ['T1'] }),
+      createTask({ id: 'T3', goal: 'three', dependencies: ['T2'] }),
+    ],
+  }
+  dag = markTaskDone(dag, 'T1')
+  // T2 fails; repair + retry inserted
+  dag = applyObservationToDag(dag, { type: 'test_failure' }, 'T2')
+  const repairId = dag.tasks.find((t) => /^R-/.test(t.id)).id
+  const retry = dag.tasks.find((t) => /^T2-a/.test(t.id))
+  // repair + retry succeed
+  dag = markTaskDone(dag, repairId)
+  dag = markTaskDone(dag, retry.id)
+  // T3 should now be ready because its dependency was rewired from T2 -> retry
+  const ready = getReadyTasks(dag)
+  assert.ok(ready.some((t) => t.id === 'T3'))
+  dag = markTaskDone(dag, 'T3')
+  assert.equal(isMissionDagComplete(dag), true)
 })
 
 test('scheduleParallel returns batches of ready tasks', () => {

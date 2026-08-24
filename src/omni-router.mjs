@@ -31,12 +31,13 @@ import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFro
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTaskWithLLM } from './task-compiler.mjs'
 import { bindCapabilitiesToDag, createMissionDag, formatMissionDag } from './mission-dag.mjs'
-import { generateMissionDag } from './planner-dag.mjs'
+import { generateMissionDag, roleForTask } from './planner-dag.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
+import { classifyFailure } from './failure-taxonomy.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
 import { createMemory, formatMemory, loadMemoryFile, recordDecision, recordFailure, recordProject, recordTrajectory, saveMemoryFile, summarizeMemory } from './memory.mjs'
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
@@ -1377,7 +1378,7 @@ export function apply(ctx, config = {}) {
       let capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
       const dag = bindCapabilitiesToDag(generateMissionDag(mission, brief, { taskType }), capabilityBrain)
-      const evidenceStore = createEvidenceStore()
+      const evidenceRecords = []
 
       const finalDag = await runDagLoop(dag, {
         act: async (action) => {
@@ -1387,7 +1388,8 @@ export function apply(ctx, config = {}) {
             : ''
           const briefText = `\n\nTask brief:\nObjective: ${brief.objective}\nAcceptance: ${brief.acceptanceCriteria.join('; ')}`
           const prompt = `Mission: ${task}\nTask: ${action.taskId} — ${goal}\n\nExecute this step. Reply with a short result and evidence.${briefText}${visualQa}`
-          const sandbox = capabilityToolFilter(capabilityBrain, action.task?.requiredCapabilities || [], 'builder')
+          const role = roleForTask(action.task || {})
+          const sandbox = capabilityToolFilter(capabilityBrain, action.task?.requiredCapabilities || [], role)
           const run = await subagents.start('spawn', {
             label: `mission-${action.taskId}`,
             prompt: [{ type: 'text', text: prompt }],
@@ -1401,19 +1403,30 @@ export function apply(ctx, config = {}) {
             .map((block) => block.text)
             .join('')
           try { await run.dispose() } catch { /* best-effort */ }
-          const captured = captureEvidence(evidenceStore, {
+          const captured = captureEvidence({ entries: evidenceRecords }, {
             type: 'agent_output',
             source: action.taskId,
             value: output.slice(0, 2000),
             ok: !/FAIL|error|失败|not ok/i.test(output),
           })
-          return { output, evidenceId: captured.record.id }
+          evidenceRecords.push(captured.record)
+          return {
+            output,
+            evidenceId: captured.record.id,
+            tokenUsage: result?.tokenUsage ?? result?.usage?.totalTokens ?? 0,
+            cost: result?.cost ?? 0,
+            toolCalls: result?.toolCalls ?? result?.usage?.toolCalls ?? 0,
+          }
         },
         observe: async (result, _current, action) => {
           const goal = action?.task?.goal || ''
           const needsVisual = frontend && /validate|verify|visual|ui/i.test(goal) && config.autoVisualQA !== false
-          if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure' }
-          return /FAIL|error|失败|not ok/i.test(result.output || '') ? { type: 'test_failure' } : { type: 'step_done' }
+          if (needsVisual && !/VISUAL_QA:\s*PASS/i.test(result.output || '')) return { type: 'test_failure', reason: 'visual QA failed' }
+          if (/FAIL|error|失败|not ok/i.test(result.output || '')) {
+            const failure = classifyFailure({ type: 'unknown', reason: result.output || '' })
+            return { type: failure.category, reason: failure.recovery, detail: String(result.output || '').slice(0, 500) }
+          }
+          return { type: 'step_done' }
         },
         maxSteps,
         maxParallel: Number(args?.maxParallel) || 1,
@@ -1426,7 +1439,7 @@ export function apply(ctx, config = {}) {
       })
 
       const metrics = finalDag.metrics || {}
-      const evSummary = evidenceSummary(evidenceStore)
+      const evSummary = evidenceSummary({ entries: evidenceRecords })
       return [
         `Mission run: ${finalDag.status}`,
         `Tasks done: ${finalDag.dag.tasks.filter((t) => t.status === 'done').length}/${finalDag.dag.tasks.length}`,

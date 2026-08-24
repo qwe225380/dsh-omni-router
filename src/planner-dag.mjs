@@ -67,6 +67,15 @@ export function generateMissionDag(mission, brief = {}, options = {}) {
   return { mission, tasks }
 }
 
+export function roleForTask(task = {}) {
+  const text = `${task.goal || ''} ${task.id || ''}`
+  if (/judge|final verdict/i.test(text)) return 'judge'
+  if (/review/i.test(text)) return 'code-reviewer'
+  if (/verify|verification|run (relevant|full|failing)|regression|validate|test suite/i.test(text)) return 'qa-verifier'
+  if (/repair|diagnose/i.test(text)) return 'repair'
+  return 'builder'
+}
+
 /**
  * Compile a Mission DAG into a DSH-native plan artifact (objective + ordered
  * task groups). This is the bridge toward executing through DSH native

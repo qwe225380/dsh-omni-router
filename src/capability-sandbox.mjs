@@ -6,24 +6,24 @@
  * the DAG task actually requires source.write.
  */
 
-import { resolveCapability } from './capability-brain.mjs'
+import { resolveCapabilityV2 } from './capability-brain.mjs'
 
 const VERIFIER_DENY = ['edit', 'write', 'str_replace_editor', 'browser_click', 'browser_type']
 const REVIEWER_DENY = ['edit', 'write', 'str_replace_editor']
 const JUDGE_DENY = ['edit', 'write', 'str_replace_editor', 'pwsh', 'bash']
 
 export function capabilityToolFilter(capabilityBrain, requirements = [], role = 'builder') {
-  const allow = []
   const deny = []
 
   if (role === 'qa-verifier') deny.push(...VERIFIER_DENY)
   else if (role === 'code-reviewer') deny.push(...REVIEWER_DENY)
   else if (role === 'judge') deny.push(...JUDGE_DENY)
 
-  const allowedCaps = new Set()
+  // Role baseline + capability delta: do not treat resolved provider ids as a
+  // full tool whitelist. Baseline read/search/test tools stay available; only
+  // explicit deny rules remove tools (e.g. verifiers cannot write).
   for (const req of requirements || []) {
-    for (const cap of resolveCapability(capabilityBrain, req)) {
-      allowedCaps.add(cap.id)
+    for (const cap of resolveCapabilityV2(capabilityBrain, req)) {
       if (cap.risk === 'high' || cap.risk === 'critical') {
         // High-risk capabilities are allowed only for roles that may write.
         if (role !== 'builder') deny.push(cap.id)
@@ -32,7 +32,7 @@ export function capabilityToolFilter(capabilityBrain, requirements = [], role = 
   }
 
   return {
-    allow: [...allowedCaps],
+    allow: [],
     deny: [...new Set(deny)],
   }
 }

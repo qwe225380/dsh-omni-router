@@ -5,7 +5,7 @@
  */
 
 import { buildPhaseTasks } from './mission-planner.mjs'
-import { resolveCapability } from './capability-brain.mjs'
+import { resolveCapabilityV2 } from './capability-brain.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
 
 export function createTask({ id, goal, dependencies = [], allowedTools = [], writeScope = '', acceptance = [], verification = [], rollback = '', requiredCapabilities = [], preferredCapabilities = [], forbiddenCapabilities = [] } = {}) {
@@ -21,6 +21,9 @@ export function createTask({ id, goal, dependencies = [], allowedTools = [], wri
     requiredCapabilities,
     preferredCapabilities,
     forbiddenCapabilities,
+    logicalId: id,
+    replaces: null,
+    attempt: 1,
     status: 'pending',
     confidence: 0,
     evidence: [],
@@ -60,10 +63,34 @@ export function getReadyTasks(dag) {
 }
 
 export function markTaskDone(dag, taskId, evidence = {}) {
+  const target = dag.tasks.find((t) => t.id === taskId)
+  if (!target) return dag
   return {
     ...dag,
-    tasks: dag.tasks.map((t) => t.id === taskId ? { ...t, status: 'done', evidence: [...t.evidence, evidence] } : t),
+    tasks: dag.tasks.map((t) => {
+      if (t.id === taskId) {
+        return { ...t, status: 'done', evidence: [...t.evidence, evidence] }
+      }
+      // When a retry attempt succeeds, rewire downstream dependencies from the
+      // replaced attempt to this successful attempt and supersede the old one.
+      if (target.replaces && t.dependencies.includes(target.replaces)) {
+        return {
+          ...t,
+          dependencies: t.dependencies.map((d) => d === target.replaces ? target.id : d),
+        }
+      }
+      if (target.replaces && t.id === target.replaces) {
+        return { ...t, status: 'superseded' }
+      }
+      return t
+    }),
   }
+}
+
+export function isMissionDagComplete(dag = {}) {
+  const tasks = dag.tasks || []
+  if (!tasks.length) return false
+  return tasks.every((t) => ['done', 'superseded', 'skipped'].includes(t.status))
 }
 
 export function insertAfter(dag, afterId, task) {
@@ -103,6 +130,8 @@ export function applyObservationToDag(dag, observation = {}, failedTaskId = null
       ? {
           ...failedTask,
           id: retryId,
+          logicalId: failedTask.logicalId || baseId,
+          replaces: taskId,
           goal: failedTask.goal || 'Retry the failed task',
           dependencies: [repairId],
           status: 'pending',
@@ -110,12 +139,17 @@ export function applyObservationToDag(dag, observation = {}, failedTaskId = null
           evidence: [],
           failure: undefined,
         }
-      : createTask({
-          id: retryId,
-          goal: 'Retry the failed task',
-          dependencies: [repairId],
-          requiredCapabilities: ['debugging'],
-        })
+      : {
+          ...createTask({
+            id: retryId,
+            goal: 'Retry the failed task',
+            dependencies: [repairId],
+            requiredCapabilities: ['debugging'],
+          }),
+          logicalId: baseId,
+          replaces: taskId,
+          attempt,
+        }
 
     return { ...dag, tasks: [...tasks, repair, retry] }
   }
@@ -141,7 +175,7 @@ export function bindCapabilitiesToDag(dag, capabilityBrain) {
     tasks: dag.tasks.map((t) => ({
       ...t,
       allowedTools: (t.requiredCapabilities || [])
-        .flatMap((req) => resolveCapability(capabilityBrain, req).slice(0, 1))
+        .flatMap((req) => resolveCapabilityV2(capabilityBrain, req).slice(0, 1))
         .map((c) => c.id),
     })),
   }

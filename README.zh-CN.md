@@ -64,6 +64,7 @@
 - **Mission Planner v1**：`buildMission` 把任务组织成 Mission → Phase → Task 骨架，支持动态 Replan。
 - **Agent Runtime**：`omni_mission_run` 用真实 subagents 执行 Observe → Think → Act → Replan 循环，带 `maxGlobalSteps` / `maxReplans` / `maxSameActionRetries` / `maxRepairs` / `maxTokens` / `maxCost` / `maxToolCalls` / `maxWallClockMs` 预算。
 - **统一主链（优化5 Integration）**：`omni_mission_run` 已接入 Task Compiler → Capability Brain → Mission DAG → `bindCapabilitiesToDag` → DAG Runtime → Evidence，并统一 ExecutionBudget；DAG 失败会保留 failed → Repair → Retry lineage。
+- **优化6 Correctness**：Evidence Store 真正累积、failed→repair→retry 可最终 completed、role-aware DAG sandbox、Resolver V2 全链路、event-based failure taxonomy、完整 CI。
 - **P1 能力**：Planner-generated DAG（可并行分支）、Dynamic Context Expansion（按 uncertainty 自动升级）、Capability Manifest（插件/skill 声明式能力）、Failure-aware DAG mutation（按失败分类生成 repair）。
 - **P1/P2 能力**：Evidence Store（harness-captured 证据记录，`omni_mission_run` 自动采集）、Memory v3（skill distillation、execution policies、historical failures、cross-session strategies）。
 - **P1/P3 能力**：Real capability sandbox（已接入 `omni_mission_run`，按 role + capability 生成 toolFilter）、Capability Resolver v2（risk/reliability 综合打分）、OmniBench v2 scaffold（manifest schema + runner stub + prepare script + DAG-to-plan compile）。

@@ -10,7 +10,7 @@
  */
 
 import { buildPhaseTasks, decideReplan } from './mission-planner.mjs'
-import { applyObservationToDag, getReadyTasks, markTaskDone } from './mission-dag.mjs'
+import { applyObservationToDag, getReadyTasks, isMissionDagComplete, markTaskDone } from './mission-dag.mjs'
 
 export function createRuntimeState(mission, options = {}) {
   const phases = mission?.phases || []
@@ -233,7 +233,7 @@ export async function runDagLoop(dag, {
     step += 1
   }
 
-  const done = current.tasks.every((t) => t.status === 'done')
+  const done = isMissionDagComplete(current)
   const budgetStatus = statusFromBudget()
   return {
     dag: current,

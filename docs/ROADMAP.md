@@ -19,7 +19,7 @@
 - [x] Integration Phase P1 第一批：Planner-generated DAG、Dynamic Context Expansion、Capability Manifest、Failure-aware DAG mutation
 - [x] P1/P2：Evidence Store、Memory v3（skill distillation / execution policies / historical failures / cross-session strategies）
 - [x] P1/P3：Real capability sandbox、OmniBench v2 scaffold
-- [x] CI 多版本矩阵（Node 20/22/24）
+- [x] Omni 2.0 Stage 1 Correctness：Evidence 写回、DAG retry completion、role separation、Resolver V2 主链、event-based failure taxonomy、完整 CI（Node 22 + npm test）
 - [x] 兼容性文档
 
 ## 下一步（按优先级）

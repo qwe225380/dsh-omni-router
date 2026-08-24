@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.54.0] - 2026-08-21
+
+- 按优化6.md Stage 1 Correctness：
+  - 修 Evidence Store 状态写回 Bug：`omni_mission_run` 真正累积 evidenceRecords
+  - 修 failed → repair → retry DAG：retry 成功后自动重连 downstream dependencies，旧 attempt 标记 `superseded`，DAG 可最终 completed
+  - `runDagLoop` 完成判定改为 `isMissionDagComplete`（允许 superseded/skipped）
+  - Runtime 真实 usage：`act()` 转发 `tokenUsage / cost / toolCalls`
+  - DAG role separation：新增 `roleForTask`，verify/review/judge 不再一律用 builder sandbox
+  - Capability Sandbox 改为 Role Baseline + Delta，不再把 provider id 当工具白名单
+  - Resolver V2 进入主链：`bindCapabilitiesToDag` / `capability-sandbox` 使用 `resolveCapabilityV2`
+  - Event-based Failure Taxonomy：observe 用 `classifyFailure` 分类，不再把所有 error 当 test_failure
+  - CI 改为 Node 22 + `npm ci` + 完整 `npm test`
+
 ## [1.53.0] - 2026-08-21
 
 - OmniBench v2 离线/本地支持：
