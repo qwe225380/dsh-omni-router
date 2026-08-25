@@ -10,19 +10,33 @@ import { describeHostCapabilities } from '../host-interface.mjs'
 import { normalizeHostEvent } from '../omni-event.mjs'
 
 export function createDshHostAdapter(ctx = {}) {
-  const get = (key) => (typeof ctx.get === 'function' ? ctx.get(key) : undefined) || ctx[key]
+  const get = (key) => {
+    try {
+      if (typeof ctx.get === 'function') {
+        const value = ctx.get(key)
+        if (value !== undefined) return value
+      }
+    } catch {
+      // Not injected or not available.
+    }
+    try {
+      return ctx[key]
+    } catch {
+      return undefined
+    }
+  }
 
   return {
     describeHost() {
       return describeHostCapabilities({
-        workflow: !!(get('workflow') || ctx.workflow),
-        approvals: !!(get('approvals') || ctx.approvals),
-        skills: !!(get('skills') || ctx.skills),
-        plugins: !!(get('plugins') || ctx.plugins),
-        subagents: !!(get('subagents') || ctx.subagents),
-        toolEvents: !!(get('events') || ctx.events),
+        workflow: !!get('workflow'),
+        approvals: !!get('approvals'),
+        skills: !!get('skills'),
+        plugins: !!get('plugins'),
+        subagents: !!get('subagents'),
+        toolEvents: !!get('events'),
         testEvents: false,
-        fileEvents: !!(get('fs') || ctx.fs),
+        fileEvents: !!get('fs'),
       })
     },
 
@@ -42,7 +56,7 @@ export function createDshHostAdapter(ctx = {}) {
     },
 
     async listCapabilities() {
-      const toolsService = get('tools') || ctx.tools
+      const toolsService = get('tools')
       const names = []
       if (Array.isArray(toolsService)) {
         for (const tool of toolsService) {

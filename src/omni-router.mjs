@@ -559,6 +559,23 @@ export function apply(ctx, config = {}) {
   ])
   // Core Feature Freeze: default model-visible Omni surface is three tools.
   const PUBLIC_OMNI_TOOLS = new Set(['omni_status', 'omni_explain', 'omni_doctor'])
+
+  function ctxGet(key) {
+    try {
+      if (typeof ctx.get === 'function') {
+        const value = ctxGet(key)
+        if (value !== undefined) return value
+      }
+    } catch {
+      // Not injected or not available; fall back to direct property access.
+    }
+    try {
+      return ctx[key]
+    } catch {
+      return undefined
+    }
+  }
+
   const states = new Map() // session.id -> { kind, planRequested, directOverride }
   const agents = new Map() // session.id -> Agent
 
@@ -605,7 +622,7 @@ export function apply(ctx, config = {}) {
   }
 
   function agentFor(session) {
-    const current = ctx.get('agent')
+    const current = ctxGet('agent')
     if (current && current.session === session) return current
     return agents.get(session.id)
   }
@@ -639,14 +656,14 @@ export function apply(ctx, config = {}) {
     const contract = buildTaskContract({ taskText: state.firstText || '', decision })
     const intervention = interventionForIntelligenceLevel(intelligence)
     const hostCaps = {
-      workflow: !!(ctx.get('workflow') || ctx.workflow),
-      approvals: !!(ctx.get('approvals') || ctx.approvals),
-      skills: !!(ctx.get('skills') || ctx.skills),
-      plugins: !!(ctx.get('plugins') || ctx.plugins),
-      subagents: !!(ctx.get('subagents') || ctx.subagents),
-      toolEvents: !!(ctx.get('events') || ctx.events),
+      workflow: !!(ctxGet('workflow') ),
+      approvals: !!(ctxGet('approvals') ),
+      skills: !!(ctxGet('skills') ),
+      plugins: !!(ctxGet('plugins') ),
+      subagents: !!(ctxGet('subagents') ),
+      toolEvents: !!(ctxGet('events') ),
       testEvents: false,
-      fileEvents: !!(ctx.get('fs') || ctx.fs),
+      fileEvents: !!(ctxGet('fs') ),
     }
     return createOmniTaskState({
       contract,
@@ -656,7 +673,7 @@ export function apply(ctx, config = {}) {
   }
 
   function planMode() {
-    return ctx.get('planMode') || ctx.planMode || undefined
+    return ctxGet('planMode')  || undefined
   }
 
   function setPlanMode(agent, active) {
@@ -671,7 +688,7 @@ export function apply(ctx, config = {}) {
   }
 
   async function getProjectContext(session, taskType = 'other', taskText = '') {
-    const fs = ctx.get('fs') || ctx.fs
+    const fs = ctxGet('fs') 
     if (!fs) return ''
     const cwd = session.meta?.cwd || session.header?.cwd
     if (!cwd) return ''
@@ -752,8 +769,8 @@ export function apply(ctx, config = {}) {
   }
 
   async function classifyWithLLM(text) {
-    const agent = ctx.get('agent')
-    const llm = ctx.get('llm') || ctx.llm
+    const agent = ctxGet('agent')
+    const llm = ctxGet('llm') 
     const fallback = () => ({
       complexity: classifyComplexity(text, config),
       taskType: classifyTaskType(text),
@@ -897,7 +914,7 @@ export function apply(ctx, config = {}) {
 
     const sections = Array.isArray(result.sections) ? [...result.sections] : []
     const taskType = state.taskType || 'other'
-    const toolsService = ctx.get('tools') || ctx.tools
+    const toolsService = ctxGet('tools') 
     const routerStandard = isRouterStandardAvailable(toolsService, agent)
     if (routerStandard) {
       sections.push({
@@ -962,7 +979,7 @@ export function apply(ctx, config = {}) {
       if (!session) return 'no agent session'
       const agent = agentFor(session)
       const state = states.get(session.id) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false }
-      const routerStandard = agent ? isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent) : false
+      const routerStandard = agent ? isRouterStandardAvailable(ctxGet('tools') , agent) : false
       const omniState = state.omniTaskState || buildCanonicalOmniState(state)
       const contract = omniState.contract
       const intervention = omniState.intervention
@@ -1027,12 +1044,12 @@ export function apply(ctx, config = {}) {
     parameters: {},
     async execute() {
       const session = currentSession()
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       const toolNames = await collectToolNames(toolsService)
       let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
       const baseline = baselineAudit(brain)
-      const fs = ctx.get('fs') || ctx.fs
+      const fs = ctxGet('fs') 
       const dshAdapter = createDshHostAdapter(ctx)
       const host = negotiateHost(dshAdapter.describeHost())
       const lines = [
@@ -1041,7 +1058,7 @@ export function apply(ctx, config = {}) {
         `Baseline capability coverage: ${baseline.available.length}/${baseline.required.length}`,
         `Missing baseline: ${baseline.missing.join(', ') || '(none)'}`,
         `ProjectIndex: ${fs ? 'available' : 'unavailable'}`,
-        `Evidence hooks: ${ctx.get('evidence') || ctx.evidence ? 'available' : 'not-detected'}`,
+        `Evidence hooks: ${ctxGet('evidence')  ? 'available' : 'not-detected'}`,
         `Host negotiation: ${host.mode} (degraded: ${host.degraded.join(', ') || 'none'})`,
       ]
       return lines.join('\n')
@@ -1149,7 +1166,7 @@ export function apply(ctx, config = {}) {
     async execute(args) {
       const session = currentSession()
       const agent = session && agentFor(session)
-      const subagents = ctx.get('subagents') || ctx.subagents
+      const subagents = ctxGet('subagents') 
       if (!session || !agent || !subagents?.start) return 'Benchmark collection requires an active session with subagents.'
       const taskId = String(args?.taskId || '').trim()
       const arm = String(args?.arm || '').toLowerCase()
@@ -1231,7 +1248,7 @@ export function apply(ctx, config = {}) {
     async execute(args) {
       const session = currentSession()
       const agent = session && agentFor(session)
-      const subagents = ctx.get('subagents') || ctx.subagents
+      const subagents = ctxGet('subagents') 
       if (!session || !agent || !subagents?.start) return 'Benchmark batch requires an active session with subagents.'
       const arm = String(args?.arm || '').toLowerCase()
       if (!['raw', 'omni'].includes(arm)) return 'arm must be raw or omni.'
@@ -1535,7 +1552,7 @@ export function apply(ctx, config = {}) {
     },
     async execute(args) {
       const session = currentSession()
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       const toolNames = await collectToolNames(toolsService)
       let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
@@ -1562,7 +1579,7 @@ export function apply(ctx, config = {}) {
     },
     async execute(args) {
       const session = currentSession()
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       const toolNames = await collectToolNames(toolsService)
       let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
@@ -1637,7 +1654,7 @@ export function apply(ctx, config = {}) {
     },
     async execute(args) {
       const session = currentSession()
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       const toolNames = await collectToolNames(toolsService)
       let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
@@ -1732,7 +1749,7 @@ export function apply(ctx, config = {}) {
     async execute(args) {
       const session = currentSession()
       const agent = session && agentFor(session)
-      const subagents = ctx.get('subagents') || ctx.subagents
+      const subagents = ctxGet('subagents') 
       if (!session || !agent || !subagents?.start) return 'Mission run requires an active session with subagents.'
       const task = String(args?.task || '').trim()
       if (!task) return 'Task is required.'
@@ -1740,9 +1757,9 @@ export function apply(ctx, config = {}) {
       const maxSteps = Number(args?.maxSteps) || 20
       const frontend = isFrontendTask(task)
       const mission = buildMission(task, { taskType })
-      const brief = await compileTaskWithLLM(task, { llm: ctx.get('llm') || ctx.llm, agent })
+      const brief = await compileTaskWithLLM(task, { llm: ctxGet('llm') , agent })
 
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       const toolNames = await collectToolNames(toolsService)
       let capabilityBrain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
@@ -1838,7 +1855,7 @@ export function apply(ctx, config = {}) {
     async execute(args) {
       const session = currentSession()
       const agent = session && agentFor(session)
-      const subagents = ctx.get('subagents') || ctx.subagents
+      const subagents = ctxGet('subagents') 
       const cwd = session?.meta?.cwd || session?.header?.cwd
       if (!cwd) return 'No workspace cwd found.'
       const key = String(args?.key || '').trim()
@@ -1861,7 +1878,7 @@ export function apply(ctx, config = {}) {
       const frontend = isFrontendTask(task)
       const brief = saved.brief || { objective: task, acceptanceCriteria: [] }
       const evidenceRecords = Array.isArray(saved.evidence) ? saved.evidence : []
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       let capabilityBrain = saved.capabilityBrain || autoPopulateCapabilityBrain(createCapabilityBrain(), await collectToolNames(toolsService))
       capabilityBrain = loadCapabilityManifests(capabilityBrain, config.capabilityManifests || [])
       const contract = buildTaskContract({
@@ -1979,7 +1996,7 @@ export function apply(ctx, config = {}) {
       const session = currentSession()
       const agent = session && agentFor(session)
       if (!session || !agent) return 'no agent session'
-      const toolsService = ctx.get('tools') || ctx.tools
+      const toolsService = ctxGet('tools') 
       if (isRouterStandardAvailable(toolsService, agent)) {
         return 'router-standard owns reasoning-mode routing. Use dev_router_mode <spec|weak|react|...> instead.'
       }
@@ -2057,7 +2074,7 @@ export function apply(ctx, config = {}) {
       const criteria = Array.isArray(args?.criteria) && args.criteria.length
         ? args.criteria
         : intent.acceptanceCriteria
-      const subagents = ctx.get('subagents') || ctx.subagents
+      const subagents = ctxGet('subagents') 
       const agent = agentFor(session)
       if (subagents?.start && agent) {
         try {
@@ -2098,7 +2115,7 @@ export function apply(ctx, config = {}) {
         const state = stateFor(session)
         const cmd = (rawInput || '').trim().toLowerCase()
         if (cmd === 'status') {
-          const routerStandard = isRouterStandardAvailable(ctx.get('tools') || ctx.tools, agent)
+          const routerStandard = isRouterStandardAvailable(ctxGet('tools') , agent)
           return {
             kind: 'success',
             text: [
@@ -2128,7 +2145,7 @@ export function apply(ctx, config = {}) {
           return { kind: 'success', text: 'Direct execution mode set.' }
         }
         if (cmd.startsWith('mode ')) {
-          const toolsService = ctx.get('tools') || ctx.tools
+          const toolsService = ctxGet('tools') 
           if (isRouterStandardAvailable(toolsService, agent)) {
             return { kind: 'success', text: 'router-standard owns reasoning-mode routing. Use /dev_router_mode or dev_router_mode <spec|weak|react|...> instead.' }
           }
@@ -2161,7 +2178,7 @@ export function apply(ctx, config = {}) {
   }
 
   function currentSession() {
-    const agent = ctx.get('agent')
+    const agent = ctxGet('agent')
     if (agent && agent.session) return agent.session
     const last = [...agents.values()].at(-1)
     return last?.session

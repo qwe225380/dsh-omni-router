@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-rc.6] - 2026-08-21
+
+- 修复真实 DSH 会话报错 `cannot get property "workflow" without inject`：
+  - 新增安全 `ctxGet()`：`ctx.get(key)` 或 `ctx[key]` 访问均 try/catch，未注入时返回 `undefined`
+  - `omni-router.mjs` 全部 `ctx.get(...)` 改为 `ctxGet(...)`，并移除 `|| ctx.xxx` 直接属性回退
+  - `host/dsh-adapter.mjs` 同样使用安全 getter，不再直接访问 `ctx.workflow / ctx.tools / ctx.fs` 等
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.5] - 2026-08-21
 
 - 修复 README 缺少 License 展示：
