@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.4] - 2026-08-21
+
+- 产品定位与文档表达（last.md）：
+  - README 升级为产品型：Hero / Before-After / 工作原理 / Why Omni / 差异化 / Router Standard 兼容 / 生态致谢 / Proof / Benchmark Status / FAQ
+  - README 默认中文，英文版 README.en.md 同步更新
+  - `compat.mjs` 文案修正：不再提 skill routing，改为 “Omni focuses on task contracts, context, evidence, and recovery”
+  - `package.json` 描述统一为 `Decide. Prepare. Verify.`
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.3] - 2026-08-21
 
 - 默认 DSH 路径完成证明闭环：

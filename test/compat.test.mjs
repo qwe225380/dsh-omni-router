@@ -29,5 +29,6 @@ test('ROUTER_STANDARD_TOOLS lists the expected tool names', () => {
 
 test('routerStandardNotice explains delegation', () => {
   assert.match(routerStandardNotice(), /router-standard detected/)
-  assert.match(routerStandardNotice(), /dev_router/)
+  assert.match(routerStandardNotice(), /Router Standard/)
+  assert.match(routerStandardNotice(), /task contracts, context, evidence, and recovery/)
 })
