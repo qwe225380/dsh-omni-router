@@ -655,6 +655,14 @@ export function apply(ctx, config = {}) {
     const intelligence = decideIntelligenceLevel(decision)
     const contract = buildTaskContract({ taskText: state.firstText || '', decision })
     const intervention = interventionForIntelligenceLevel(intelligence)
+    // Frontend/design tasks need assist-level design acceptance + focused
+    // context even when the raw complexity looks low.
+    if (isFrontendTask(state.firstText || '') && intervention.mode === 'noop') {
+      intervention.mode = 'assist'
+      intervention.utility = 0.15
+      intervention.expectedGain = 0.1
+      intervention.reasons = ['frontend/design task: assist with design acceptance and focused context']
+    }
     const hostCaps = {
       workflow: !!(ctxGet('workflow') ),
       approvals: !!(ctxGet('approvals') ),

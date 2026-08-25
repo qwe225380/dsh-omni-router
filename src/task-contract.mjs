@@ -18,11 +18,20 @@ export function buildTaskContract({
 } = {}) {
   const intelligence = decideIntelligenceLevel(decision)
   const rawAcceptance = Array.isArray(acceptance) && acceptance.length ? acceptance : [`${taskText} is complete`]
+  const acceptanceList = normalizeAcceptance(rawAcceptance)
+  const frontend = /(前端|frontend|ui|页面|component|网页|html|css|react|vue|web)/i.test(String(taskText || ''))
+  if (frontend) {
+    acceptanceList.push(
+      { id: `C${acceptanceList.length + 1}`, text: 'Match the reference site visual polish and interaction richness', requiredTrust: 'T2' },
+      { id: `C${acceptanceList.length + 2}`, text: 'Responsive layout works on mobile and desktop', requiredTrust: 'T2' },
+      { id: `C${acceptanceList.length + 3}`, text: 'Hover/scroll animations and micro-interactions are implemented', requiredTrust: 'T2' },
+    )
+  }
   return {
     objective: taskText,
     constraints: Array.isArray(constraints) ? constraints : [],
     nonGoals: Array.isArray(nonGoals) ? nonGoals : [],
-    acceptance: normalizeAcceptance(rawAcceptance),
+    acceptance: acceptanceList,
     risk: decision.risk || 'low',
     uncertainty: decision.uncertainty ?? 0.1,
     intelligenceLevel: intelligence.level,

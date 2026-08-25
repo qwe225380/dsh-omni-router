@@ -65,6 +65,14 @@ test('verifyCompletion requires evidence per criterion with required trust', () 
   assert.equal(complete.verifiedCount, 2)
 })
 
+test('buildTaskContract adds design acceptance for frontend tasks', () => {
+  const contract = buildTaskContract({ taskText: '设计一个旅游网页', decision: { complexity: 'direct', risk: 'low', type: 'other' } })
+  const texts = contract.acceptance.map((c) => c.text)
+  assert.ok(texts.some((t) => /visual polish/i.test(t)))
+  assert.ok(texts.some((t) => /Responsive/i.test(t)))
+  assert.ok(texts.some((t) => /micro-interactions/i.test(t)))
+})
+
 test('completionStatus returns Verified / Partially Verified / Unverified', () => {
   const contract = buildTaskContract({
     taskText: 'x',

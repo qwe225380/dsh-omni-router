@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.0-rc.7] - 2026-08-21
+
+- 前端/设计任务质量优化（Fast + Good 平衡）：
+  - `buildTaskContract` 对前端/UI 任务自动追加设计验收标准：参考站视觉质感、响应式、hover/scroll 动效
+  - `buildCanonicalOmniState` 对前端任务即使复杂度为 L0，也强制 `assist` 介入，注入设计 Task Contract + Context
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.6] - 2026-08-21
 
 - 修复真实 DSH 会话报错 `cannot get property "workflow" without inject`：
