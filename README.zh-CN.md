@@ -378,6 +378,12 @@ A: 会显示 `Verified / Partially Verified / Unverified`，不会谎报完成�
 
 ---
 
+## License
+
+[MIT](./LICENSE)
+
+---
+
 > **Reuse what works. Coordinate what matters. Verify what finishes.**
 >
 > **好的能力直接复用，关键环节统一协作，最终结果必须验证。**

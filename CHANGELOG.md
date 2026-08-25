@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.0-rc.5] - 2026-08-21
+
+- 修复 README 缺少 License 展示：
+  - `README.md` / `README.en.md` / `README.zh-CN.md` 增加 `License: MIT` 章节并链接到 `LICENSE`
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.4] - 2026-08-21
 
 - 产品定位与文档表达（last.md）：

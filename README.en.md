@@ -349,4 +349,10 @@ A: It reports `Verified / Partially Verified / Unverified` instead of lying.
 
 ---
 
+## License
+
+[MIT](./LICENSE)
+
+---
+
 > **Reuse what works. Coordinate what matters. Verify what finishes.**
