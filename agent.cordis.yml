@@ -52,12 +52,8 @@
   name: '@deepseek-ai/dsh-tool-jobs'
 
 # ── skills ──────────────────────────────────────────────────────────────────
-
-- id: skill-filesystem
-  name: '@deepseek-ai/dsh-skill-filesystem'
-
-- id: tool-skill
-  name: '@deepseek-ai/dsh-tool-skill'
+# Omni deliberately does NOT mount the skill catalog/tool. Skill activation is
+# left to DSH/Host native mechanisms. Omni only reasons about capability gaps.
 
 # ── goals ───────────────────────────────────────────────────────────────────
 

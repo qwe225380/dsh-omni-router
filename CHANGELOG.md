@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.8] - 2026-08-21
+
+- 修正 Omni 与 Skills 的边界：
+  - Omni Router preset 不再挂载 `tool-skill` / `skill-filesystem`
+  - Skill 的目录、发现、调用完全交给 DSH/Host 原生机制
+  - Omni 只负责 capability 识别、缺口判断、任务约束、上下文、恢复和最终验证
+  - 本地 Omni Router 与组合预设 `omni-router-standard` 同步移除 skill 挂载
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.7] - 2026-08-21
 
 - 前端/设计任务质量优化（Fast + Good 平衡）：
