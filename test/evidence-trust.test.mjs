@@ -8,6 +8,7 @@ import {
   formatEvidenceTrust,
   invalidateEvidence,
   isEvidenceStale,
+  omniEventToEvidenceRecord,
   requiredTrustForRisk,
 } from '../src/evidence-trust.mjs'
 
@@ -49,4 +50,17 @@ test('evidenceMeetsTrust compares trust values', () => {
   assert.equal(evidenceMeetsTrust(record, 'T2'), true)
   assert.equal(evidenceMeetsTrust(record, 'T4'), false)
   assert.match(formatEvidenceTrust(record), /T3/)
+})
+
+test('omniEventToEvidenceRecord maps DSH events to evidence trust levels', () => {
+  const command = omniEventToEvidenceRecord({ type: 'command.completed', host: 'dsh', payload: { exitCode: 0, criterionId: 'C2' } })
+  assert.equal(command.trustLevel, 'T3')
+  assert.equal(command.ok, true)
+  assert.equal(command.criterionId, 'C2')
+
+  const tool = omniEventToEvidenceRecord({ type: 'tool.completed', host: 'dsh', payload: {} })
+  assert.equal(tool.trustLevel, 'T2')
+
+  const failed = omniEventToEvidenceRecord({ type: 'test.completed', host: 'dsh', payload: { exitCode: 1 } })
+  assert.equal(failed.ok, false)
 })

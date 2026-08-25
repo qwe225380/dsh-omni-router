@@ -28,15 +28,17 @@ export function evaluateReleaseGates(results = [], options = {}) {
   const costValues = pairs.map((p) => p.costRatio).filter((v) => v !== null && v !== undefined)
   const costRatio = costValues.length ? costValues.reduce((s, v) => s + v, 0) / costValues.length : null
 
+  const allTasks = new Set(results.map((r) => `${r.repo || r.id}:${r.task || r.id}`))
   const byTask = {}
+  for (const taskKey of allTasks) byTask[taskKey] = []
   for (const pair of pairs) {
-    if (!byTask[pair.id]) byTask[pair.id] = []
-    byTask[pair.id].push(pair)
+    const taskKey = `${pair.repo}:${pair.task}`
+    if (byTask[taskKey]) byTask[taskKey].push(pair)
   }
   const perTaskCounts = Object.values(byTask).map((list) => list.length)
   const minPairedPerTask = perTaskCounts.length ? Math.min(...perTaskCounts) : 0
   const repos = new Set(results.map((r) => r.repo)).size
-  const tasks = new Set(results.map((r) => `${r.repo}:${r.task}`)).size
+  const tasks = allTasks.size
 
   const gates = [
     {

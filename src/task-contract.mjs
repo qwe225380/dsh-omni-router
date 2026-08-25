@@ -96,6 +96,14 @@ export function verifyCompletion(contract = {}, evidenceRecords = [], options = 
   }
 }
 
+export function completionStatus(contract = {}, evidenceRecords = [], options = {}) {
+  const proof = verifyCompletion(contract, evidenceRecords, options)
+  if (proof.requiredCount === 0) return { status: 'Unverified', proof }
+  if (proof.completed) return { status: 'Verified', proof }
+  if (proof.verifiedCount === 0) return { status: 'Unverified', proof }
+  return { status: 'Partially Verified', proof }
+}
+
 export function formatTaskContract(contract = {}) {
   const lines = [
     `Objective: ${contract.objective || ''}`,

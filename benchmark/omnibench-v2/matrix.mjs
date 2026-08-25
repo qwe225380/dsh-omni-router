@@ -59,6 +59,8 @@ export function compareArms(results = []) {
     const omniSuccess = omni.success === true
     pairs.push({
       id: raw.id,
+      repo: raw.repo || raw.id,
+      task: raw.task || raw.id,
       run: raw.run,
       difficulty: raw.difficulty || omni.difficulty || 'medium',
       rawSuccess,

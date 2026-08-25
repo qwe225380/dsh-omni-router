@@ -48,3 +48,14 @@ test('evaluateReleaseGates returns ready false with insufficient data', () => {
   assert.equal(report.ready, false)
   assert.ok(report.gates.some((g) => g.name === 'Every task has >= 3 paired runs' && g.pass === false))
 })
+
+test('evaluateReleaseGates fails tasks with no paired runs', () => {
+  const withMissing = [
+    ...sample,
+    { id: 't3', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'r3', task: 't3', metrics: {}, telemetryComplete: true, falseCompletion: false },
+  ]
+  const report = evaluateReleaseGates(withMissing)
+  const gate = report.gates.find((g) => g.name === 'Every task has >= 3 paired runs')
+  assert.equal(gate.value, 0)
+  assert.equal(gate.pass, false)
+})

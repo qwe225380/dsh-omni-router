@@ -39,14 +39,14 @@ import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capabilit
 import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
-import { buildTaskContract, formatTaskContract, verifyCompletion } from './task-contract.mjs'
+import { buildTaskContract, completionStatus, formatTaskContract, verifyCompletion } from './task-contract.mjs'
 import { buildKernelPrompt } from './kernel-prompt.mjs'
 import { decideIntervention, formatInterventionGate, interventionForIntelligenceLevel } from './intervention-gate.mjs'
 import { createOmniTaskState, formatOmniTaskState } from './omni-task-state.mjs'
 import { compileMissionToHost, toMissionIR } from './mission-ir.mjs'
 import { createDshHostAdapter } from './host/dsh-adapter.mjs'
 import { negotiateHost, formatHostNegotiation } from './host-interface.mjs'
-import { requiredTrustForRisk } from './evidence-trust.mjs'
+import { requiredTrustForRisk, omniEventToEvidenceRecord } from './evidence-trust.mjs'
 import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
@@ -966,6 +966,7 @@ export function apply(ctx, config = {}) {
       const omniState = state.omniTaskState || buildCanonicalOmniState(state)
       const contract = omniState.contract
       const intervention = omniState.intervention
+      const completion = completionStatus(contract, omniState.evidence || [])
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
@@ -974,6 +975,7 @@ export function apply(ctx, config = {}) {
         `intelligenceLevel=${contract.intelligenceLevel || 'L0'}`,
         `intervention=${intervention.mode || 'noop'} (utility=${intervention.utility ?? 0})`,
         `hostMode=${omniState.host?.mode || 'unknown'}`,
+        `completion=${completion.status} (${completion.proof.verifiedCount}/${completion.proof.requiredCount})`,
         `planRequested=${state.planRequested}`,
         `directOverride=${state.directOverride}`,
         `routerStandard=${routerStandard ? 'delegated' : 'not-detected'}`,
@@ -998,6 +1000,7 @@ export function apply(ctx, config = {}) {
       const contract = omniState.contract
       const intervention = omniState.intervention
       const trust = requiredTrustForRisk(contract.risk)
+      const completion = completionStatus(contract, omniState.evidence || [])
       const topic = String(args?.topic || '').toLowerCase()
       const lines = [
         `Mode: ${contract.intelligenceLevel} (${intervention.mode})`,
@@ -1007,7 +1010,8 @@ export function apply(ctx, config = {}) {
         `Approval required: ${contract.verificationPolicy?.approvalRequired ? 'yes' : 'no'}`,
         `Capabilities needed: ${(contract.requiredCapabilities || []).join(', ') || 'native tools'}`,
         `Evidence trust required: ${trust.label}`,
-        `Completion requires: ${contract.acceptance?.join('; ') || 'light verification'}`,
+        `Completion status: ${completion.status} (${completion.proof.verifiedCount}/${completion.proof.requiredCount})`,
+        `Completion requires: ${contract.acceptance?.map((c) => c.text || c).join('; ') || 'light verification'}`,
       ]
       if (topic === 'mode' || topic === 'capabilities' || topic === 'verification' || topic === 'completion') {
         const idx = lines.findIndex((l) => l.toLowerCase().startsWith(topic))
@@ -2162,6 +2166,20 @@ export function apply(ctx, config = {}) {
     const last = [...agents.values()].at(-1)
     return last?.session
   }
+
+  // Default-path completion bridge:
+  // DSH events -> OmniEvent -> Evidence Record -> OmniTaskState.evidence
+  // This makes "Proven when done" machine-enforced even when the host executes
+  // normally and Omni only injects a Kernel Prompt.
+  const hostBridge = createDshHostAdapter(ctx)
+  hostBridge.subscribeEvents((event) => {
+    const st = event.sessionId ? states.get(event.sessionId) : null
+    if (!st) return
+    if (!st.omniTaskState) st.omniTaskState = buildCanonicalOmniState(st)
+    if (!Array.isArray(st.omniTaskState.evidence)) st.omniTaskState.evidence = []
+    const record = omniEventToEvidenceRecord(event)
+    if (record) st.omniTaskState.evidence.push(record)
+  })
 }
 
 /** Extract plain text from a user message event payload. */

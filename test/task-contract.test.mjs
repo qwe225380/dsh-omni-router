@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   buildTaskContract,
+  completionStatus,
   formatTaskContract,
   normalizeAcceptance,
   verifyCompletion,
@@ -62,4 +63,19 @@ test('verifyCompletion requires evidence per criterion with required trust', () 
   ])
   assert.equal(complete.completed, true)
   assert.equal(complete.verifiedCount, 2)
+})
+
+test('completionStatus returns Verified / Partially Verified / Unverified', () => {
+  const contract = buildTaskContract({
+    taskText: 'x',
+    acceptance: ['C1', 'C2'],
+  })
+  assert.equal(completionStatus(contract, []).status, 'Unverified')
+  assert.equal(completionStatus(contract, [
+    { criterionId: 'C1', trustLevel: 'T3', ok: true },
+  ]).status, 'Partially Verified')
+  assert.equal(completionStatus(contract, [
+    { criterionId: 'C1', trustLevel: 'T3', ok: true },
+    { criterionId: 'C2', trustLevel: 'T2', ok: true },
+  ]).status, 'Verified')
 })

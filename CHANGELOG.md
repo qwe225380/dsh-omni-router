@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.0-rc.3] - 2026-08-21
+
+- 默认 DSH 路径完成证明闭环：
+  - `DSH Adapter.subscribeEvents()` 从 stub 改为真实 best-effort 订阅（tool/command/test/file/approval/agent）
+  - 新增 `omniEventToEvidenceRecord()`：DSH 事件 → Evidence Record（command/test=T3、tool/file/approval=T2、unknown=T1）
+  - 默认路径事件桥：DSH events → OmniEvent → Evidence Record → `OmniTaskState.evidence`
+  - `omni_status` / `omni_explain` 显示 `Verified / Partially Verified / Unverified`
+- OmniBench 严谨性修复：
+  - `compareArms()` pair 增加 `repo` / `task`
+  - `Every task has >= 3 paired runs` 现在从全部 task 集合初始化，没有 pair 的 task 也会被计入并导致 gate FAIL
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.2] - 2026-08-21
 
 - README 默认改为中文，支持中英文切换：

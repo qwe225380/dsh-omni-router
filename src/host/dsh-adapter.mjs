@@ -7,6 +7,7 @@
  */
 
 import { describeHostCapabilities } from '../host-interface.mjs'
+import { normalizeHostEvent } from '../omni-event.mjs'
 
 export function createDshHostAdapter(ctx = {}) {
   const get = (key) => (typeof ctx.get === 'function' ? ctx.get(key) : undefined) || ctx[key]
@@ -52,10 +53,30 @@ export function createDshHostAdapter(ctx = {}) {
       return names.map((name) => ({ provider: `dsh-tool-${name}`, capabilities: inferCapabilities(name) }))
     },
 
-    subscribeEvents() {
-      // DSH event subscription is wired in the plugin entry; kept as a stub
-      // here so the interface is complete.
-      return () => {}
+    subscribeEvents(handler) {
+      if (typeof ctx.on !== 'function') return () => {}
+      const disposables = []
+      const eventTypes = [
+        'tool.started', 'tool.completed', 'command.completed', 'test.completed',
+        'file.changed', 'approval.requested', 'approval.completed',
+        'agent.started', 'agent.completed',
+      ]
+      for (const type of eventTypes) {
+        try {
+          const off = ctx.on(type, (payload) => {
+            const sessionId = payload?.sessionId || payload?.session?.id || null
+            handler(normalizeHostEvent({ ...payload, type }, 'dsh', { sessionId }))
+          })
+          if (typeof off === 'function') disposables.push(off)
+        } catch {
+          // Some DSH versions do not expose every event name; skip gracefully.
+        }
+      }
+      return () => {
+        for (const off of disposables) {
+          try { off() } catch { /* already disposed */ }
+        }
+      }
     },
 
     async requestApproval(request = {}) {

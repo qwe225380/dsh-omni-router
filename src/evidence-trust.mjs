@@ -22,6 +22,7 @@ export function createEvidenceRecord({
   trustLevel = 'T0',
   createdAt = new Date().toISOString(),
   payload = {},
+  ok,
 } = {}) {
   return {
     evidenceId: id,
@@ -32,7 +33,31 @@ export function createEvidenceRecord({
     trustValue: TRUST_LEVELS[trustLevel] ?? 0,
     createdAt,
     payload,
+    ...(ok === undefined ? {} : { ok }),
   }
+}
+
+export function omniEventToEvidenceRecord(event = {}) {
+  const type = event.type || 'unknown'
+  let trustLevel = 'T1'
+  if (type === 'command.completed' || type === 'test.completed') trustLevel = 'T3'
+  else if (type.startsWith('tool.')) trustLevel = 'T2'
+  else if (type.startsWith('file.')) trustLevel = 'T2'
+  else if (type.startsWith('approval.')) trustLevel = 'T2'
+  const payload = event.payload || {}
+  const exitCode = payload.exitCode ?? payload.exit_code
+  const ok = (type === 'command.completed' || type === 'test.completed')
+    ? exitCode === 0
+    : undefined
+  return createEvidenceRecord({
+    id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    criterionId: payload.criterionId || payload.criterion_id || '',
+    workspaceFingerprint: event.workspaceFingerprint || '',
+    producer: event.host || 'host',
+    trustLevel,
+    payload: event.payload || {},
+    ...(ok === undefined ? {} : { ok }),
+  })
 }
 
 export function isEvidenceStale(record = {}, currentFingerprint = '') {
