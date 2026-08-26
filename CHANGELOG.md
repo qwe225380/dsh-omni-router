@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-rc.10] - 2026-08-21
+
+- 成品版能力自动补齐（用户零配置）：
+  - `omni_capability_audit` / `omni_capability_provision` / `omni_capability_probe` 默认对模型可见
+  - 内置推荐编程能力注册表（superpowers-dsh / dsh-doublecheck / dsh-trio / dsh-router-standard / marketplace / hub）
+  - 默认启用 `capabilityProvisioning.enabled: true`、`mode: auto-trusted`
+  - 新增默认安装执行器：优先用 DSH commands/shell，其次回退 `execSync`
+  - 模型在对话中可自动识别能力缺口并调用 DSH 安装，无需用户手动配置
+  - 修复 `ctxGet` 递归 bug（`ctx.get` 被误替换成 `ctxGet`）
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.9] - 2026-08-21
 
 - 恢复 Omni Router preset 的 DSH 原生技能能力：

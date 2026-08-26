@@ -557,13 +557,21 @@ export function apply(ctx, config = {}) {
     'omni_status', 'omni_plan', 'omni_direct',
     'browser_snapshot', 'browser_elements', 'browser_status', 'browser_tabs', 'browser_cookies',
   ])
-  // Core Feature Freeze: default model-visible Omni surface is three tools.
-  const PUBLIC_OMNI_TOOLS = new Set(['omni_status', 'omni_explain', 'omni_doctor'])
+  // Core Feature Freeze: default model-visible Omni surface includes the
+  // reliability controls and capability auto-provisioning (out-of-box).
+  const PUBLIC_OMNI_TOOLS = new Set([
+    'omni_status',
+    'omni_explain',
+    'omni_doctor',
+    'omni_capability_audit',
+    'omni_capability_provision',
+    'omni_capability_probe',
+  ])
 
   function ctxGet(key) {
     try {
       if (typeof ctx.get === 'function') {
-        const value = ctxGet(key)
+        const value = ctx.get(key)
         if (value !== undefined) return value
       }
     } catch {
@@ -573,6 +581,58 @@ export function apply(ctx, config = {}) {
       return ctx[key]
     } catch {
       return undefined
+    }
+  }
+
+  // Out-of-box capability provisioning: a curated set of well-known DSH
+  // programming skills/plugins. Omni discovers missing capabilities from this
+  // registry and, in auto-trusted mode, asks DSH to install the minimal set.
+  const DEFAULT_CAPABILITY_REGISTRY = [
+    { id: 'superpowers-dsh', package: 'superpowers-dsh', type: 'plugin', provides: ['tdd', 'debugging', 'planning', 'executing-plans'], verified: true, risk: 'low', reliability: 0.9 },
+    { id: 'dsh-doublecheck', package: 'dsh-doublecheck', type: 'plugin', provides: ['verification', 'delivery-proof', 'code.review'], verified: true, risk: 'low', reliability: 0.9 },
+    { id: 'dsh-trio', package: 'dsh-trio', type: 'plugin', provides: ['browser.automation', 'browser.screenshot', 'github.remote', 'gitlab.remote'], verified: true, risk: 'low', reliability: 0.85 },
+    { id: 'dsh-router-standard', package: 'dsh-router-standard', type: 'plugin', provides: ['persona.routing', 'attention.routing', 'progressive-disclosure'], verified: true, risk: 'low', reliability: 0.85 },
+    { id: 'dsh-plugins-store', package: 'dsh-plugins-store', type: 'plugin', provides: ['plugin.discovery', 'plugin.install'], verified: true, risk: 'medium', reliability: 0.8 },
+    { id: 'dsh.fish', package: 'dsh.fish', type: 'plugin', provides: ['hub.discovery', 'hub.install'], verified: true, risk: 'medium', reliability: 0.8 },
+    { id: 'dsh-community-plugins', package: 'dsh-community-plugins', type: 'plugin', provides: ['skill.discovery'], verified: true, risk: 'medium', reliability: 0.8 },
+  ]
+
+  const capabilityProvisioning = {
+    enabled: true,
+    mode: 'auto-trusted',
+    maxTaskPlugins: 1,
+    maxPermanentManagedPlugins: 5,
+    trustedSources: [
+      'https://github.com/DshMarketPlace/dsh-plugins-store',
+      'https://github.com/stvlynn/dsh.fish',
+      'https://github.com/HubaKing/dsh-community-plugins',
+      'https://github.com/qwe225380/dsh-omni-router',
+    ],
+    registry: DEFAULT_CAPABILITY_REGISTRY,
+    ...(config.capabilityProvisioning || {}),
+  }
+
+  async function defaultCapabilityExecutor({ type, candidate, profile, txn } = {}) {
+    const pkg = candidate?.package || candidate?.id || txn?.package
+    if (!pkg) return false
+    const command = type === 'rollback'
+      ? (txn?.rollbackCommand || `dsh plugin --profile ${profile || 'web'} remove ${pkg}`)
+      : (candidate?.installCommand || `dsh plugin --profile ${profile || 'web'} add ${pkg}`)
+    const commands = ctxGet('commands') || ctxGet('shell')
+    try {
+      if (typeof commands?.run === 'function') {
+        await commands.run(command)
+        return true
+      }
+      if (typeof commands?.exec === 'function') {
+        await commands.exec(command)
+        return true
+      }
+      const { execSync } = await import('node:child_process')
+      execSync(command, { stdio: 'pipe', timeout: 120000 })
+      return true
+    } catch {
+      return false
     }
   }
 
@@ -1591,7 +1651,7 @@ export function apply(ctx, config = {}) {
       const toolNames = await collectToolNames(toolsService)
       let brain = autoPopulateCapabilityBrain(createCapabilityBrain(), toolNames)
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
-      const provisioning = config.capabilityProvisioning || {}
+      const provisioning = capabilityProvisioning
       const requirements = Array.isArray(args?.requirements) ? args.requirements.map(String).filter(Boolean) : []
       const explicitMissing = Array.isArray(args?.missing) ? args.missing.map(String).filter(Boolean) : []
       const missing = explicitMissing.length
@@ -1638,7 +1698,7 @@ export function apply(ctx, config = {}) {
         mode,
         profile: args?.profile || provisioning.profile || 'web',
         trustedSources: provisioning.trustedSources || [],
-        execute: provisioning.execute,
+        execute: provisioning.execute || defaultCapabilityExecutor,
         probeTools: toolNames,
         probeSkills: provisioning.probeSkills || [],
       })
@@ -1670,7 +1730,7 @@ export function apply(ctx, config = {}) {
       if (!provider) return `Provider "${args?.provider}" not found in Capability Brain.`
       const probe = await probeCapability(
         { ...provider, expectedTools: args?.expectedTools || [], expectedSkills: args?.expectedSkills || [] },
-        { tools: toolNames, skills: config.capabilityProvisioning?.probeSkills || [] },
+        { tools: toolNames, skills: capabilityProvisioning.probeSkills || [] },
       )
       const lines = [`Probe ${args.provider}: ${probe.ok ? 'READY' : 'BROKEN'}`]
       for (const check of probe.checks) lines.push(`- ${check.ok ? '✓' : '✗'} ${check.type} ${check.name}`)
