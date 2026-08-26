@@ -2,14 +2,21 @@
 
 > [English](./README.en.md)
 
-### Make DeepSeek Harness more reliable at real software engineering.
+> **DeepSeek Harness 的智能可靠性与能力协作层。**
+>
+> 自动复用已有 Skills、Tools 和 Plugins，缺什么才补什么；简单任务不干预，复杂任务准备精准上下文与任务约束，失败时切换恢复策略，最终用真实 Evidence 判断任务是否真正完成。
 
 **默认快。必要时聪明。完成必须有证据。**
 
-Omni 是 DeepSeek Harness 的轻量 **Agent Reliability Kernel**。
+```bash
+dsh plugin --profile web add dsh-omni-router
+```
 
-它不会替 DeepSeek 写代码，也不会重新实现 Harness。
-它只解决 Coding Agent 最常见、也最昂贵的几个问题：
+---
+
+## Why Omni
+
+Coding Agent 最常见的六个问题：
 
 - 找错代码和上下文
 - 复杂任务做着做着跑偏
@@ -18,26 +25,26 @@ Omni 是 DeepSeek Harness 的轻量 **Agent Reliability Kernel**。
 - 失败后重复同一种办法
 - 最后说“完成了”，实际并没有完成
 
-安装 Omni 后，你仍然正常使用 DeepSeek Harness。
-
-```text
-Simple task
-→ raw DSH
-
-Complex task
-→ focused context + task contract
-→ DSH executes
-→ real evidence
-→ verified completion
-```
-
-> **DeepSeek Harness owns execution. Omni owns reliability.**
-
-[安装](#安装) · [工作原理](#工作原理) · [为什么用 Omni](#为什么用-omni) · [与 Router Standard 的区别](#与-dsh-routing-suite--router-standard-的关系) · [Benchmark](#benchmark-status)
+Omni 就是为了解决这些工程问题，而不是再做一个“Router”。
 
 ---
 
-## 问题：没有 Omni 时
+## What Omni does
+
+| 能力 | Omni 实际做什么 |
+|---|---|
+| ♻️ **自动复用已有能力** | 优先利用 DSH 已有 Tool / Skill / Plugin，不重复造轮子 |
+| 🧩 **自动补齐能力缺口** | Capability Audit → 发现缺口 → trusted provisioning |
+| 🎯 **精准 Context** | 根据任务提取相关文件、符号、依赖、测试，而不是塞整个仓库 |
+| 🧠 **智能介入** | 简单任务真正 NOOP，复杂任务才进入 Assist / Guard |
+| 🔄 **失败恢复** | retry 不奏效时 repair / expand context / change hypothesis |
+| ✅ **完成证明** | Acceptance ↔ Evidence，支持 T0–T4 trust，不相信模型单方面说 Done |
+
+---
+
+## 30 秒 Demo
+
+### Without Omni
 
 ```text
 User:
@@ -56,9 +63,7 @@ Done ✅
 - 没有 regression test
 - 没有证据证明“真的完成了”
 
----
-
-## 有 Omni 时
+### With Omni
 
 ```text
 Task Contract
@@ -82,175 +87,227 @@ Evidence
 Proof: 3/3
 ```
 
-> Omni 不要求用户学习新的 workflow，它只在后台把“完成”变成“有证据的完成”。
-
 ---
 
-## 工作原理
+## 一个插件，复用整个 DSH 生态
+
+```
+                    Omni
+          Capability + Reliability
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+    Skills         Plugins         Tools
+      │              │              │
+      ├── TDD        ├── Browser    ├── Shell
+      ├── Git        ├── Router     ├── Editor
+      └── Verify     └── Others     └── Tests
+      │              │              │
+      └──────────────┼──────────────┘
+                     ▼
+              DeepSeek Harness
+                     │
+                     ▼
+                  Execute
+                     │
+                     ▼
+          Evidence → Verify
+```
+
+> **Omni 不追求自己拥有最多能力，而是尽可能让已经存在的优秀能力发挥作用。**
+
+### 真实例子：前端 UI 修复
 
 ```text
-              Task
-               │
-               ▼
-        Does Omni help?
-          /        \
-        NO          YES
-        │            │
-       DSH      Contract + Context
-        │            │
-        └──────┬─────┘
-               ▼
-          DSH executes
-               │
-               ▼
-          Real Evidence
-               │
-               ▼
-         Proven Complete
+用户：
+帮我检查这个网页的实现，并修复 UI 问题。
+
+Omni:
+1. 判断这是前端任务
+2. 检查当前 DSH 能力
+3. 已有 Browser → 直接复用
+4. 已有 UI/Verification Skill → 继续由 DSH 使用
+5. 不再安装重复能力
+6. 生成 UI acceptance criteria
+7. DSH 执行
+8. 收集 screenshot / tool / test evidence
+9. Verify
 ```
 
-Omni 只做三件事：
-
-1. **Decide** — 判断是否值得介入
-2. **Prepare** — 准备精准上下文与约束
-3. **Verify** — 证明工作真的完成了
-
-简单任务默认 **NOOP**：Omni 完全退出，几乎不增加开销。
-
----
-
-## 为什么用 Omni
-
-### 1. Invisible by default
-
-简单任务 → NOOP。
-
-Omni 不为了体现存在感而介入。
-
-### 2. Focused context
-
-复杂任务只给模型真正相关的代码、调用关系、测试和约束。
-
-### 3. Failure-aware recovery
-
-失败后不会只把同一个 prompt 再跑一次。
-
-相同失败重复出现时，会自动换策略：扩大上下文、重新调查、换能力、重新规划。
-
-### 4. Proven completion
-
-**Done is proven, not declared.**
-
-每个验收标准都绑定证据；没有证据不能算完成。
-
----
-
-## 与其他项目的区别
-
-| Project type     | Main purpose                                         |
-| ---------------- | ---------------------------------------------------- |
-| DeepSeek Harness | Agent runtime / tools / execution                    |
-| Agent Skills     | Reusable task expertise                              |
-| Router Standard  | DeepSeek persona / attention / workflow routing      |
-| Omni             | **Task reliability / context / evidence / recovery** |
-
-> Omni intentionally reuses the layers above instead of replacing them.
-
----
-
-## 与 dsh-routing-suite / Router Standard 的关系
-
-Omni 与 Router Standard 可以同时使用，但解决的问题不同。
-
-| Capability                  | Router Standard | Omni     |
-| --------------------------- | --------------- | -------- |
-| Persona / reasoning routing | ✅               | Delegate |
-| Progressive tool disclosure | ✅               | Host     |
-| Task Contract               | —               | ✅        |
-| Focused repo context        | —               | ✅        |
-| Evidence trust              | —               | ✅        |
-| Criterion-based completion  | —               | ✅        |
-| Failure recovery            | Partial         | ✅        |
-| Cross-host reliability      | —               | Goal     |
-
-一句话：
-
-> **Router Standard 决定 DeepSeek 怎么工作；Omni 判断工程任务是否真正完成。**
-
-检测到 Router Standard 时，Omni 会主动让出 reasoning/persona routing，避免两个 Router 同时控制模型。
-
----
-
-## 生态兼容与致谢
-
-### Inspirations
-
-Omni 的设计受到 DeepSeek Harness 社区多个项目的启发，尤其是：
-
-- `dsh-router-standard / dsh-routing-suite`
-  - persona routing
-  - attention engineering
-  - progressive disclosure
-  - real Harness assembly-chain research
-
-### Integrations
-
-- 自动检测 Router Standard
-- 检测到后 delegate reasoning/persona routing
-- 消费其产生的 tool/evidence 信号（如果可用）
-
-### Omni-compatible
-
-一个插件不需要为 Omni 专门改造。
-
-只要它能够通过 DSH 暴露工具、事件或 capability metadata，Omni 就可以把它视为一个 capability / evidence provider。
+### 真实例子：复杂重构
 
 ```text
-Existing plugin
-     ↓
-DSH
-     ↓
-tool / event / capability metadata
-     ↓
-Omni understands it
+当前环境：
+✓ Git
+✓ Testing
+✓ Skills
+✗ 某个任务要求的特殊能力
+
+Omni:
+已有能力 → 全部复用
+缺失能力 → 只补这个 gap
 ```
-
-| Project / Capability        | Omni strategy                          |
-| --------------------------- | -------------------------------------- |
-| `dsh-router-standard`       | **Delegate** persona/reasoning routing |
-| DSH native Skills           | **Reuse** automatic activation         |
-| Browser plugin              | **Reuse** browser capability           |
-| Testing/verification Skills | **Reuse evidence/results**             |
-| Git plugins                 | **Reuse** native workflow              |
-| MCP servers                 | **Treat as host capabilities**         |
-| Missing capability          | **Provision only when necessary**      |
-
-> **Omni 不替代优秀插件，而是让它们在同一个任务可靠性闭环中协同工作。**
 
 ---
 
-## 安装
+## Under the hood
 
-```bash
-dsh plugin --profile web add dsh-omni-router
+Omni 的用户界面很简单，但内部并不是一个 Prompt 模板。
+
+```text
+Task
+ │
+ ▼
+Task Classification
+ │
+ ▼
+Intervention Gate ───────────→ NOOP
+ │
+ ▼
+Task Contract
+ ├── Acceptance Criteria
+ ├── Risk
+ ├── Context Budget
+ └── Capability Requirements
+ │
+ ▼
+Context Engine
+ ├── multilingual tokenizer
+ ├── lexical retrieval
+ ├── symbol retrieval
+ ├── dependency graph
+ └── freshness tracking
+ │
+ ▼
+Capability Audit
+ ├── existing tools
+ ├── native skills
+ ├── installed plugins
+ └── missing capabilities
+ │
+ ▼
+DeepSeek Harness
+ │
+ ▼
+DSH Events
+ │
+ ▼
+Evidence Trust
+ ├── T0 model claim
+ ├── T1 observation
+ ├── T2 host/tool
+ ├── T3 deterministic execution
+ └── T4 independent verifier
+ │
+ ▼
+Criterion Verification
+ ├── PASS → Verified
+ └── FAIL → Recovery
+              │
+              └──→ DSH
 ```
 
-或通过 npm：
+---
 
-```bash
-npm i dsh-omni-router
-cd node_modules/dsh-omni-router
-node scripts/install-preset.mjs
+## Reliability Engineering
+
+Omni 不只是功能堆叠，它专门处理这些 Agent failure modes：
+
+```text
+✓ 模型自己声称测试通过
+  → model evidence 只能 T0/T1
+
+✓ Tool 执行结果和模型文字混淆
+  → provenance-aware Evidence
+
+✓ 文件修改后旧测试结果仍被当有效
+  → Evidence freshness / invalidation
+
+✓ permission / dependency / timeout 被误认为成功
+  → success whitelist + failure taxonomy
+
+✓ 中文任务检索不到英文 symbol
+  → multilingual query tokenizer + semantic expansion
+
+✓ 相同失败无限 retry
+  → failure-aware recovery
+
+✓ 简单任务被复杂框架拖慢
+  → true L0 NOOP
+
+✓ 已经有插件还重复造能力
+  → capability reuse first
+
+✓ 缺能力时用户需要手动安装
+  → trusted capability provisioning
+
+✓ 两个 Router 同时控制模型
+  → compatibility delegation
 ```
 
-重启 DSH，新建会话时选择 **Omni Router**。
+---
+
+## Omni 不只是 Router
+
+```text
+普通 Router
+Task → choose mode/model/agent
+
+Omni
+Task
+→ 判断是否需要介入
+→ 复用已有能力
+→ 补齐缺失能力
+→ 准备正确 Context
+→ 定义 Acceptance
+→ Host 执行
+→ 收集真实 Evidence
+→ 验证完成
+→ 失败后恢复
+```
+
+> **Routing is one decision. Reliability is the whole lifecycle.**
+
+---
+
+## Works better with good plugins
+
+Omni 不要求生态围绕自己重写。
+
+例如安装 `dsh-router-standard` 后，Omni 可以自动生成组合预设：
+
+```text
+Omni Router + Router Standard
+```
+
+Router Standard 继续负责 DeepSeek persona / attention / workflow routing；Omni 负责 capability、context、evidence 和 reliability。
+
+---
+
+## Built like infrastructure, not a prompt pack
+
+Omni 对 routing、Context、Evidence、Capability、Recovery、Host Adapter、Installer 和 OmniBench 均有独立测试覆盖。
+
+每个 RC 都要求完整 `npm test` 回归，Benchmark 另有独立 Raw vs Omni runner。
+
+```text
+test/
+├── kernel/
+├── context/
+├── evidence/
+├── recovery/
+├── capability/
+├── host/
+├── integration/
+└── e2e/
+```
 
 ---
 
 ## Proof of Completion
 
-每个验收标准都有 id（如 `C1`、`C2`）。每个标准必须至少有一条 fresh evidence
-记录并满足要求的信任等级：
+每个验收标准都有 id（如 `C1`、`C2`）。每个标准必须至少有一条 fresh evidence 记录并满足要求的信任等级：
 
 | Trust | Source |
 |---|---|
@@ -259,8 +316,6 @@ node scripts/install-preset.mjs
 | T2 | host/tool output |
 | T3 | deterministic command/test execution |
 | T4 | independent / hidden verifier |
-
-最终输出：
 
 ```text
 Completed.
@@ -278,11 +333,44 @@ Partially Verified
 Unverified
 ```
 
-而不会假装完成。
+---
+
+## Compatibility
+
+| Project / Capability | Omni strategy |
+|---|---|
+| `dsh-router-standard` | **Delegate** persona/reasoning routing |
+| DSH native Skills | **Reuse** automatic activation |
+| Browser plugin | **Reuse** browser capability |
+| Testing/verification Skills | **Reuse evidence/results** |
+| Git plugins | **Reuse** native workflow |
+| MCP servers | **Treat as host capabilities** |
+| Missing capability | **Provision only when necessary** |
 
 ---
 
-## Benchmark Status
+## Evolution
+
+```text
+1.x
+Router
+↓
+2.x
+Planner / Context / Capability / Evidence exploration
+↓
+2.4
+Reliability Kernel
+↓
+3.0
+Convergence:
+Decide · Prepare · Verify
+```
+
+> 3.0 intentionally removed or hid overlapping runtime/router features instead of continuing feature growth.
+
+---
+
+## OmniBench
 
 ```text
 3.0 RC benchmark validation is in progress.
@@ -299,18 +387,6 @@ Cost ≤2.5×
 
 在数据达到这些 Gate 之前，不会宣称 frontier parity。
 
-等真实数据跑出来后会更新为：
-
-```text
-Raw Flash        XX%
-Flash + Omni     YY%
-Δ                 +ZZpp
-False completion X%
-Cost              X.X×
-```
-
-运行方式：
-
 ```bash
 npm run omnibench:v2:generate -- benchmark/omnibench-v2/manifest.local.example.json
 node benchmark/omnibench-v2/run.mjs benchmark/omnibench-v2/manifest.local.example.json --exec
@@ -320,7 +396,7 @@ node benchmark/omnibench-v2/gates.mjs <results.json>
 
 ---
 
-## 架构
+## Architecture
 
 ```text
 kernel/          task-contract · intervention-gate · omni-event · evidence-trust
@@ -330,26 +406,6 @@ capability/      auditor · quality · solver · provisioner · performance
 mission/         mission-ir · planner-dag · mission-dag（兼容层）
 host/            interface · dsh-adapter
 benchmark/       omnibench-v2 runner · matrix · gates
-```
-
----
-
-## 开发者模式
-
-默认模型可见工具只有：
-
-- `omni_status`
-- `omni_explain`
-- `omni_doctor`
-
-旧 runtime / benchmark / capability 工具在默认模式下不注册。
-
-需要时设置：
-
-```yaml
-developerMode: true
-# 或
-exposeDeveloperTools: true
 ```
 
 ---
@@ -368,22 +424,30 @@ A: 不会。DSH 仍然拥有执行、工具、Skills、插件、Runtime。
 
 A: 不会。Omni 只定义“任务达到什么状态才算成功”，不调度具体插件。
 
+**Q: 它能自动安装技能/插件吗？**
+
+A: 能。RC10+ 默认开启 trusted capability provisioning：识别缺口 → 搜索 → 最小集安装 → 验证。
+
 **Q: 它和 Router Standard 冲突吗？**
 
-A: 不冲突。检测到 Router Standard 时，Omni 主动让出 reasoning/persona routing，只负责可靠性闭环。
+A: 不冲突。检测到 Router Standard 时，Omni 自动生成组合预设，并让出 reasoning/persona routing。
 
-**Q: 没有 DSH 事件时还能证明完成吗？**
+---
 
-A: 会显示 `Verified / Partially Verified / Unverified`，不会谎报完成。
+## Credits / Inspirations
+
+Omni 的设计受到 DeepSeek Harness 社区多个项目的启发，尤其是：
+
+- `dsh-router-standard / dsh-routing-suite`
+  - persona routing
+  - attention engineering
+  - progressive disclosure
+  - real Harness assembly-chain research
+
+Omni 不替代这些能力，而是让它们在同一任务可靠性闭环中协同工作。
 
 ---
 
 ## License
 
 [MIT](./LICENSE)
-
----
-
-> **Reuse what works. Coordinate what matters. Verify what finishes.**
->
-> **好的能力直接复用，关键环节统一协作，最终结果必须验证。**

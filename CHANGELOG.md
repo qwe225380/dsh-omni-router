@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.12] - 2026-08-21
+
+- README 按 `readversion.md` 重写：
+  - 首页突出“智能可靠性与能力协作层”
+  - 新增 6 大核心能力、生态复用、Under the hood、Reliability Engineering、Evolution、Compatibility 等章节
+  - 中英文 README 同步更新
+  - GitHub repository description 更新为 capability-aware reliability layer
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.11] - 2026-08-21
 
 - 条件化组合预设安装（方式 A）：

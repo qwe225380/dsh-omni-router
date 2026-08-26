@@ -2,14 +2,19 @@
 
 > [中文](./README.md)
 
-### Make DeepSeek Harness more reliable at real software engineering.
+> **A capability-aware reliability layer for DeepSeek Harness — reuse what already works, fill only what is missing, and verify what actually finished.**
 
 **Fast by default. Smart when needed. Proven when done.**
 
-Omni is a lightweight **Agent Reliability Kernel** for DeepSeek Harness.
+```bash
+dsh plugin --profile web add dsh-omni-router
+```
 
-It does not write code for DeepSeek, and it does not re-implement the Harness.
-It addresses the most common and expensive coding-agent problems:
+---
+
+## Why Omni
+
+Coding agents commonly suffer from:
 
 - Wrong code or wrong context
 - Losing track in complex tasks
@@ -18,26 +23,26 @@ It addresses the most common and expensive coding-agent problems:
 - Repeating the same failed strategy
 - Saying "done" without actually finishing
 
-After installing Omni, you keep using DeepSeek Harness normally.
-
-```text
-Simple task
-→ raw DSH
-
-Complex task
-→ focused context + task contract
-→ DSH executes
-→ real evidence
-→ verified completion
-```
-
-> **DeepSeek Harness owns execution. Omni owns reliability.**
-
-[Install](#install) · [How it works](#how-it-works) · [Why Omni](#why-omni) · [Router Standard](#relation-to-dsh-routing-suite--router-standard) · [Benchmark](#benchmark-status)
+Omni exists to solve these engineering problems, not to be another router.
 
 ---
 
-## Without Omni
+## What Omni does
+
+| Capability | What Omni actually does |
+|---|---|
+| ♻️ **Reuse existing capabilities** | Prefer installed Tools / Skills / Plugins instead of rebuilding them |
+| 🧩 **Fill capability gaps** | Capability Audit → detect gaps → trusted provisioning |
+| 🎯 **Focused context** | Relevant files, symbols, dependencies, tests — not the whole repo |
+| 🧠 **Smart intervention** | Simple tasks are true NOOP; complex tasks get Assist / Guard |
+| 🔄 **Failure recovery** | retry → repair → expand context → change hypothesis |
+| ✅ **Proof of completion** | Acceptance ↔ Evidence with T0–T4 trust; never trust a model's bare "done" |
+
+---
+
+## 30-second demo
+
+### Without Omni
 
 ```text
 User:
@@ -54,11 +59,9 @@ Problems:
 - The real concurrency test never ran
 - A caller was missed
 - No regression test was added
-- No evidence that "done" is actually true
+- No evidence that "done" is true
 
----
-
-## With Omni
+### With Omni
 
 ```text
 Task Contract
@@ -82,162 +85,215 @@ Evidence
 Proof: 3/3
 ```
 
-> Omni does not ask you to learn a new workflow. It turns "done" into "done with evidence".
-
 ---
 
-## How it works
+## One plugin, reuse the whole DSH ecosystem
+
+```
+                    Omni
+          Capability + Reliability
+                     │
+      ┌──────────────┼──────────────┐
+      │              │              │
+      ▼              ▼              ▼
+    Skills         Plugins         Tools
+      │              │              │
+      ├── TDD        ├── Browser    ├── Shell
+      ├── Git        ├── Router     ├── Editor
+      └── Verify     └── Others     └── Tests
+      │              │              │
+      └──────────────┼──────────────┘
+                     ▼
+              DeepSeek Harness
+                     │
+                     ▼
+                  Execute
+                     │
+                     ▼
+          Evidence → Verify
+```
+
+> **Omni does not try to own the most capabilities. It makes the good capabilities you already have work together.**
+
+### Example: Frontend UI fix
 
 ```text
-              Task
-               │
-               ▼
-        Does Omni help?
-          /        \
-        NO          YES
-        │            │
-       DSH      Contract + Context
-        │            │
-        └──────┬─────┘
-               ▼
-          DSH executes
-               │
-               ▼
-          Real Evidence
-               │
-               ▼
-         Proven Complete
+User:
+Inspect this webpage and fix the UI.
+
+Omni:
+1. Detect frontend task
+2. Check current DSH capabilities
+3. Browser already installed → reuse
+4. UI/Verification skill exists → let DSH use it
+5. Do not install duplicates
+6. Generate UI acceptance criteria
+7. DSH executes
+8. Collect screenshot / tool / test evidence
+9. Verify
 ```
 
-Omni does three things:
+### Example: Complex refactor
 
-1. **Decide** when intervention helps
-2. **Prepare** focused context and constraints
-3. **Verify** that the work is actually complete
+```text
+Current environment:
+✓ Git
+✓ Testing
+✓ Skills
+✗ Some task-specific capability
 
-Simple tasks default to **NOOP**: Omni fully exits and adds near-zero overhead.
-
----
-
-## Why Omni
-
-### 1. Invisible by default
-
-Simple task → NOOP.
-
-Omni does not intervene just to prove it exists.
-
-### 2. Focused context
-
-Complex tasks get only the relevant code, call relationships, tests, and constraints.
-
-### 3. Failure-aware recovery
-
-It does not retry the same prompt after the same failure.
-
-Repeated identical failures trigger a strategy shift: expand context, re-investigate, change capability, or re-plan.
-
-### 4. Proven completion
-
-**Done is proven, not declared.**
-
-Every acceptance criterion is bound to evidence.
-
----
-
-## How is Omni different?
-
-| Project type     | Main purpose                                         |
-| ---------------- | ---------------------------------------------------- |
-| DeepSeek Harness | Agent runtime / tools / execution                    |
-| Agent Skills     | Reusable task expertise                              |
-| Router Standard  | DeepSeek persona / attention / workflow routing      |
-| Omni             | **Task reliability / context / evidence / recovery** |
-
-> Omni intentionally reuses the layers above instead of replacing them.
-
----
-
-## Relation to dsh-routing-suite / Router Standard
-
-Omni and Router Standard can be used together.
-
-| Capability                  | Router Standard | Omni     |
-| --------------------------- | --------------- | -------- |
-| Persona / reasoning routing | ✅               | Delegate |
-| Progressive tool disclosure | ✅               | Host     |
-| Task Contract               | —               | ✅        |
-| Focused repo context        | —               | ✅        |
-| Evidence trust              | —               | ✅        |
-| Criterion-based completion  | —               | ✅        |
-| Failure recovery            | Partial         | ✅        |
-| Cross-host reliability      | —               | Goal     |
-
-> **Router Standard decides how DeepSeek works. Omni decides whether the engineering task is actually done.**
-
-When Router Standard is detected, Omni delegates reasoning/persona routing to avoid two routers controlling the model.
-
----
-
-## Ecosystem & Inspirations
-
-### Inspirations
-
-Omni is inspired by several DeepSeek Harness community projects, especially:
-
-- `dsh-router-standard / dsh-routing-suite`
-  - persona routing
-  - attention engineering
-  - progressive disclosure
-  - real Harness assembly-chain research
-
-### Integrations
-
-- Detects Router Standard automatically
-- Delegates reasoning/persona routing when detected
-- Consumes its tool/evidence signals when available
-
-### Omni-compatible
-
-A plugin does not need to be modified for Omni.
-
-If it exposes tools, events, or capability metadata through DSH, Omni can treat it as a capability / evidence provider.
-
-| Project / Capability        | Omni strategy                          |
-| --------------------------- | -------------------------------------- |
-| `dsh-router-standard`       | **Delegate** persona/reasoning routing |
-| DSH native Skills           | **Reuse** automatic activation         |
-| Browser plugin              | **Reuse** browser capability           |
-| Testing/verification Skills | **Reuse evidence/results**             |
-| Git plugins                 | **Reuse** native workflow              |
-| MCP servers                 | **Treat as host capabilities**         |
-| Missing capability          | **Provision only when necessary**      |
-
-> **Omni does not replace good plugins. It makes them work together inside one reliability loop.**
-
----
-
-## Install
-
-```bash
-dsh plugin --profile web add dsh-omni-router
+Omni:
+Existing capabilities → all reused
+Missing capability → only fill that gap
 ```
 
-Or from npm:
+---
 
-```bash
-npm i dsh-omni-router
-cd node_modules/dsh-omni-router
-node scripts/install-preset.mjs
+## Under the hood
+
+Omni's surface is simple, but it is not a prompt template.
+
+```text
+Task
+ │
+ ▼
+Task Classification
+ │
+ ▼
+Intervention Gate ───────────→ NOOP
+ │
+ ▼
+Task Contract
+ ├── Acceptance Criteria
+ ├── Risk
+ ├── Context Budget
+ └── Capability Requirements
+ │
+ ▼
+Context Engine
+ ├── multilingual tokenizer
+ ├── lexical retrieval
+ ├── symbol retrieval
+ ├── dependency graph
+ └── freshness tracking
+ │
+ ▼
+Capability Audit
+ ├── existing tools
+ ├── native skills
+ ├── installed plugins
+ └── missing capabilities
+ │
+ ▼
+DeepSeek Harness
+ │
+ ▼
+DSH Events
+ │
+ ▼
+Evidence Trust
+ ├── T0 model claim
+ ├── T1 observation
+ ├── T2 host/tool
+ ├── T3 deterministic execution
+ └── T4 independent verifier
+ │
+ ▼
+Criterion Verification
+ ├── PASS → Verified
+ └── FAIL → Recovery
+              │
+              └──→ DSH
 ```
 
-Restart DSH and select **Omni Router** in a new session.
+---
+
+## Reliability Engineering
+
+Omni handles these real agent failure modes:
+
+```text
+✓ Model claims tests passed
+  → model evidence is only T0/T1
+
+✓ Tool output confused with model text
+  → provenance-aware Evidence
+
+✓ Old test results used after files changed
+  → Evidence freshness / invalidation
+
+✓ permission / dependency / timeout treated as success
+  → success whitelist + failure taxonomy
+
+✓ Chinese task cannot find English symbols
+  → multilingual query tokenizer + semantic expansion
+
+✓ Same failure retried forever
+  → failure-aware recovery
+
+✓ Simple tasks slowed by complex frameworks
+  → true L0 NOOP
+
+✓ Rebuilding capabilities that already exist
+  → capability reuse first
+
+✓ Users must manually install missing capabilities
+  → trusted capability provisioning
+
+✓ Two routers controlling the same model
+  → compatibility delegation
+```
+
+---
+
+## Omni is not just a router
+
+```text
+Normal Router
+Task → choose mode/model/agent
+
+Omni
+Task
+→ decide whether to intervene
+→ reuse existing capabilities
+→ fill missing capabilities
+→ prepare correct context
+→ define acceptance
+→ host executes
+→ collect real evidence
+→ verify completion
+→ recover from failure
+```
+
+> **Routing is one decision. Reliability is the whole lifecycle.**
+
+---
+
+## Works better with good plugins
+
+Omni does not ask the ecosystem to rewrite itself around it.
+
+If `dsh-router-standard` is installed, Omni automatically creates the combined preset:
+
+```text
+Omni Router + Router Standard
+```
+
+Router Standard keeps handling DeepSeek persona / attention / workflow routing; Omni handles capability, context, evidence, and reliability.
+
+---
+
+## Built like infrastructure, not a prompt pack
+
+Omni has independent test coverage for routing, Context, Evidence, Capability, Recovery, Host Adapter, Installer, and OmniBench.
+
+Every RC requires a full `npm test` regression; benchmark has its own Raw vs Omni runner.
 
 ---
 
 ## Proof of Completion
 
-Each acceptance criterion has an id (e.g. `C1`, `C2`). Every criterion needs at least one fresh evidence record at the required trust level:
+Every acceptance criterion has an id (e.g. `C1`, `C2`). Every criterion needs at least one fresh evidence record at the required trust level:
 
 | Trust | Source |
 |---|---|
@@ -265,7 +321,42 @@ Unverified
 
 ---
 
-## Benchmark Status
+## Compatibility
+
+| Project / Capability | Omni strategy |
+|---|---|
+| `dsh-router-standard` | **Delegate** persona/reasoning routing |
+| DSH native Skills | **Reuse** automatic activation |
+| Browser plugin | **Reuse** browser capability |
+| Testing/verification Skills | **Reuse evidence/results** |
+| Git plugins | **Reuse** native workflow |
+| MCP servers | **Treat as host capabilities** |
+| Missing capability | **Provision only when necessary** |
+
+---
+
+## Evolution
+
+```text
+1.x
+Router
+↓
+2.x
+Planner / Context / Capability / Evidence exploration
+↓
+2.4
+Reliability Kernel
+↓
+3.0
+Convergence:
+Decide · Prepare · Verify
+```
+
+> 3.0 intentionally removed or hid overlapping runtime/router features instead of continuing feature growth.
+
+---
+
+## OmniBench
 
 ```text
 3.0 RC benchmark validation is in progress.
@@ -305,26 +396,6 @@ benchmark/       omnibench-v2 runner · matrix · gates
 
 ---
 
-## Developer Mode
-
-Default model-visible tools:
-
-- `omni_status`
-- `omni_explain`
-- `omni_doctor`
-
-Legacy runtime / benchmark / capability tools are not registered by default.
-
-To expose them:
-
-```yaml
-developerMode: true
-# or
-exposeDeveloperTools: true
-```
-
----
-
 ## FAQ
 
 **Q: Does it slow down simple tasks?**
@@ -339,20 +410,30 @@ A: No. DSH keeps execution, tools, skills, plugins, and runtime.
 
 A: No. Omni defines what "success" means; it does not micromanage plugin calls.
 
+**Q: Can it auto-install skills/plugins?**
+
+A: Yes. RC10+ enables trusted capability provisioning: detect gaps → search → minimal install → verify.
+
 **Q: Does it conflict with Router Standard?**
 
-A: No. When Router Standard is detected, Omni delegates reasoning/persona routing.
+A: No. When Router Standard is detected, Omni auto-creates a combined preset and delegates reasoning/persona routing.
 
-**Q: Can it still prove completion without DSH events?**
+---
 
-A: It reports `Verified / Partially Verified / Unverified` instead of lying.
+## Credits / Inspirations
+
+Omni is inspired by several DeepSeek Harness community projects, especially:
+
+- `dsh-router-standard / dsh-routing-suite`
+  - persona routing
+  - attention engineering
+  - progressive disclosure
+  - real Harness assembly-chain research
+
+Omni does not replace these capabilities; it makes them work together in one reliability loop.
 
 ---
 
 ## License
 
 [MIT](./LICENSE)
-
----
-
-> **Reuse what works. Coordinate what matters. Verify what finishes.**
