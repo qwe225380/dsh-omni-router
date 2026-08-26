@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.11] - 2026-08-21
+
+- 条件化组合预设安装（方式 A）：
+  - 用户只装 Omni Router → 只生成 `Omni Router`
+  - 如果检测到 router-standard 已安装 → 自动生成 `Omni Router + Router Standard`
+  - 如果用户先装 Omni、后装 Router Standard，DSH 重启加载 Omni 插件时会自动补生成组合预设
+  - `lib/installer.js` 新增 `ensureCombinedPreset()`，在 `ready` 时执行
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.10] - 2026-08-21
 
 - 成品版能力自动补齐（用户零配置）：
