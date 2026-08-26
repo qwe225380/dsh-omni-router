@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-rc.9] - 2026-08-21
+
+- 恢复 Omni Router preset 的 DSH 原生技能能力：
+  - 重新挂载 `skill-filesystem` / `tool-skill`，让 Omni 发起的会话也能调用技能
+  - 明确边界：技能目录/调用由 DSH/模型决定，Omni 仍不做技能路由
+  - 本地 Omni Router preset 与组合 preset 同步
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.8] - 2026-08-21
 
 - 修正 Omni 与 Skills 的边界：

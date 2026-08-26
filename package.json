@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "3.0.0-rc.8",
+  "version": "3.0.0-rc.9",
   "description": "Omni - an Agent Reliability Kernel for DeepSeek Harness. Decide. Prepare. Verify: DSH owns execution, Omni owns reliability.",
   "type": "module",
   "main": "./lib/index.js",
