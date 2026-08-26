@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.13] - 2026-08-21
+
+- README 按 `update.md` 调整定位：
+  - 核心从“自动复用/编排能力”改为 **Reliability, not orchestration**
+  - 首页 slogan：**DSH 给 Agent 能力，Omni 让结果可靠**
+  - What Omni does 重新组织为：Intervention Intelligence / Context & Task Intelligence / Proof & Recovery / Reuse first / Capability Gap Management / Failure discipline
+  - “复用 DSH 生态”降级为设计原则/生态策略
+  - GitHub repository description 同步更新
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.12] - 2026-08-21
 
 - README 按 `readversion.md` 重写：

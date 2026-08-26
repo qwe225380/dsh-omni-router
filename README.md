@@ -2,9 +2,11 @@
 
 > [English](./README.en.md)
 
-> **DeepSeek Harness 的智能可靠性与能力协作层。**
->
-> 自动复用已有 Skills、Tools 和 Plugins，缺什么才补什么；简单任务不干预，复杂任务准备精准上下文与任务约束，失败时切换恢复策略，最终用真实 Evidence 判断任务是否真正完成。
+> **Omni 给 DeepSeek Harness 增加一层任务级可靠性：**
+> 判断何时介入、准备正确上下文、约束完成条件、验证真实证据，并在失败时改变策略。
+> 它优先复用 DSH 已有的 Skills、Tools 和 Plugins，而不是重新实现它们。
+
+**DSH 给 Agent 能力，Omni 让结果可靠。**
 
 **默认快。必要时聪明。完成必须有证据。**
 
@@ -31,14 +33,14 @@ Omni 就是为了解决这些工程问题，而不是再做一个“Router”。
 
 ## What Omni does
 
-| 能力 | Omni 实际做什么 |
+| 核心价值 | Omni 实际做什么 |
 |---|---|
-| ♻️ **自动复用已有能力** | 优先利用 DSH 已有 Tool / Skill / Plugin，不重复造轮子 |
-| 🧩 **自动补齐能力缺口** | Capability Audit → 发现缺口 → trusted provisioning |
-| 🎯 **精准 Context** | 根据任务提取相关文件、符号、依赖、测试，而不是塞整个仓库 |
-| 🧠 **智能介入** | 简单任务真正 NOOP，复杂任务才进入 Assist / Guard |
-| 🔄 **失败恢复** | retry 不奏效时 repair / expand context / change hypothesis |
-| ✅ **完成证明** | Acceptance ↔ Evidence，支持 T0–T4 trust，不相信模型单方面说 Done |
+| 🧠 **Intervention Intelligence** | 简单任务真正 NOOP，复杂任务才进入 Assist / Guard |
+| 🎯 **Context & Task Intelligence** | Task Contract + 精准 Context + Capability Sufficiency |
+| ✅ **Proof & Recovery** | Evidence / Freshness / Acceptance coverage / Recovery |
+| ♻️ **Reuse first** | 设计原则：优先复用 DSH 已有 Tool / Skill / Plugin，不重复造轮子 |
+| 🧩 **Capability Gap Management** | 只在确实阻塞任务时补齐缺口 |
+| 🔄 **失败纪律** | retry 不奏效时 repair / expand context / change hypothesis |
 
 ---
 
@@ -90,6 +92,8 @@ Proof: 3/3
 ---
 
 ## 一个插件，复用整个 DSH 生态
+
+> 这不是 Omni 的核心，而是它的生态策略：**Reuse first. Don't reimplement host capabilities.**
 
 ```
                     Omni

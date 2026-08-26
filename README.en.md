@@ -2,7 +2,11 @@
 
 > [中文](./README.md)
 
-> **A capability-aware reliability layer for DeepSeek Harness — reuse what already works, fill only what is missing, and verify what actually finished.**
+> **Omni adds a task-level reliability layer to DeepSeek Harness:**
+> decide when to intervene, prepare the right context, constrain completion criteria, verify real evidence, and change strategy on failure.
+> It reuses existing DSH Skills, Tools, and Plugins instead of re-implementing them.
+
+**DSH gives agents capabilities. Omni makes their outcomes dependable.**
 
 **Fast by default. Smart when needed. Proven when done.**
 
@@ -29,14 +33,14 @@ Omni exists to solve these engineering problems, not to be another router.
 
 ## What Omni does
 
-| Capability | What Omni actually does |
+| Core value | What Omni actually does |
 |---|---|
-| ♻️ **Reuse existing capabilities** | Prefer installed Tools / Skills / Plugins instead of rebuilding them |
-| 🧩 **Fill capability gaps** | Capability Audit → detect gaps → trusted provisioning |
-| 🎯 **Focused context** | Relevant files, symbols, dependencies, tests — not the whole repo |
-| 🧠 **Smart intervention** | Simple tasks are true NOOP; complex tasks get Assist / Guard |
-| 🔄 **Failure recovery** | retry → repair → expand context → change hypothesis |
-| ✅ **Proof of completion** | Acceptance ↔ Evidence with T0–T4 trust; never trust a model's bare "done" |
+| 🧠 **Intervention Intelligence** | Simple tasks are true NOOP; complex tasks get Assist / Guard |
+| 🎯 **Context & Task Intelligence** | Task Contract + focused context + capability sufficiency |
+| ✅ **Proof & Recovery** | Evidence / freshness / acceptance coverage / recovery |
+| ♻️ **Reuse first** | Design principle: prefer installed Tools / Skills / Plugins |
+| 🧩 **Capability Gap Management** | Fill gaps only when they block acceptance |
+| 🔄 **Failure discipline** | retry → repair → expand context → change hypothesis |
 
 ---
 
@@ -88,6 +92,8 @@ Proof: 3/3
 ---
 
 ## One plugin, reuse the whole DSH ecosystem
+
+> This is not the core of Omni; it is the ecosystem strategy: **Reuse first. Don't reimplement host capabilities.**
 
 ```
                     Omni
