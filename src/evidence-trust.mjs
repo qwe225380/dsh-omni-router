@@ -17,24 +17,49 @@ export const TRUST_LEVELS = {
 export function createEvidenceRecord({
   id = `E-${Date.now().toString(36)}`,
   criterionId = '',
+  criterionIds = [],
   workspaceFingerprint = '',
+  workspaceRevision,
+  artifactRevisions,
   producer = 'unknown',
+  provider,
+  kind = '',
+  subject,
+  artifacts = [],
   trustLevel = 'T0',
   createdAt = new Date().toISOString(),
   payload = {},
   ok,
 } = {}) {
   return {
+    schemaVersion: '1',
     evidenceId: id,
     criterionId,
+    criterionIds: Array.isArray(criterionIds) && criterionIds.length ? criterionIds : (criterionId ? [criterionId] : []),
     workspaceFingerprint,
+    ...(workspaceRevision !== undefined ? { workspaceRevision } : {}),
+    ...(artifactRevisions ? { artifactRevisions } : {}),
     producer,
+    ...(provider ? { provider } : {}),
+    ...(kind ? { kind } : {}),
+    ...(subject ? { subject } : {}),
+    ...(artifacts.length ? { artifacts } : {}),
     trustLevel,
     trustValue: TRUST_LEVELS[trustLevel] ?? 0,
     createdAt,
     payload,
     ...(ok === undefined ? {} : { ok }),
   }
+}
+
+// Evidence provider supplies facts. Omni assigns trust. Third-party providers
+// can never self-report T4 unless Omni Policy explicitly grants it.
+export function assignEvidenceTrust(record = {}, { policyGrantedT4 = false } = {}) {
+  let trustLevel = record.trustLevel || 'T0'
+  if (trustLevel === 'T4' && !policyGrantedT4) {
+    trustLevel = 'T2'
+  }
+  return { ...record, trustLevel, trustValue: TRUST_LEVELS[trustLevel] ?? 0 }
 }
 
 export function omniEventToEvidenceRecord(event = {}) {
@@ -49,26 +74,41 @@ export function omniEventToEvidenceRecord(event = {}) {
   const ok = (type === 'command.completed' || type === 'test.completed')
     ? exitCode === 0
     : undefined
-  return createEvidenceRecord({
+  const kind = type === 'test.completed' ? 'test.pass' : type === 'command.completed' ? 'command' : type.startsWith('tool.') ? 'tool' : type.startsWith('file.') ? 'file' : type
+  const raw = createEvidenceRecord({
     id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     criterionId: payload.criterionId || payload.criterion_id || '',
+    criterionIds: Array.isArray(payload.criterionIds) ? payload.criterionIds : [],
     workspaceFingerprint: event.workspaceFingerprint || '',
+    workspaceRevision: payload.workspaceRevision ?? event.workspaceRevision,
+    artifactRevisions: payload.artifactRevisions || event.artifactRevisions,
     producer: event.host || 'host',
+    provider: payload.provider || event.provider,
+    kind,
+    subject: payload.subject || event.subject,
+    artifacts: Array.isArray(payload.artifacts) ? payload.artifacts : [],
     trustLevel,
     payload: event.payload || {},
     ...(ok === undefined ? {} : { ok }),
   })
+  // Providers cannot self-report T4; Omni assigns trust.
+  return assignEvidenceTrust(raw)
 }
 
-export function isEvidenceStale(record = {}, currentFingerprint = '') {
-  if (!currentFingerprint) return false
-  return Boolean(record.workspaceFingerprint && record.workspaceFingerprint !== currentFingerprint)
+export function isEvidenceStale(record = {}, currentFingerprint = '', currentRevision) {
+  if (currentFingerprint && record.workspaceFingerprint && record.workspaceFingerprint !== currentFingerprint) {
+    return true
+  }
+  if (currentRevision !== undefined && record.workspaceRevision !== undefined && currentRevision > record.workspaceRevision) {
+    return true
+  }
+  return false
 }
 
-export function invalidateEvidence(records = [], currentFingerprint = '') {
+export function invalidateEvidence(records = [], currentFingerprint = '', currentRevision) {
   return records.map((record) => ({
     ...record,
-    stale: isEvidenceStale(record, currentFingerprint),
+    stale: isEvidenceStale(record, currentFingerprint, currentRevision),
   }))
 }
 

@@ -19,14 +19,8 @@ export function buildTaskContract({
   const intelligence = decideIntelligenceLevel(decision)
   const rawAcceptance = Array.isArray(acceptance) && acceptance.length ? acceptance : [`${taskText} is complete`]
   const acceptanceList = normalizeAcceptance(rawAcceptance)
-  const frontend = /(前端|frontend|ui|页面|component|网页|html|css|react|vue|web)/i.test(String(taskText || ''))
-  if (frontend) {
-    acceptanceList.push(
-      { id: `C${acceptanceList.length + 1}`, text: 'Match the reference site visual polish and interaction richness', requiredTrust: 'T2' },
-      { id: `C${acceptanceList.length + 2}`, text: 'Responsive layout works on mobile and desktop', requiredTrust: 'T2' },
-      { id: `C${acceptanceList.length + 3}`, text: 'Hover/scroll animations and micro-interactions are implemented', requiredTrust: 'T2' },
-    )
-  }
+  // Derived criteria must never expand user scope. No implicit frontend or
+  // design acceptance is injected here (value.md P0.4).
   return {
     objective: taskText,
     constraints: Array.isArray(constraints) ? constraints : [],
@@ -57,11 +51,43 @@ export function normalizeAcceptance(acceptance = []) {
         id: criterion.id || `C${index}`,
         text: criterion.text || criterion.id || `C${index}`,
         requiredTrust: criterion.requiredTrust || 'T2',
+        origin: criterion.origin || 'user',
+        ...(criterion.evidenceKinds ? { evidenceKinds: criterion.evidenceKinds } : {}),
+        ...(criterion.targets ? { targets: criterion.targets } : {}),
       }
     }
     index += 1
-    return { id: `C${index}`, text: String(criterion), requiredTrust: 'T2' }
+    return { id: `C${index}`, text: String(criterion), requiredTrust: 'T2', origin: 'user' }
   })
+}
+
+function matchesTarget(target, value = '') {
+  if (!target) return false
+  const text = String(value || '')
+  if (target.startsWith('*') && target.endsWith('*')) {
+    return text.includes(target.slice(1, -1))
+  }
+  if (target.endsWith('*')) {
+    return text.startsWith(target.slice(0, -1))
+  }
+  if (target.startsWith('*')) {
+    return text.endsWith(target.slice(1))
+  }
+  return text === target || text.includes(target)
+}
+
+function recordMatchesCriterion(record, criterion) {
+  const ids = record.criterionId ? [record.criterionId] : (record.criterionIds || [])
+  if (ids.includes(criterion.id)) return 'explicit'
+
+  // Deterministic binding: kind + target/artifact match, no LLM guessing.
+  const kinds = criterion.evidenceKinds || []
+  const kind = record.kind || record.type || ''
+  if (!kinds.length || !kind) return null
+  if (!kinds.some((k) => k === kind)) return null
+  const targets = criterion.targets || []
+  const hay = [record.subject, ...(record.artifacts || [])].filter(Boolean).join(' ')
+  return targets.length === 0 || targets.some((t) => matchesTarget(t, hay)) ? 'deterministic' : null
 }
 
 export function verifyCompletion(contract = {}, evidenceRecords = [], options = {}) {
@@ -77,19 +103,19 @@ export function verifyCompletion(contract = {}, evidenceRecords = [], options = 
   const criteriaResult = criteria.map((criterion) => {
     const requiredValue = TRUST_VALUES[criterion.requiredTrust] ?? 0
     const match = records.find((record) => {
-      const ids = record.criterionId ? [record.criterionId] : (record.criterionIds || [])
-      const matchesCriterion = ids.includes(criterion.id)
-      if (!matchesCriterion) return false
       if (!isFresh(record)) return false
       if (record.stale === true) return false
       if (record.ok === false) return false
       const trust = TRUST_VALUES[record.trustLevel] ?? record.trustValue ?? 0
-      return trust >= requiredValue
+      if (trust < requiredValue) return false
+      return recordMatchesCriterion(record, criterion) !== null
     })
     return {
       id: criterion.id,
       text: criterion.text,
       requiredTrust: criterion.requiredTrust,
+      origin: criterion.origin || 'user',
+      binding: match ? recordMatchesCriterion(match, criterion) : null,
       verified: !!match,
       evidenceId: match?.evidenceId || match?.id || null,
     }

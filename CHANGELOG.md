@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.14] - 2026-08-21
+
+- value.md 第一阶段 P0（安全与真实性）：
+  - P0.1：`capabilityProvisioning.mode` 默认改为 `recommend`，第三方代码默认不自动安装，需用户/Host 审批
+  - P0.3：新增 `.omni/capability-audit.json` 审计日志，记录 taskId / capabilityGap / provider / package / source / approvedBy / probeResult
+  - P0.4：删除 TaskContract 隐式 frontend 设计验收注入；Criterion 增加 `origin`（user/derived/policy），derived 不扩大业务范围
+  - P0.6/7：EvidenceRecord v1（schemaVersion/provider/kind/criterionIds/subject/artifacts/workspaceRevision/artifactRevisions）；`assignEvidenceTrust` 禁止第三方自报 T4；`verifyCompletion` 支持显式 + 确定性（evidenceKinds/targets）绑定
+  - P0.8：Evidence stale 支持 `workspaceRevision` 比较
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.13] - 2026-08-21
 
 - README 按 `update.md` 调整定位：

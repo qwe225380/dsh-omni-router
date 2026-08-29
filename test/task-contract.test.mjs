@@ -37,13 +37,15 @@ test('formatTaskContract renders readable summary', () => {
   assert.match(text, /Intelligence: L0/)
 })
 
-test('normalizeAcceptance keeps object criteria with required trust', () => {
+test('normalizeAcceptance keeps object criteria with required trust and origin', () => {
   const criteria = normalizeAcceptance([
     { id: 'C1', text: 'bug fixed', requiredTrust: 'T3' },
     'tests pass',
   ])
   assert.equal(criteria[0].requiredTrust, 'T3')
+  assert.equal(criteria[0].origin, 'user')
   assert.equal(criteria[1].id, 'C2')
+  assert.equal(criteria[1].origin, 'user')
 })
 
 test('verifyCompletion requires evidence per criterion with required trust', () => {
@@ -65,12 +67,24 @@ test('verifyCompletion requires evidence per criterion with required trust', () 
   assert.equal(complete.verifiedCount, 2)
 })
 
-test('buildTaskContract adds design acceptance for frontend tasks', () => {
+test('buildTaskContract does not inject implicit design acceptance for frontend tasks', () => {
   const contract = buildTaskContract({ taskText: '设计一个旅游网页', decision: { complexity: 'direct', risk: 'low', type: 'other' } })
   const texts = contract.acceptance.map((c) => c.text)
-  assert.ok(texts.some((t) => /visual polish/i.test(t)))
-  assert.ok(texts.some((t) => /Responsive/i.test(t)))
-  assert.ok(texts.some((t) => /micro-interactions/i.test(t)))
+  assert.ok(!texts.some((t) => /visual polish/i.test(t)))
+  assert.ok(!texts.some((t) => /micro-interactions/i.test(t)))
+  assert.ok(contract.acceptance.every((c) => c.origin === 'user'))
+})
+
+test('verifyCompletion supports deterministic binding via kind and targets', () => {
+  const contract = buildTaskContract({
+    taskText: 'x',
+    acceptance: [{ id: 'C2', text: 'concurrency safe', requiredTrust: 'T3', evidenceKinds: ['test.pass'], targets: ['*concurrency*'] }],
+  })
+  const proof = verifyCompletion(contract, [
+    { kind: 'test.pass', artifacts: ['tests/session-concurrency.test.js'], trustLevel: 'T3', ok: true },
+  ])
+  assert.equal(proof.completed, true)
+  assert.equal(proof.criteria[0].binding, 'deterministic')
 })
 
 test('completionStatus returns Verified / Partially Verified / Unverified', () => {

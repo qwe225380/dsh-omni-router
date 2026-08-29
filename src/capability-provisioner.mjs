@@ -8,6 +8,8 @@
  * or explicit commands.
  */
 
+import fs from 'node:fs'
+import path from 'node:path'
 import { scorePluginCandidate } from './capability-quality.mjs'
 import { solveMinimalSet } from './capability-solver.mjs'
 
@@ -192,6 +194,42 @@ export function formatProvisionResult(result = {}) {
     }
   }
   return lines.join('\n')
+}
+
+// --- Capability change audit (P0.3) -----------------------------------------
+
+export function capabilityAuditPath(cwd) {
+  return path.join(cwd, '.omni', 'capability-audit.json')
+}
+
+export function loadCapabilityAudit(cwd) {
+  const file = capabilityAuditPath(cwd)
+  if (!fs.existsSync(file)) return []
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return []
+  }
+}
+
+export function appendCapabilityAudit(cwd, entry = {}) {
+  const file = capabilityAuditPath(cwd)
+  const audit = loadCapabilityAudit(cwd)
+  audit.push({
+    taskId: entry.taskId || '',
+    capabilityGap: entry.capabilityGap || [],
+    provider: entry.provider || '',
+    package: entry.package || '',
+    version: entry.version || '',
+    source: entry.source || '',
+    reason: entry.reason || '',
+    approvedBy: entry.approvedBy || 'recommend',
+    installedAt: entry.installedAt || new Date().toISOString(),
+    probeResult: entry.probeResult || null,
+  })
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(audit, null, 2), 'utf8')
+  return file
 }
 
 // --- Discovery adapters -----------------------------------------------------

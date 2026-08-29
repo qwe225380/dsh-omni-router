@@ -1,7 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 
 import {
+  appendCapabilityAudit,
   canAutoInstall,
   createHubAdapter,
   createMarketplaceAdapter,
@@ -10,6 +14,7 @@ import {
   discoverCandidates,
   evaluateProvisionPlan,
   formatProvisionResult,
+  loadCapabilityAudit,
   probeCapability,
   provisionCapabilities,
   rollbackProvision,
@@ -19,6 +24,7 @@ import { createCapabilityBrain } from '../src/capability-brain.mjs'
 test('canAutoInstall enforces trust mode and risk', () => {
   const verified = { verified: true, risk: 'low' }
   assert.equal(canAutoInstall(verified, 'auto-trusted'), true)
+  assert.equal(canAutoInstall(verified, 'recommend'), false)
   assert.equal(canAutoInstall(verified, 'manual'), false)
   assert.equal(canAutoInstall({ verified: false, risk: 'low' }, 'auto-trusted'), false)
   assert.equal(canAutoInstall({ verified: true, risk: 'high' }, 'auto-trusted'), false)
@@ -93,4 +99,18 @@ test('createProvisionTransaction and rollbackProvision', async () => {
   assert.equal(rollback.ok, true)
   assert.equal(rollback.txn.status, 'rolled_back')
   assert.match(formatProvisionResult({ results: [] }), /^$/)
+})
+
+test('capability audit log records installed changes', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'cap-audit-'))
+  try {
+    const file = appendCapabilityAudit(cwd, { taskId: 't1', capabilityGap: ['browser.visual-validation'], provider: 'dsh-trio', package: 'dsh-trio', reason: 'browser validation' })
+    assert.ok(fs.existsSync(file))
+    const audit = loadCapabilityAudit(cwd)
+    assert.equal(audit.length, 1)
+    assert.equal(audit[0].package, 'dsh-trio')
+    assert.equal(audit[0].approvedBy, 'recommend')
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true })
+  }
 })

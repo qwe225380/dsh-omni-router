@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   TRUST_LEVELS,
+  assignEvidenceTrust,
   createEvidenceRecord,
   evidenceMeetsTrust,
   formatEvidenceTrust,
@@ -63,4 +64,33 @@ test('omniEventToEvidenceRecord maps DSH events to evidence trust levels', () =>
 
   const failed = omniEventToEvidenceRecord({ type: 'test.completed', host: 'dsh', payload: { exitCode: 1 } })
   assert.equal(failed.ok, false)
+})
+
+test('EvidenceRecord v1 includes schema, kind, artifacts, and revisions', () => {
+  const record = createEvidenceRecord({
+    criterionIds: ['C1'],
+    kind: 'test.pass',
+    artifacts: ['tests/a.test.js'],
+    workspaceRevision: 3,
+    artifactRevisions: { 'a.ts': 2 },
+    provider: 'dsh',
+  })
+  assert.equal(record.schemaVersion, '1')
+  assert.equal(record.kind, 'test.pass')
+  assert.deepEqual(record.criterionIds, ['C1'])
+  assert.equal(record.workspaceRevision, 3)
+  assert.equal(record.artifactRevisions['a.ts'], 2)
+})
+
+test('isEvidenceStale detects workspace revision changes', () => {
+  const record = createEvidenceRecord({ workspaceRevision: 10 })
+  assert.equal(isEvidenceStale(record, '', 10), false)
+  assert.equal(isEvidenceStale(record, '', 11), true)
+})
+
+test('assignEvidenceTrust caps third-party self-reported T4', () => {
+  const granted = assignEvidenceTrust({ trustLevel: 'T4' }, { policyGrantedT4: true })
+  assert.equal(granted.trustLevel, 'T4')
+  const capped = assignEvidenceTrust({ trustLevel: 'T4' })
+  assert.equal(capped.trustLevel, 'T2')
 })

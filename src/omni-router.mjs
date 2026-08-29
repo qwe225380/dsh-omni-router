@@ -36,7 +36,7 @@ import { autoPopulateCapabilityBrain, createCapabilityBrain, recordCapabilityOut
 import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capability-auditor.mjs'
-import { createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
+import { appendCapabilityAudit, createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
 import { buildTaskContract, completionStatus, formatTaskContract, verifyCompletion } from './task-contract.mjs'
@@ -585,8 +585,8 @@ export function apply(ctx, config = {}) {
   }
 
   // Out-of-box capability provisioning: a curated set of well-known DSH
-  // programming skills/plugins. Omni discovers missing capabilities from this
-  // registry and, in auto-trusted mode, asks DSH to install the minimal set.
+  // programming skills/plugins. This is a bootstrap/fallback only; the
+  // authoritative "what plugin provides X" answer belongs to dsh-market/hub.
   const DEFAULT_CAPABILITY_REGISTRY = [
     { id: 'superpowers-dsh', package: 'superpowers-dsh', type: 'plugin', provides: ['tdd', 'debugging', 'planning', 'executing-plans'], verified: true, risk: 'low', reliability: 0.9 },
     { id: 'dsh-doublecheck', package: 'dsh-doublecheck', type: 'plugin', provides: ['verification', 'delivery-proof', 'code.review'], verified: true, risk: 'low', reliability: 0.9 },
@@ -599,7 +599,9 @@ export function apply(ctx, config = {}) {
 
   const capabilityProvisioning = {
     enabled: true,
-    mode: 'auto-trusted',
+    // Safety first: detect and recommend gaps, but do NOT auto-install
+    // third-party code unless the user explicitly opts into auto-trusted.
+    mode: 'recommend',
     maxTaskPlugins: 1,
     maxPermanentManagedPlugins: 5,
     trustedSources: [
@@ -1702,8 +1704,32 @@ export function apply(ctx, config = {}) {
         probeTools: toolNames,
         probeSkills: provisioning.probeSkills || [],
       })
+      const cwd = session?.meta?.cwd || session?.header?.cwd
+      const installed = (result.results || []).filter((r) => r.status === 'ready')
+      if (cwd && installed.length) {
+        for (const r of installed) {
+          appendCapabilityAudit(cwd, {
+            taskId: session.id,
+            capabilityGap: missing,
+            provider: r.candidate?.id,
+            package: r.candidate?.package || r.candidate?.id,
+            version: r.candidate?.version,
+            source: r.candidate?.source,
+            reason: plan.missing?.join(', ') || '',
+            approvedBy: mode,
+            installedAt: new Date().toISOString(),
+            probeResult: r.probe?.ok ?? null,
+          })
+        }
+      }
       lines.push('', 'Provision result:')
       lines.push(formatProvisionResult(result))
+      if (installed.length) {
+        lines.push(`\nOmni added during this task (${installed.length}):`)
+        for (const r of installed) {
+          lines.push(`- ${r.candidate?.package || r.candidate?.id} (reason: ${plan.missing?.join(', ') || 'capability gap'})`)
+        }
+      }
       return lines.join('\n')
     },
   })
