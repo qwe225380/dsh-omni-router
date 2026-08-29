@@ -331,6 +331,12 @@ test('heuristicComplexity lets risk override strong direct hints', () => {
   assert.equal(heuristicComplexity('修复这个 typo', baseConfig).value, 'direct')
 })
 
+test('Intervention Diet: business nouns alone no longer force plan-first', () => {
+  assert.equal(heuristicComplexity('修复优惠券计算问题', baseConfig).value, 'direct')
+  assert.equal(heuristicComplexity('修复库存超卖', baseConfig).value, 'direct')
+  assert.equal(heuristicComplexity('修复物流跟踪', baseConfig).value, 'direct')
+})
+
 test('buildContextGraph maps relevant files to tests', () => {
   const entries = [
     { name: 'auth.ts', type: 'file' },

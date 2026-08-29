@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-rc.18] - 2026-08-21
+
+- 评价.md 剩余代码层项：
+  - Recovery telemetry：`.omni/recovery-telemetry.json`，记录 failure/recovery action funnel、成功率；`omni_mission_run` 自动记录
+  - Intervention Diet：移除业务关键词（库存/优惠券/退款/物流/积分/会员/发票/售后…），复杂度只由结构性工程信号决定
+  - Production Code Diet：新增 `npm run diet` 死代码审计（未使用 export 报告 → `.omni/code-diet.json`）
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.17] - 2026-08-21
 
 - 评价.md Correctness 修复：

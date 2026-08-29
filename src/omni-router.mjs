@@ -56,6 +56,7 @@ import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
 import { evidencePass, extractHarnessEvidence } from './evidence.mjs'
 import { adaptEvidenceFromProvider } from './evidence-adapter.mjs'
+import { recordMissionRecovery } from './recovery-telemetry.mjs'
 import { listMissionStates, loadMissionState, saveMissionState } from './mission-resume.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
@@ -82,18 +83,14 @@ export const inject = ['systemPrompt', 'tools', 'llm', 'commands', 'skills']
 
 /** Default tokens that make a task look plan-first. */
 const DEFAULT_PLAN_FIRST_KEYWORDS = [
+  // Generic engineering / structural signals only. Business vocabulary was
+  // removed on purpose (Intervention Diet): Omni must not infer complexity
+  // from domain nouns.
   '设计', '架构', '重构', '方案', '需求', '系统', '分析',
-  '改造', '迁移', '升级', '更换', '替换', '定时',
-  '时区', 'WebSocket', '重连', '限流', '状态机', '看板',
-  '重试', '核销', '改为', '多语言', '国际化', '通知',
-  '库存扣减', '库存超卖', '库存预警', '签名', 'Webhook', 'OSS', '超时',
-  '登录接口', '头像上传失败', '短信验证码', '分页丢失',
-  '金额精度', '数量不同步', '二维码登录', '幂等', '多仓库', '服务商',
-  '黑名单', '批量导入', '会员等级', '状态管理', '虚拟滚动', '批量发放', '注销功能',
-  '优惠券计算', '优惠券不可用', '优惠券转赠', '优惠券领取', '批量导出', '重复处理',
-  '售后进度', '售后工单', '售后图片', '日志检索', '签到奖励', '签到连续', '打包', 'MinIO', '文件存储', '改价', '积分商城',
-  '统计', '实名认证', '退款', '库存同步', '邀请奖励', '发票', '设备管理', '预售功能', '物流跟踪', '自动打标', '使用范围',
-  '合并支付', '价格保护', '评价回复审核', '消息队列异步', '聚合查询', '数据导出权限',
+  '改造', '迁移', '升级', '多语言', '国际化', '幂等', '并发',
+  '事务', '一致性', '分布式', '状态机', '兼容性', '协议', '安全',
+  '权限', '认证', '性能', '可扩展', '回滚', '重试', '超时', '限流',
+  'WebSocket', '重连', '通知',
   'design', 'architecture', 'refactor', 'plan', 'requirement', 'spec',
 ]
 
@@ -107,13 +104,11 @@ const STRONG_DIRECT_HINTS = ['修复', '修一下', 'bug', 'fix', '删掉', '运
 
 /** For fix/delete tasks, these signals indicate the bug is complex enough to plan first. */
 const COMPLEX_FIX_KEYWORDS = [
-  '并发', '回滚', '幂等', '协议版本', '协议不兼容', '金额精度', '状态机', '分布式', '超时',
-  '事务', '一致性', '重复处理', '重复发送', '重复执行', '数量不同步', '状态不同步', '已读状态', '消息丢失', '超卖', '对账', '网关',
-  '退款', '优惠券核销', '优惠券计算', '优惠券并发', '优惠券叠加', '优惠券回滚', '优惠券转赠', '优惠券批量',
-  '优惠券使用后', '优惠券过期未', '优惠券使用条件', '订单号重复', '重复生成', '物流', '登录状态', '已读回执', '库存扣减', '库存未恢复', '库存同步延迟',
-  '积分不累计', '积分明细', '等级权益', '推送延迟', '漏签', '验签', '签名',
-  'Webhook', '迁移', '升级', '多仓库', '定时', '批量发放', '批量导入', '批量导出', '批量同步',
-  '权限控制', '权限校验', '权限模型', '权限系统', '权限菜单', '权限角色', '状态管理',
+  // Generic concurrency/consistency/state signals only (Intervention Diet).
+  '并发', '回滚', '幂等', '协议版本', '协议不兼容', '状态机', '分布式', '超时',
+  '事务', '一致性', '重复处理', '重复发送', '重复执行', '消息丢失', '对账', '网关',
+  '迁移', '升级', '批量导入', '批量导出', '权限控制', '权限校验', '权限模型',
+  '状态管理', '安全', '认证', '性能', '推送延迟', '验签', '签名',
 ]
 
 /** Normalize user text for classification. */
@@ -1917,6 +1912,9 @@ export function apply(ctx, config = {}) {
         resumeInfo = `\nSaved mission state: ${saved}`
       }
       const currentRevision = createDshHostAdapter(ctx).getWorkspaceRevision(session.id)
+      if (cwd) {
+        recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: finalDag.status === 'done' ? 'success' : 'failed' })
+      }
       const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
       return [
         `Mission run: ${finalDag.status}`,
