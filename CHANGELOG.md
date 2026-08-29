@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-rc.15] - 2026-08-21
+
+- value.md Phase 4: Evidence Federation / Adapter v1
+  - 新增 `src/evidence-adapter.mjs`：第三方结果（doublecheck / agentteams / router-standard / browser）统一转 EvidenceRecord v1
+  - `federateEvidence()` 将外部结果并入本地证据集，`consumeProof()` 防止重复
+  - Trust 仍由 Omni Policy 授予：第三方自报 T4 一律降级，除非显式 grant
+  - 新增 6 个测试，`npm test` 全量通过
+
 ## [3.0.0-rc.14] - 2026-08-21
 
 - value.md 第一阶段 P0（安全与真实性）：
