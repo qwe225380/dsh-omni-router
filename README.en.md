@@ -418,7 +418,7 @@ A: No. Omni defines what "success" means; it does not micromanage plugin calls.
 
 **Q: Can it auto-install skills/plugins?**
 
-A: Yes. RC10+ enables trusted capability provisioning: detect gaps → search → minimal install → verify.
+A: Yes, but default is `recommend`: detect gaps → search → recommend → user/host approval before install. Auto-install only with explicit `auto-trusted`, and every change is recorded in `.omni/capability-audit.json`.
 
 **Q: Does it conflict with Router Standard?**
 

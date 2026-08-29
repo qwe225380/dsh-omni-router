@@ -430,7 +430,7 @@ A: 不会。Omni 只定义“任务达到什么状态才算成功”，不调度
 
 **Q: 它能自动安装技能/插件吗？**
 
-A: 能。RC10+ 默认开启 trusted capability provisioning：识别缺口 → 搜索 → 最小集安装 → 验证。
+A: 能。默认 `recommend` 模式：识别缺口 → 搜索 → 推荐 → 用户/Host 审批后才安装；只有显式开启 `auto-trusted` 才自动安装，并记录 `.omni/capability-audit.json`。
 
 **Q: 它和 Router Standard 冲突吗？**
 

@@ -46,10 +46,12 @@ test('adaptEvidenceFromProvider produces EvidenceRecord v1 with Omni-assigned tr
   assert.match(formatAdaptedEvidence(record), /delivery\.verify/)
 })
 
-test('third-party self-reported T4 is capped unless Omni policy grants it', () => {
-  const capped = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T4', ok: true } })
-  assert.equal(capped.trustLevel, 'T2')
-  const granted = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T4', ok: true }, policy: { grantedT4: true } })
+test('third-party self-reported trust is ignored; T4 requires policy + independent verifier', () => {
+  const claimedT3 = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T3', ok: true } })
+  assert.equal(claimedT3.trustLevel, 'T2')
+  const claimedT4 = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T4', ok: true } })
+  assert.equal(claimedT4.trustLevel, 'T2')
+  const granted = adaptEvidenceFromProvider({ provider: 'independent-verifier', result: { verifier: true, ok: true }, policy: { grantedT4: true } })
   assert.equal(granted.trustLevel, 'T4')
 })
 

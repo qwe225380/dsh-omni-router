@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-rc.17] - 2026-08-21
+
+- 评价.md Correctness 修复：
+  - Trust：Provider 自报 trust 完全忽略，T4 仅当 Omni Policy grant + 独立 verifier 才授予
+  - Binding 收紧：确定性绑定必须同时有 evidenceKinds + 显式 targets；无 targets 保持 UNBOUND（宁可不通过，绝不误通过）
+  - Freshness 闭环：DSH Adapter 维护 workspaceRevision，`file.changed` 递增；`verifyCompletion` 支持 `currentRevision` stale 判定
+  - Federation 接入默认事件路径：provider 形态事件走 `adaptEvidenceFromProvider`
+  - Multi-arm：`comparePair(baselineArm, candidateArm)` + gates 支持任意 arm 对比
+  - README FAQ 修正 recommend 默认行为
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.16] - 2026-08-21
 
 - Criterion Binding 接入任务真实路径 + Context/Intervention/Benchmark 指标：

@@ -10,20 +10,23 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { compareArms, summarizeBenchmark } from './matrix.mjs'
+import { compareArms, comparePair, summarizeBenchmark } from './matrix.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 export function evaluateReleaseGates(results = [], options = {}) {
+  const baselineArm = options.baselineArm || 'raw'
+  const candidateArm = options.candidateArm || 'omni'
   const summary = summarizeBenchmark(results)
-  const pairs = compareArms(results)
+  const pairs = baselineArm === 'raw' && candidateArm === 'omni' ? compareArms(results) : comparePair(results, baselineArm, candidateArm)
+  const candidateSummary = summary.byArm[candidateArm] || summarizeBenchmark([]).omni
 
   const mediumHardPairs = pairs.filter((p) => ['medium', 'hard', 'long'].includes(p.difficulty))
   const mediumHardUplift = mediumHardPairs.length
     ? mediumHardPairs.reduce((s, p) => s + p.uplift, 0) / mediumHardPairs.length
     : null
-  const falseCompletion = summary.omni.falseCompletionRate
-  const telemetryCompleteRate = summary.omni.telemetryCompleteRate
+  const falseCompletion = candidateSummary.falseCompletionRate
+  const telemetryCompleteRate = candidateSummary.telemetryCompleteRate
 
   const costValues = pairs.map((p) => p.costRatio).filter((v) => v !== null && v !== undefined)
   const costRatio = costValues.length ? costValues.reduce((s, v) => s + v, 0) / costValues.length : null

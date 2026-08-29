@@ -36,15 +36,21 @@ export function parseProviderOk(provider = '', result = {}) {
 }
 
 export function trustForProvider(provider = '', result = {}) {
+  // Provider claims are never accepted. Trust is derived from provider class,
+  // kind, determinism, and Omni policy only.
   const name = String(provider || '').toLowerCase()
-  if (result.trustLevel && result.trustLevel !== 'T4') return result.trustLevel
   if (name.includes('doublecheck') && (result.exitCode !== undefined || result.passed !== undefined)) return 'T3'
   if (TRUSTED_PROVIDERS.has(name)) return 'T2'
   return 'T2'
 }
 
+export function isIndependentVerifier(provider = '', result = {}) {
+  const name = String(provider || '').toLowerCase()
+  return result.verifier === true || result.independent === true || name.includes('independent') || name.includes('hidden-verifier')
+}
+
 export function adaptEvidenceFromProvider({ provider = '', result = {}, policy = {} } = {}) {
-  const trustLevel = policy.grantedT4 === true && result.trustLevel === 'T4' ? 'T4' : trustForProvider(provider, result)
+  const trustLevel = policy.grantedT4 === true && isIndependentVerifier(provider, result) ? 'T4' : trustForProvider(provider, result)
   const record = createEvidenceRecord({
     id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     criterionIds: Array.isArray(result.criterionIds) ? result.criterionIds : [],

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 
 import {
   compareArms,
+  comparePair,
   summarizeBenchmark,
 } from '../benchmark/omnibench-v2/matrix.mjs'
 import {
@@ -72,4 +73,15 @@ test('summarizeBenchmark supports multi-arm results via byArm', () => {
   assert.ok(summary.byArm.mid)
   assert.ok(summary.byArm.frontier)
   assert.equal(summary.byArm.mid.successRate, 1)
+})
+
+test('comparePair supports arbitrary baseline/candidate arms', () => {
+  const multi = [
+    ...sample,
+    { id: 't1', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r1', task: 't1', metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 't2', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r2', task: 't2', metrics: {}, telemetryComplete: true, falseCompletion: false },
+  ]
+  const pairs = comparePair(multi, 'omni', 'mid')
+  assert.equal(pairs.length, 2)
+  assert.ok(pairs.every((p) => p.uplift >= 0))
 })

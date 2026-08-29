@@ -100,6 +100,18 @@ test('bindEvidenceToCriteria enriches unbound records deterministically', () => 
   assert.equal(verifyCompletion(contract, bound).completed, true)
 })
 
+test('bindEvidenceToCriteria stays UNBOUND without explicit targets', () => {
+  const contract = buildTaskContract({
+    taskText: 'x',
+    acceptance: [{ id: 'C2', text: 'concurrency safe', requiredTrust: 'T3', evidenceKinds: ['test.pass'] }],
+  })
+  const bound = bindEvidenceToCriteria(contract, [
+    { kind: 'test.pass', subject: 'session concurrency', trustLevel: 'T3', ok: true },
+  ])
+  assert.equal(bound[0].criterionIds, undefined)
+  assert.equal(verifyCompletion(contract, bound).completed, false)
+})
+
 test('completionStatus returns Verified / Partially Verified / Unverified', () => {
   const contract = buildTaskContract({
     taskText: 'x',

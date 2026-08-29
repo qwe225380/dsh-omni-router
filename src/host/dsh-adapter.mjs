@@ -26,6 +26,8 @@ export function createDshHostAdapter(ctx = {}) {
     }
   }
 
+  const revisions = new Map()
+
   return {
     describeHost() {
       return describeHostCapabilities({
@@ -47,6 +49,10 @@ export function createDshHostAdapter(ctx = {}) {
         cwd: session?.meta?.cwd || session?.header?.cwd || null,
         sessionId: session?.id || null,
       }
+    },
+
+    getWorkspaceRevision(sessionId = '') {
+      return revisions.get(sessionId) || 0
     },
 
     getWorkspaceFingerprint() {
@@ -79,7 +85,14 @@ export function createDshHostAdapter(ctx = {}) {
         try {
           const off = ctx.on(type, (payload) => {
             const sessionId = payload?.sessionId || payload?.session?.id || null
-            handler(normalizeHostEvent({ ...payload, type }, 'dsh', { sessionId }))
+            const event = normalizeHostEvent({ ...payload, type }, 'dsh', { sessionId })
+            if (event.type === 'file.changed') {
+              const next = (revisions.get(sessionId) || 0) + 1
+              revisions.set(sessionId, next)
+              event.workspaceRevision = next
+              event.payload = { ...event.payload, workspaceRevision: next }
+            }
+            handler(event)
           })
           if (typeof off === 'function') disposables.push(off)
         } catch {

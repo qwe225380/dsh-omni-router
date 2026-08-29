@@ -61,26 +61,13 @@ export function normalizeAcceptance(acceptance = []) {
   })
 }
 
-function tokensOf(text) {
-  return String(text || '').toLowerCase().match(/[a-z0-9_]+/g) || []
-}
-
 export function bindEvidenceToCriteria(contract = {}, evidenceRecords = []) {
   const criteria = normalizeAcceptance(contract.acceptance)
   return (Array.isArray(evidenceRecords) ? evidenceRecords : []).map((record) => {
     if ((record.criterionIds || []).length || record.criterionId) return record
-    const hay = tokensOf([record.subject, ...(record.artifacts || [])].join(' '))
-    const best = criteria
-      .map((criterion) => {
-        const kinds = criterion.evidenceKinds || []
-        if (kinds.length && !kinds.includes(record.kind || '')) return null
-        const overlap = tokensOf([criterion.text, ...(criterion.targets || [])].join(' ')).filter((t) => hay.includes(t)).length
-        return overlap > 0 ? { criterion, overlap } : null
-      })
-      .filter(Boolean)
-      .sort((a, b) => b.overlap - a.overlap)[0]
-    if (!best) return record
-    return { ...record, criterionIds: [...(record.criterionIds || []), best.criterion.id] }
+    const match = criteria.find((criterion) => recordMatchesCriterion(record, criterion) === 'deterministic')
+    if (!match) return record
+    return { ...record, criterionIds: [...(record.criterionIds || []), match.id] }
   })
 }
 
@@ -103,24 +90,29 @@ function recordMatchesCriterion(record, criterion) {
   const ids = record.criterionId ? [record.criterionId] : (record.criterionIds || [])
   if (ids.includes(criterion.id)) return 'explicit'
 
-  // Deterministic binding: kind + target/artifact match, no LLM guessing.
+  // Deterministic binding REQUIRES kind + explicit target/artifact pattern.
+  // No targets → UNBOUND. Never bind on kind alone.
   const kinds = criterion.evidenceKinds || []
+  const targets = criterion.targets || []
   const kind = record.kind || record.type || ''
   if (!kinds.length || !kind) return null
   if (!kinds.some((k) => k === kind)) return null
-  const targets = criterion.targets || []
+  if (!targets.length) return null
   const hay = [record.subject, ...(record.artifacts || [])].filter(Boolean).join(' ')
-  return targets.length === 0 || targets.some((t) => matchesTarget(t, hay)) ? 'deterministic' : null
+  return targets.some((t) => matchesTarget(t, hay)) ? 'deterministic' : null
 }
 
 export function verifyCompletion(contract = {}, evidenceRecords = [], options = {}) {
   const criteria = normalizeAcceptance(contract.acceptance)
   const fingerprint = options.workspaceFingerprint || ''
+  const currentRevision = options.currentRevision
   const records = Array.isArray(evidenceRecords) ? evidenceRecords : []
 
   const isFresh = (record) => {
-    if (!fingerprint) return true
-    return !(record.workspaceFingerprint && record.workspaceFingerprint !== fingerprint)
+    if (record.stale === true) return false
+    if (fingerprint && record.workspaceFingerprint && record.workspaceFingerprint !== fingerprint) return false
+    if (currentRevision !== undefined && record.workspaceRevision !== undefined && currentRevision > record.workspaceRevision) return false
+    return true
   }
 
   const criteriaResult = criteria.map((criterion) => {

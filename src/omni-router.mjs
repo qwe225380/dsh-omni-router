@@ -55,6 +55,7 @@ import { formatMemory, recordDecision, recordFailure, recordProject, recordTraje
 import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
 import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
 import { evidencePass, extractHarnessEvidence } from './evidence.mjs'
+import { adaptEvidenceFromProvider } from './evidence-adapter.mjs'
 import { listMissionStates, loadMissionState, saveMissionState } from './mission-resume.mjs'
 import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
 import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
@@ -1915,7 +1916,8 @@ export function apply(ctx, config = {}) {
         })
         resumeInfo = `\nSaved mission state: ${saved}`
       }
-      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords))
+      const currentRevision = createDshHostAdapter(ctx).getWorkspaceRevision(session.id)
+      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
       return [
         `Mission run: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
@@ -2025,7 +2027,8 @@ export function apply(ctx, config = {}) {
         savedAt: new Date().toISOString(),
       })
       const evSummary = evidenceSummary({ entries: evidenceRecords })
-      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords))
+      const currentRevision = createDshHostAdapter(ctx).getWorkspaceRevision(session.id)
+      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
       return [
         `Mission resume: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
@@ -2291,7 +2294,11 @@ export function apply(ctx, config = {}) {
     if (!st) return
     if (!st.omniTaskState) st.omniTaskState = buildCanonicalOmniState(st)
     if (!Array.isArray(st.omniTaskState.evidence)) st.omniTaskState.evidence = []
-    const record = omniEventToEvidenceRecord(event)
+    const payload = event.payload || {}
+    const external = payload.provider || payload.delivery || payload.status || payload.verifier === true
+    const record = external
+      ? adaptEvidenceFromProvider({ provider: payload.provider || event.host || 'provider', result: payload })
+      : omniEventToEvidenceRecord(event)
     if (record) st.omniTaskState.evidence.push(record)
   })
 }

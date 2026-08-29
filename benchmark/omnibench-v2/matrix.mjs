@@ -80,6 +80,37 @@ export function compareArms(results = []) {
   return pairs
 }
 
+export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'omni') {
+  const byPair = {}
+  for (const r of results) {
+    const key = `${r.id}:${r.run}`
+    if (!byPair[key]) byPair[key] = {}
+    byPair[key][r.arm] = r
+  }
+  const pairs = []
+  for (const [key, pair] of Object.entries(byPair)) {
+    const baseline = pair[baselineArm]
+    const candidate = pair[candidateArm]
+    if (!baseline || !candidate) continue
+    if (baseline.success === null || candidate.success === null) continue
+    const baselineSuccess = baseline.success === true
+    const candidateSuccess = candidate.success === true
+    pairs.push({
+      id: baseline.id,
+      repo: baseline.repo || baseline.id,
+      task: baseline.task || baseline.id,
+      run: baseline.run,
+      difficulty: baseline.difficulty || candidate.difficulty || 'medium',
+      baselineSuccess,
+      candidateSuccess,
+      uplift: (candidateSuccess ? 1 : 0) - (baselineSuccess ? 1 : 0),
+      costRatio: baseline.metrics?.cost ? (candidate.metrics?.cost || 0) / baseline.metrics.cost : null,
+      wallRatio: baseline.durationMs ? (candidate.durationMs || 0) / baseline.durationMs : null,
+    })
+  }
+  return pairs
+}
+
 function main() {
   const resultsPath = process.argv[2] || path.join(here, 'results', 'latest.json')
   const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'))
