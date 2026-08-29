@@ -104,12 +104,12 @@ export function runCommand(command, cwd, label, timeoutMs = 0) {
   }
 }
 
-export function generatePrompts(list) {
+export function generatePrompts(list, arms = ['raw', 'omni']) {
   const outDir = path.join(here, 'prompts')
   fs.mkdirSync(outDir, { recursive: true })
   let count = 0
   for (const m of list) {
-    for (const arm of ['raw', 'omni']) {
+    for (const arm of arms) {
       for (let i = 1; i <= (m.runs || 3); i++) {
         const file = path.join(outDir, `${m.id}-${arm}-${i}.txt`)
         fs.writeFileSync(file, buildPrompt(m, arm), 'utf8')
@@ -192,16 +192,20 @@ function main() {
     for (const e of errors) console.error(`- ${e}`)
     process.exit(1)
   }
-  const promptCount = generatePrompts(list)
+  const armsArgIdx = process.argv.indexOf('--arms')
+  const arms = armsArgIdx !== -1
+    ? process.argv[armsArgIdx + 1].split(',').map((s) => s.trim()).filter(Boolean)
+    : (list[0]?.arms || ['raw', 'omni'])
+  const promptCount = generatePrompts(list, arms)
 
   let totalRuns = 0
-  for (const m of list) totalRuns += (m.runs || 1) * 2
+  for (const m of list) totalRuns += (m.runs || 1) * arms.length
   console.log(`Generated ${promptCount} DSH prompts in ${path.join(here, 'prompts')}`)
-  console.log(`OmniBench v2 run plan (${totalRuns} agent runs)`)
+  console.log(`OmniBench v2 run plan (${totalRuns} agent runs, arms=${arms.join(',')})`)
 
   if (!execMode) {
     for (const m of list) {
-      console.log(`- ${m.id}: ${m.repo} @ ${m.commit} (${m.language}/${m.framework}) runs=${m.runs} -> raw ${m.runs} + omni ${m.runs}`)
+      console.log(`- ${m.id}: ${m.repo} @ ${m.commit} (${m.language}/${m.framework}) runs=${m.runs} -> ${arms.map((a) => `${a} ${m.runs}`).join(' + ')}`)
     }
     console.log('Pass --exec and configure agentCommand to execute runs locally.')
     return
@@ -209,10 +213,10 @@ function main() {
 
   const results = []
   for (const m of list) {
-    for (const arm of ['raw', 'omni']) {
+    for (const arm of arms) {
       for (let i = 1; i <= (m.runs || 3); i++) {
         const runDir = prepareRunWorkspace(m, arm, i)
-        const agentCommand = agentCommandOverride || (arm === 'raw' ? m.rawAgentCommand : m.omniAgentCommand) || m.agentCommand
+        const agentCommand = agentCommandOverride || m[`${arm}AgentCommand`] || m.agentCommand
         const promptFile = path.join(here, 'prompts', `${m.id}-${arm}-${i}.txt`)
         const prompt = fs.readFileSync(promptFile, 'utf8')
         const timeoutMs = Number(m.timeoutMs) || 0

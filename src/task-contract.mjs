@@ -61,6 +61,29 @@ export function normalizeAcceptance(acceptance = []) {
   })
 }
 
+function tokensOf(text) {
+  return String(text || '').toLowerCase().match(/[a-z0-9_]+/g) || []
+}
+
+export function bindEvidenceToCriteria(contract = {}, evidenceRecords = []) {
+  const criteria = normalizeAcceptance(contract.acceptance)
+  return (Array.isArray(evidenceRecords) ? evidenceRecords : []).map((record) => {
+    if ((record.criterionIds || []).length || record.criterionId) return record
+    const hay = tokensOf([record.subject, ...(record.artifacts || [])].join(' '))
+    const best = criteria
+      .map((criterion) => {
+        const kinds = criterion.evidenceKinds || []
+        if (kinds.length && !kinds.includes(record.kind || '')) return null
+        const overlap = tokensOf([criterion.text, ...(criterion.targets || [])].join(' ')).filter((t) => hay.includes(t)).length
+        return overlap > 0 ? { criterion, overlap } : null
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.overlap - a.overlap)[0]
+    if (!best) return record
+    return { ...record, criterionIds: [...(record.criterionIds || []), best.criterion.id] }
+  })
+}
+
 function matchesTarget(target, value = '') {
   if (!target) return false
   const text = String(value || '')

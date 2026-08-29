@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import {
+  bindEvidenceToCriteria,
   buildTaskContract,
   completionStatus,
   formatTaskContract,
@@ -85,6 +86,18 @@ test('verifyCompletion supports deterministic binding via kind and targets', () 
   ])
   assert.equal(proof.completed, true)
   assert.equal(proof.criteria[0].binding, 'deterministic')
+})
+
+test('bindEvidenceToCriteria enriches unbound records deterministically', () => {
+  const contract = buildTaskContract({
+    taskText: 'x',
+    acceptance: [{ id: 'C2', text: 'concurrency safe', requiredTrust: 'T3', evidenceKinds: ['test.pass'], targets: ['*concurrency*'] }],
+  })
+  const bound = bindEvidenceToCriteria(contract, [
+    { kind: 'test.pass', subject: 'session concurrency', artifacts: ['tests/session-concurrency.test.js'], trustLevel: 'T3', ok: true },
+  ])
+  assert.deepEqual(bound[0].criterionIds, ['C2'])
+  assert.equal(verifyCompletion(contract, bound).completed, true)
 })
 
 test('completionStatus returns Verified / Partially Verified / Unverified', () => {

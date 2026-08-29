@@ -59,3 +59,17 @@ test('evaluateReleaseGates fails tasks with no paired runs', () => {
   assert.equal(gate.value, 0)
   assert.equal(gate.pass, false)
 })
+
+test('summarizeBenchmark supports multi-arm results via byArm', () => {
+  const multi = [
+    ...sample,
+    { id: 't1', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r1', task: 't1', metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 't2', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r2', task: 't2', metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 't1', arm: 'frontier', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 't2', arm: 'frontier', run: 1, success: true, difficulty: 'hard', repo: 'r2', task: 't2', metrics: {}, telemetryComplete: true, falseCompletion: false },
+  ]
+  const summary = summarizeBenchmark(multi)
+  assert.ok(summary.byArm.mid)
+  assert.ok(summary.byArm.frontier)
+  assert.equal(summary.byArm.mid.successRate, 1)
+})

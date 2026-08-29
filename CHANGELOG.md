@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.16] - 2026-08-21
+
+- Criterion Binding 接入任务真实路径 + Context/Intervention/Benchmark 指标：
+  - 新增 `bindEvidenceToCriteria()`：无 criterionId 的证据按 kind + target/artifact 确定性绑定（不调用 LLM）
+  - `omni_mission_run` / `omni_mission_resume` 的 Proof 使用绑定后证据
+  - 新增 `src/context-metrics.mjs`：Recall@5/10、Precision、Token 开销、irrelevant token ratio
+  - 新增 `interventionKPIs()`：NOOP Precision、missed/false intervention rate、简单任务 overhead
+  - OmniBench 支持多 arm（raw/omni/mid/frontier…）：`--arms` 或 manifest.arms，`summarizeBenchmark().byArm`
+  - 新增 context-metrics 测试等，`npm test` 全量通过
+
 ## [3.0.0-rc.15] - 2026-08-21
 
 - value.md Phase 4: Evidence Federation / Adapter v1

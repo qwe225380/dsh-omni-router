@@ -39,7 +39,7 @@ import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capabilit
 import { appendCapabilityAudit, createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
 import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
-import { buildTaskContract, completionStatus, formatTaskContract, verifyCompletion } from './task-contract.mjs'
+import { bindEvidenceToCriteria, buildTaskContract, completionStatus, formatTaskContract, verifyCompletion } from './task-contract.mjs'
 import { buildKernelPrompt } from './kernel-prompt.mjs'
 import { decideIntervention, formatInterventionGate, interventionForIntelligenceLevel } from './intervention-gate.mjs'
 import { createOmniTaskState, formatOmniTaskState } from './omni-task-state.mjs'
@@ -1541,6 +1541,9 @@ export function apply(ctx, config = {}) {
           type: 'harness',
           source: action.taskId,
           criterionId,
+          kind: harness.tests?.length ? 'test.pass' : harness.commands?.length ? 'command' : 'tool',
+          artifacts: (harness.files || []).map((f) => f.file).filter(Boolean),
+          subject: action.task?.goal || '',
           value: output.slice(0, 2000),
           ok: trustOk && evidencePass(harness),
           trustLevel: harness.trustLevel || 'T0',
@@ -1912,7 +1915,7 @@ export function apply(ctx, config = {}) {
         })
         resumeInfo = `\nSaved mission state: ${saved}`
       }
-      const proof = verifyCompletion(contract, evidenceRecords)
+      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords))
       return [
         `Mission run: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
@@ -2022,7 +2025,7 @@ export function apply(ctx, config = {}) {
         savedAt: new Date().toISOString(),
       })
       const evSummary = evidenceSummary({ entries: evidenceRecords })
-      const proof = verifyCompletion(contract, evidenceRecords)
+      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords))
       return [
         `Mission resume: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,

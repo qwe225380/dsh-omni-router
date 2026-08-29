@@ -93,6 +93,39 @@ export function interventionForIntelligenceLevel(intelligence = {}) {
   return { mode: 'guard', utility: 0.3, expectedGain: 0.15, confidence: 0.9, reasons: ['high risk: approval + independent evidence'] }
 }
 
+export function interventionKPIs(decisions = [], options = {}) {
+  // decisions: { predictedNoop, actuallyNeeded, intervened, tokenOverheadMs }
+  let tn = 0 // predicted noop, not needed
+  let fp = 0 // predicted noop, needed (missed)
+  let fn = 0 // intervened, not needed (false intervention)
+  let tp = 0 // intervened, needed
+  let simpleOverheadMs = 0
+  let simpleTasks = 0
+  for (const d of decisions) {
+    const noop = d.predictedNoop === true || d.intervened === false
+    const needed = d.actuallyNeeded === true
+    if (noop && !needed) tn += 1
+    else if (noop && needed) fp += 1
+    else if (!noop && !needed) fn += 1
+    else tp += 1
+    if (noop) {
+      simpleTasks += 1
+      simpleOverheadMs += Number(d.tokenOverheadMs || 0)
+    }
+  }
+  const total = tn + fp + fn + tp
+  return {
+    total,
+    noopCount: tn + fp,
+    interveneCount: fn + tp,
+    noopPrecision: tn + fp ? Math.round((tn / (tn + fp)) * 1000) / 1000 : 1,
+    missedInterventionRate: tp + fn ? Math.round((fp / (tp + fn)) * 1000) / 1000 : 0,
+    falseInterventionRate: tn + fn ? Math.round((fn / (tn + fn)) * 1000) / 1000 : 0,
+    simpleTaskOverheadMs: simpleTasks ? Math.round(simpleOverheadMs / simpleTasks) : 0,
+    targetNoopShare: options.targetNoopShare ?? 0.65,
+  }
+}
+
 export function formatInterventionGate(result = {}) {
   return `${result.intervene ? 'INTERVENE' : 'NOOP'} (utility=${result.utility}, threshold=${result.threshold})`
 }

@@ -13,9 +13,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 export function summarizeBenchmark(results = []) {
-  const byArm = { raw: [], omni: [] }
+  const byArm = {}
   for (const r of results) {
-    if (byArm[r.arm]) byArm[r.arm].push(r)
+    if (!r.arm) continue
+    byArm[r.arm] = byArm[r.arm] || []
+    byArm[r.arm].push(r)
   }
   const summarize = (list) => {
     const executed = list.filter((r) => r.success !== null)
@@ -36,9 +38,14 @@ export function summarizeBenchmark(results = []) {
       interventionCount: list.reduce((s, r) => s + (r.metrics?.interventions || 0), 0),
     }
   }
+  const arms = {}
+  for (const arm of Object.keys(byArm)) {
+    arms[arm] = summarize(byArm[arm])
+  }
   return {
-    raw: summarize(byArm.raw),
-    omni: summarize(byArm.omni),
+    raw: arms.raw || summarize([]),
+    omni: arms.omni || summarize([]),
+    byArm: arms,
   }
 }
 

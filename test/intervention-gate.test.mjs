@@ -7,6 +7,7 @@ import {
   formatInterventionGate,
   interventionEfficiency,
   interventionForIntelligenceLevel,
+  interventionKPIs,
   noOpPrecision,
   shouldIntervene,
 } from '../src/intervention-gate.mjs'
@@ -49,4 +50,16 @@ test('interventionForIntelligenceLevel maps L0-L3 to noop/assist/guard', () => {
   assert.equal(interventionForIntelligenceLevel({ level: 'L1' }).mode, 'assist')
   assert.equal(interventionForIntelligenceLevel({ level: 'L2' }).mode, 'assist')
   assert.equal(interventionForIntelligenceLevel({ level: 'L3' }).mode, 'guard')
+})
+
+test('interventionKPIs computes noop precision and missed/false rates', () => {
+  const kpis = interventionKPIs([
+    { predictedNoop: true, actuallyNeeded: false }, // TN
+    { predictedNoop: true, actuallyNeeded: true },  // FP missed
+    { predictedNoop: false, actuallyNeeded: true }, // TP
+    { predictedNoop: false, actuallyNeeded: false }, // FN false intervention
+  ])
+  assert.equal(kpis.noopPrecision, 0.5)
+  assert.equal(kpis.missedInterventionRate, 0.5)
+  assert.equal(kpis.falseInterventionRate, 0.5)
 })
