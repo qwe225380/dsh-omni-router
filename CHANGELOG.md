@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.0-rc.19] - 2026-08-21
+
+- 评价2.md 8 项收尾：
+  - P0-1：单一共享 Host Adapter 实例（`hostAdapter`），修复 Workspace Revision 归零 bug
+  - P0-2：Trust 再收紧——`passed:true` 只给 T2，只有真实 exitCode 给 T3；T4 仅限 Omni 注册的独立 verifier 身份，payload 自声明无效
+  - P0-3：Federation Envelope——删除 `payload.status` 宽松识别，只认 `provider/evidenceProvider` 或 `omni-evidence-provider` 信封
+  - P0-4：Recovery outcome = Proof outcome（不再用 DAG done）
+  - P1-1：Failure Fingerprint（sha1: category+file+message）进入 Recovery Telemetry，聚合支持 category×action 与重复指纹率
+  - P1-2：修复 code-diet scanner（只在其他文件搜索），并把内部 helper 去 export（14→12 个候选）
+  - P2-1：Multi-arm CLI——`--baseline/--candidate`（matrix.mjs + gates.mjs）
+  - P2-2：package keywords 更新、README 修正（multi-arm / Measured Reliability / 示例措辞）
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.18] - 2026-08-21
 
 - 评价.md 剩余代码层项：

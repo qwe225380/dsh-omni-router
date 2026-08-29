@@ -26,8 +26,9 @@ test('parseProviderOk reads provider-specific success fields', () => {
   assert.equal(parseProviderOk('agentteams', { success: true }), true)
 })
 
-test('trustForProvider assigns T3 only to deterministic doublecheck and caps unknown', () => {
+test('trustForProvider assigns T3 only to host-observed exit code', () => {
   assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }), 'T3')
+  assert.equal(trustForProvider('dsh-doublecheck', { passed: true }), 'T2')
   assert.equal(trustForProvider('dsh-doublecheck', {}), 'T2')
   assert.equal(trustForProvider('agentteams', {}), 'T2')
   assert.equal(trustForProvider('unknown', { trustLevel: 'T4' }), 'T2')
@@ -46,13 +47,13 @@ test('adaptEvidenceFromProvider produces EvidenceRecord v1 with Omni-assigned tr
   assert.match(formatAdaptedEvidence(record), /delivery\.verify/)
 })
 
-test('third-party self-reported trust is ignored; T4 requires policy + independent verifier', () => {
+test('third-party self-reported trust and identity are ignored', () => {
   const claimedT3 = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T3', ok: true } })
   assert.equal(claimedT3.trustLevel, 'T2')
-  const claimedT4 = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T4', ok: true } })
-  assert.equal(claimedT4.trustLevel, 'T2')
-  const granted = adaptEvidenceFromProvider({ provider: 'independent-verifier', result: { verifier: true, ok: true }, policy: { grantedT4: true } })
-  assert.equal(granted.trustLevel, 'T4')
+  const selfDeclaredIndependent = adaptEvidenceFromProvider({ provider: 'unknown', result: { trustLevel: 'T4', independent: true, verifier: true, ok: true }, policy: { grantedT4: true } })
+  assert.equal(selfDeclaredIndependent.trustLevel, 'T2')
+  const registered = adaptEvidenceFromProvider({ provider: 'hidden-verifier', result: { ok: true }, policy: { grantedT4: true } })
+  assert.equal(registered.trustLevel, 'T4')
 })
 
 test('consumeProof and federateEvidence append without duplicates', () => {

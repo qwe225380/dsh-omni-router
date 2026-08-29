@@ -291,9 +291,19 @@ Router Standard keeps handling DeepSeek persona / attention / workflow routing; 
 
 ## Built like infrastructure, not a prompt pack
 
-Omni has independent test coverage for routing, Context, Evidence, Capability, Recovery, Host Adapter, Installer, and OmniBench.
+Omni has independent test coverage for routing, Context, Evidence, Capability, Recovery, Host Adapter, Installer, and OmniBench (~60 test files).
 
-Every RC requires a full `npm test` regression; benchmark has its own Raw vs Omni runner.
+Every RC requires a full `npm test` regression; benchmark supports multi-arm comparisons (raw / omni / mid / frontier / stack / stack_omni…).
+
+## Measured Reliability
+
+```text
+Evidence Federation  third-party results → EvidenceRecord v1 (no self-reported trust)
+Context Metrics      Recall@5/10 · Precision · token overhead · irrelevant ratio
+Intervention KPIs    NOOP precision · missed/false intervention rate
+Recovery Telemetry   failure fingerprint · retry/repair/hypothesis funnel · success rate
+Multi-arm Benchmark  comparePair(baseline, candidate) + release gates
+```
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-omni-router",
-  "version": "3.0.0-rc.18",
+  "version": "3.0.0-rc.19",
   "description": "Omni - an Agent Reliability Kernel for DeepSeek Harness. Decide. Prepare. Verify: DSH owns execution, Omni owns reliability.",
   "type": "module",
   "main": "./lib/index.js",
@@ -11,13 +11,16 @@
   },
   "license": "MIT",
   "keywords": [
+    "deepseek-harness",
     "dsh",
     "dsh-plugin",
-    "deepseek-harness",
-    "agent-preset",
-    "router",
-    "plan-mode",
-    "tdd"
+    "agent-reliability",
+    "coding-agent",
+    "verification",
+    "evidence",
+    "context-engineering",
+    "agent-harness",
+    "router"
   ],
   "files": [
     "lib",

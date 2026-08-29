@@ -37,20 +37,29 @@ export function parseProviderOk(provider = '', result = {}) {
 
 export function trustForProvider(provider = '', result = {}) {
   // Provider claims are never accepted. Trust is derived from provider class,
-  // kind, determinism, and Omni policy only.
+  // host-observed determinism, and Omni policy only.
   const name = String(provider || '').toLowerCase()
-  if (name.includes('doublecheck') && (result.exitCode !== undefined || result.passed !== undefined)) return 'T3'
+  // Only a real host-observed exit code counts as deterministic execution.
+  // `passed: true` is still a provider assertion → T2.
+  if (name.includes('doublecheck') && result.exitCode !== undefined) return 'T3'
   if (TRUSTED_PROVIDERS.has(name)) return 'T2'
   return 'T2'
 }
 
-export function isIndependentVerifier(provider = '', result = {}) {
-  const name = String(provider || '').toLowerCase()
-  return result.verifier === true || result.independent === true || name.includes('independent') || name.includes('hidden-verifier')
+// Provider identity must be explicitly registered with Omni as an independent
+// verifier. Payload self-declaration (`independent: true`) is never accepted.
+const INDEPENDENT_VERIFIERS = new Set([
+  'hidden-verifier',
+  'omni-hidden-verifier',
+  'omni-independent-verifier',
+])
+
+function isIndependentVerifier(provider = '') {
+  return INDEPENDENT_VERIFIERS.has(String(provider || '').toLowerCase())
 }
 
 export function adaptEvidenceFromProvider({ provider = '', result = {}, policy = {} } = {}) {
-  const trustLevel = policy.grantedT4 === true && isIndependentVerifier(provider, result) ? 'T4' : trustForProvider(provider, result)
+  const trustLevel = policy.grantedT4 === true && isIndependentVerifier(provider) ? 'T4' : trustForProvider(provider, result)
   const record = createEvidenceRecord({
     id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     criterionIds: Array.isArray(result.criterionIds) ? result.criterionIds : [],

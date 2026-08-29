@@ -111,12 +111,19 @@ export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'o
   return pairs
 }
 
+function arg(name) {
+  const idx = process.argv.indexOf(`--${name}`)
+  return idx !== -1 ? process.argv[idx + 1] : null
+}
+
 function main() {
   const resultsPath = process.argv[2] || path.join(here, 'results', 'latest.json')
   const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'))
   const summary = summarizeBenchmark(results)
-  const pairs = compareArms(results)
-  console.log(JSON.stringify({ summary, pairs }, null, 2))
+  const baseline = arg('baseline')
+  const candidate = arg('candidate')
+  const pairs = baseline && candidate ? comparePair(results, baseline, candidate) : compareArms(results)
+  console.log(JSON.stringify({ summary, pairs, comparison: { baseline: baseline || 'raw', candidate: candidate || 'omni' } }, null, 2))
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

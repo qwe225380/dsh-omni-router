@@ -33,24 +33,25 @@ const allFiles = [
   ...listFiles(path.join(root, 'benchmark')),
 ]
 
-const allText = allFiles.map((f) => fs.readFileSync(f, 'utf8')).join('\n')
+const byFile = new Map(allFiles.map((f) => [f, fs.readFileSync(f, 'utf8')]))
 
 const report = []
 for (const file of srcFiles) {
-  const text = fs.readFileSync(file, 'utf8')
+  const text = byFile.get(file)
   const exported = []
   for (const match of text.matchAll(/export\s+(?:async\s+)?(?:function|const|class)\s+([A-Za-z0-9_]+)/g)) {
     exported.push(match[1])
   }
   const base = path.basename(file)
   const unused = exported.filter((name) => {
-    // Every export is referenced at least once by its own definition; count
-    // other references only.
+    // Search OTHER files only: the definition file itself must not count.
     const pattern = new RegExp(`\\b${name}\\b`, 'g')
-    let refs = 0
-    for (const m of text.matchAll(pattern)) refs += 1
-    for (const m of allText.matchAll(pattern)) refs += 1
-    return refs <= 1
+    let otherRefs = 0
+    for (const [other, otherText] of byFile) {
+      if (other === file) continue
+      for (const m of otherText.matchAll(pattern)) otherRefs += 1
+    }
+    return otherRefs === 0
   })
   if (unused.length) report.push({ file: base, exports: exported.length, unused })
 }

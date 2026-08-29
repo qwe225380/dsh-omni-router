@@ -85,3 +85,13 @@ test('comparePair supports arbitrary baseline/candidate arms', () => {
   assert.equal(pairs.length, 2)
   assert.ok(pairs.every((p) => p.uplift >= 0))
 })
+
+test('evaluateReleaseGates honors baseline/candidate arms', () => {
+  const multi = [
+    ...sample,
+    { id: 't1', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r1', task: 't1', metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 't2', arm: 'mid', run: 1, success: true, difficulty: 'medium', repo: 'r2', task: 't2', metrics: {}, telemetryComplete: true, falseCompletion: false },
+  ]
+  const report = evaluateReleaseGates(multi, { baselineArm: 'omni', candidateArm: 'mid' })
+  assert.ok(report.pairs >= 2)
+})

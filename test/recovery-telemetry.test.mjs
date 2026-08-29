@@ -19,7 +19,7 @@ test('recordMissionRecovery only writes when failures or recovery actions exist'
     const file = recordMissionRecovery(cwd, {
       taskId: 't1',
       actions: [
-        { type: 'failure', reason: 'test fail' },
+        { type: 'failure', reason: 'test fail', observation: { category: 'test_failure', file: 'payment.test.js', detail: 'assertion A failed' } },
         { action: 'repair', attempt: 2 },
         { action: 'change_hypothesis', attempt: 3 },
       ],
@@ -30,6 +30,8 @@ test('recordMissionRecovery only writes when failures or recovery actions exist'
     assert.equal(records.length, 1)
     assert.equal(records[0].failureCount, 1)
     assert.equal(records[0].recoveryCount, 2)
+    assert.equal(records[0].failures[0].category, 'test_failure')
+    assert.match(records[0].failures[0].fingerprint, /^[0-9a-f]{12}$/)
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }
@@ -45,4 +47,19 @@ test('aggregateRecoveryTelemetry computes funnel and success rate', () => {
   assert.equal(aggregate.funnel.repair, 1)
   assert.equal(aggregate.funnel.changeHypothesis, 1)
   assert.match(formatRecoveryTelemetry(aggregate), /Recovery telemetry/)
+})
+
+test('failureFingerprint is deterministic and aggregate counts repeats', async () => {
+  const { failureFingerprint } = await import('../src/recovery-telemetry.mjs')
+  const a = failureFingerprint({ category: 'test_failure', file: 'payment.test.js', message: 'assertion A' })
+  const b = failureFingerprint({ category: 'test_failure', file: 'payment.test.js', message: 'assertion A' })
+  const c = failureFingerprint({ category: 'test_failure', file: 'payment.test.js', message: 'assertion B' })
+  assert.equal(a, b)
+  assert.notEqual(a, c)
+  const aggregate = aggregateRecoveryTelemetry([
+    { outcome: 'success', recoveryCount: 1, actions: [{ action: 'repair' }], failures: [{ category: 'test_failure', fingerprint: a }] },
+    { outcome: 'failed', recoveryCount: 1, actions: [{ action: 'change_hypothesis' }], failures: [{ category: 'test_failure', fingerprint: a }] },
+  ])
+  assert.equal(aggregate.repeatedFingerprintCount, 1)
+  assert.equal(aggregate.repeatedFingerprintRate, 1)
 })

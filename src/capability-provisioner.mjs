@@ -198,7 +198,7 @@ export function formatProvisionResult(result = {}) {
 
 // --- Capability change audit (P0.3) -----------------------------------------
 
-export function capabilityAuditPath(cwd) {
+function capabilityAuditPath(cwd) {
   return path.join(cwd, '.omni', 'capability-audit.json')
 }
 

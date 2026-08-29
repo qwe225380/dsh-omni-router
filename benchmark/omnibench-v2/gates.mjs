@@ -98,10 +98,20 @@ export function evaluateReleaseGates(results = [], options = {}) {
   }
 }
 
+function arg(name) {
+  const idx = process.argv.indexOf(`--${name}`)
+  return idx !== -1 ? process.argv[idx + 1] : null
+}
+
 function main() {
   const resultsPath = process.argv[2] || path.join(here, 'results', 'latest.json')
   const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'))
-  const report = evaluateReleaseGates(results, { verbose: true })
+  const options = {
+    verbose: true,
+    baselineArm: arg('baseline') || 'raw',
+    candidateArm: arg('candidate') || 'omni',
+  }
+  const report = evaluateReleaseGates(results, options)
   for (const gate of report.gates) {
     if (gate.pass === null) {
       console.log(`- ${gate.name}: ${gate.value}`)

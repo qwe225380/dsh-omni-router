@@ -121,7 +121,7 @@ Proof: 3/3
 
 > **Omni 不追求自己拥有最多能力，而是尽可能让已经存在的优秀能力发挥作用。**
 
-### 真实例子：前端 UI 修复
+### 示例：前端 UI 修复
 
 ```text
 用户：
@@ -139,7 +139,7 @@ Omni:
 9. Verify
 ```
 
-### 真实例子：复杂重构
+### 示例：复杂重构
 
 ```text
 当前环境：
@@ -291,20 +291,18 @@ Router Standard 继续负责 DeepSeek persona / attention / workflow routing；O
 
 ## Built like infrastructure, not a prompt pack
 
-Omni 对 routing、Context、Evidence、Capability、Recovery、Host Adapter、Installer 和 OmniBench 均有独立测试覆盖。
+Omni 对 routing、Context、Evidence、Capability、Recovery、Host Adapter、Installer 和 OmniBench 均有独立测试覆盖（约 60 个测试文件）。
 
-每个 RC 都要求完整 `npm test` 回归，Benchmark 另有独立 Raw vs Omni runner。
+每个 RC 都要求完整 `npm test` 回归；Benchmark 支持 multi-arm（raw / omni / mid / frontier / stack / stack_omni…）。
+
+## Measured Reliability
 
 ```text
-test/
-├── kernel/
-├── context/
-├── evidence/
-├── recovery/
-├── capability/
-├── host/
-├── integration/
-└── e2e/
+Evidence Federation  第三方结果 → EvidenceRecord v1（provider 自报 trust 无效）
+Context Metrics      Recall@5/10 · Precision · Token 开销 · irrelevant ratio
+Intervention KPIs    NOOP Precision · missed/false intervention rate
+Recovery Telemetry   failure fingerprint · retry/repair/hypothesis funnel · success rate
+Multi-arm Benchmark  comparePair(baseline, candidate) + release gates
 ```
 
 ---

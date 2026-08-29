@@ -580,6 +580,11 @@ export function apply(ctx, config = {}) {
     }
   }
 
+  // Single shared host adapter instance for the whole apply() lifecycle.
+  // Creating new instances would reset per-session state (e.g. workspace
+  // revision counters) — see 评价2.md P0.
+  const hostAdapter = createDshHostAdapter(ctx)
+
   // Out-of-box capability provisioning: a curated set of well-known DSH
   // programming skills/plugins. This is a bootstrap/fallback only; the
   // authoritative "what plugin provides X" answer belongs to dsh-market/hub.
@@ -1116,7 +1121,7 @@ export function apply(ctx, config = {}) {
       brain = loadCapabilityManifests(brain, config.capabilityManifests || [])
       const baseline = baselineAudit(brain)
       const fs = ctxGet('fs') 
-      const dshAdapter = createDshHostAdapter(ctx)
+      const dshAdapter = hostAdapter
       const host = negotiateHost(dshAdapter.describeHost())
       const lines = [
         `DSH session: ${session ? 'ok' : 'missing'}`,
@@ -1911,11 +1916,13 @@ export function apply(ctx, config = {}) {
         })
         resumeInfo = `\nSaved mission state: ${saved}`
       }
-      const currentRevision = createDshHostAdapter(ctx).getWorkspaceRevision(session.id)
-      if (cwd) {
-        recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: finalDag.status === 'done' ? 'success' : 'failed' })
-      }
+      const currentRevision = hostAdapter.getWorkspaceRevision(session.id)
       const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
+      // Recovery outcome must follow Proof, not the DAG status:
+      // "Done is proven, not declared."
+      if (cwd) {
+        recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: proof.completed ? 'success' : 'failed' })
+      }
       return [
         `Mission run: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
@@ -2025,7 +2032,7 @@ export function apply(ctx, config = {}) {
         savedAt: new Date().toISOString(),
       })
       const evSummary = evidenceSummary({ entries: evidenceRecords })
-      const currentRevision = createDshHostAdapter(ctx).getWorkspaceRevision(session.id)
+      const currentRevision = hostAdapter.getWorkspaceRevision(session.id)
       const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
       return [
         `Mission resume: ${finalDag.status}`,
@@ -2286,14 +2293,17 @@ export function apply(ctx, config = {}) {
   // DSH events -> OmniEvent -> Evidence Record -> OmniTaskState.evidence
   // This makes "Proven when done" machine-enforced even when the host executes
   // normally and Omni only injects a Kernel Prompt.
-  const hostBridge = createDshHostAdapter(ctx)
+  const hostBridge = hostAdapter
   hostBridge.subscribeEvents((event) => {
     const st = event.sessionId ? states.get(event.sessionId) : null
     if (!st) return
     if (!st.omniTaskState) st.omniTaskState = buildCanonicalOmniState(st)
     if (!Array.isArray(st.omniTaskState.evidence)) st.omniTaskState.evidence = []
     const payload = event.payload || {}
-    const external = payload.provider || payload.delivery || payload.status || payload.verifier === true
+    // Explicit Federation Envelope only. Native DSH events must stay on the
+    // native normalization path; `status`/`delivery` alone are NOT enough.
+    const external = Boolean(payload.provider || payload.evidenceProvider)
+      || (payload.schemaVersion === '1' && event.type === 'omni-evidence-provider')
     const record = external
       ? adaptEvidenceFromProvider({ provider: payload.provider || event.host || 'provider', result: payload })
       : omniEventToEvidenceRecord(event)
