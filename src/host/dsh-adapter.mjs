@@ -109,6 +109,7 @@ export function createDshHostAdapter(ctx = {}) {
               provider: null,
               deterministic: event.type === 'command.completed' || event.type === 'test.completed',
             }
+            event.revisionTrusted = freshnessAvailable
             event.payload = { ...event.payload, workspaceRevision: current }
             handler(event)
           })

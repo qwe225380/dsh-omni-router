@@ -73,6 +73,7 @@ test('recovery transitions bind each failure to its nearest action', () => {
       taskId: 't2',
       actions: [
         { type: 'failure', observation: { category: 'test_failure', file: 'a.test.js', detail: 'A' }, attempt: 3 },
+        { action: 'retry' }, // attempt-less: must NOT win over typed nearest
         { action: 'repair', attempt: 2 },
         { action: 'change_hypothesis', attempt: 3 },
       ],

@@ -75,11 +75,14 @@ export function recordMissionRecovery(cwd, { taskId = '', actions = [], outcome,
     .map((a) => ({ action: a.action || a.type, attempt: a.attempt || null }))
   if (!failures.length && !recoveryActions.length) return null
   // failure → chosen recovery → outcome transitions.
-  // Nearest binding: the first recovery action whose attempt >= failure.attempt
-  // (actions without attempt fall back to the first action).
+  // Nearest binding: among actions WITH attempt, take the smallest
+  // attempt >= failure.attempt. Attempt-less actions are only a fallback.
+  const typed = recoveryActions.filter((a) => a.attempt !== null && a.attempt !== undefined)
+  const untyped = recoveryActions.filter((a) => a.attempt === null || a.attempt === undefined)
   const transitions = failures.map((failure) => {
-    const action = recoveryActions.find((a) => a.attempt === null || a.attempt === undefined || Number(a.attempt) >= Number(failure.attempt))
-      || recoveryActions[0]
+    const candidates = typed.filter((a) => Number(a.attempt) >= Number(failure.attempt))
+    candidates.sort((a, b) => Number(a.attempt) - Number(b.attempt))
+    const action = candidates[0] || untyped[0] || recoveryActions[0]
     return {
       category: failure.category,
       fingerprint: failure.fingerprint,

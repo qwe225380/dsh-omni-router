@@ -51,11 +51,16 @@ export function evaluateReleaseGates(results = [], options = {}) {
     const list = values.filter((v) => v !== null && v !== undefined)
     return list.length ? list.reduce((s, v) => s + v, 0) / list.length : null
   }
-  const noopPrecision = avg(cohortResults.map((r) => r.metrics?.noopPrecision))
-  const recoverySuccessRate = avg(cohortResults.map((r) => r.metrics?.recoverySuccessRate))
+  const candidateResults = cohortResults.filter((r) => r.arm === candidateArm)
+  const noopPrecision = avg(candidateResults.map((r) => r.metrics?.noopPrecision))
+  const recoverySuccessRate = avg(candidateResults.map((r) => r.metrics?.recoverySuccessRate))
   const simplePairs = pairs.filter((p) => ['easy', 'simple'].includes(p.difficulty))
   const simpleRegression = simplePairs.length ? avg(simplePairs.map((p) => p.uplift)) : null
-  const interventionReduction = avg(pairs.map((p) => p.interventionReduction))
+  // Cohort-level intervention reduction. baseline=0 → not applicable (null),
+  // never fake 100%.
+  const sumBaselineHuman = cohortResults.filter((r) => r.arm === baselineArm).reduce((s, r) => s + (r.metrics?.humanInterventions || 0), 0)
+  const sumCandidateHuman = candidateResults.reduce((s, r) => s + (r.metrics?.humanInterventions || 0), 0)
+  const interventionReduction = sumBaselineHuman > 0 ? 1 - sumCandidateHuman / sumBaselineHuman : null
 
   const gates = [
     {

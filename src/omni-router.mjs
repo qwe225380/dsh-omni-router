@@ -1,15 +1,15 @@
 /**
- * omni-router: task-complexity auto-router for DeepSeek Harness.
+ * omni-router: task-level reliability layer for DeepSeek Harness.
  *
- * One preset, one behavior:
- *   - simple / concrete task  -> full catalog, direct execution
- *   - complex / ambiguous    -> enter built-in plan mode, produce a structured
- *                                plan, and wait for user approval
+ * DSH owns execution. Omni owns reliability:
+ *   - Intervention Gate decides when to help (true NOOP for simple tasks)
+ *   - Task Contract + focused context when it does help
+ *   - Capability sufficiency: reuse host capabilities, recommend gaps
+ *   - Evidence + freshness: done is proven, not declared
+ *   - Recovery: change strategy instead of repeating failure
  *
- * The plugin is intentionally small. It reuses DSH's built-in plan mode for the
- * confirmation gate and only adds a lightweight complexity classifier plus a
- * few manual override tools. Optional integrations (browser/MCP/GitHub, quality
- * gates, skills) live in the host profile; this preset does not require them.
+ * The default model-visible surface is three tools (status/explain/doctor);
+ * advanced/developer tools are loaded lazily.
  */
 
 import fs from 'node:fs'
@@ -723,13 +723,21 @@ export function apply(ctx, config = {}) {
   }
 
   // Single completion evaluator used by status/explain/mission/resume so they
-  // can never disagree. Always reads the shared adapter's current revision and
-  // workspace fingerprint.
-  function evaluateCurrentCompletion(contract, evidence, session, adapter = hostAdapter) {
+  // can never disagree. Always reads the shared adapter's current revision,
+  // workspace fingerprint, and freshness availability.
+  function completionOptions(session, adapter = hostAdapter) {
     const currentRevision = adapter.getWorkspaceRevision(session?.id)
     const workspaceFingerprint = adapter.getWorkspaceFingerprint()
     const freshnessUnknown = !adapter.getFreshnessAvailable() && !workspaceFingerprint
-    return completionStatus(contract, bindEvidenceToCriteria(contract, evidence || []), { currentRevision, workspaceFingerprint, freshnessUnknown })
+    return { currentRevision, workspaceFingerprint, freshnessUnknown }
+  }
+
+  function evaluateCurrentProof(contract, evidence, session, adapter = hostAdapter) {
+    return verifyCompletion(contract, bindEvidenceToCriteria(contract, evidence || []), completionOptions(session, adapter))
+  }
+
+  function evaluateCurrentCompletion(contract, evidence, session, adapter = hostAdapter) {
+    return completionStatus(contract, bindEvidenceToCriteria(contract, evidence || []), completionOptions(session, adapter))
   }
 
   function planMode() {
@@ -1549,6 +1557,7 @@ export function apply(ctx, config = {}) {
           kind: harness.tests?.length ? 'test.pass' : harness.commands?.length ? 'command' : 'tool',
           artifacts: (harness.files || []).map((f) => f.file).filter(Boolean),
           subject: action.task?.goal || '',
+          revisionTrusted: hostAdapter.getFreshnessAvailable(),
           value: output.slice(0, 2000),
           ok: trustOk && evidencePass(harness),
           trustLevel: harness.trustLevel || 'T0',
@@ -1927,8 +1936,7 @@ export function apply(ctx, config = {}) {
         })
         resumeInfo = `\nSaved mission state: ${saved}`
       }
-      const currentRevision = hostAdapter.getWorkspaceRevision(session.id)
-      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
+      const proof = evaluateCurrentProof(contract, evidenceRecords, session)
       // Recovery outcome must follow Proof, not the DAG status:
       // "Done is proven, not declared."
       if (cwd) {
@@ -2046,8 +2054,7 @@ export function apply(ctx, config = {}) {
         savedAt: new Date().toISOString(),
       })
       const evSummary = evidenceSummary({ entries: evidenceRecords })
-      const currentRevision = hostAdapter.getWorkspaceRevision(session.id)
-      const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
+      const proof = evaluateCurrentProof(contract, evidenceRecords, session)
       recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: proof.completed ? 'success' : 'failed', cost: metrics.cost || 0 })
       return [
         `Mission resume: ${finalDag.status}`,

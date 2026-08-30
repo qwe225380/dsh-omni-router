@@ -47,10 +47,13 @@ test('freshness integration: file.changed advances revision and all events carry
   handlers['test.completed']({ sessionId: 's1', payload: { exitCode: 0 } })
 
   assert.equal(host.getWorkspaceRevision('s1'), 1)
+  assert.equal(host.getFreshnessAvailable(), true)
   const testEvent = received.find((e) => e.type === 'test.completed')
   assert.equal(testEvent.workspaceRevision, 1)
+  assert.equal(testEvent.revisionTrusted, true)
   const record = omniEventToEvidenceRecord(testEvent)
   assert.equal(record.workspaceRevision, 1)
+  assert.equal(record.revisionTrusted, true)
 
   handlers['file.changed']({ sessionId: 's1', payload: { file: 'b.ts' } })
   assert.equal(host.getWorkspaceRevision('s1'), 2)

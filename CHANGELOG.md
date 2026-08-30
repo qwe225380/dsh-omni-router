@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.22] - 2026-08-30
+
+- 评估5.md 4 项 correctness（Code Freeze 前最后一轮）：
+  - Mission run/resume 统一使用 `evaluateCurrentProof()`（bind + revision + fingerprint + freshnessUnknown），与 status/explain 同源
+  - Freshness 改为判断 **revision 是否可信**（`revisionTrusted`），不再是“数字存在”；revision=0/1/3 在 tracking 不可信时对 T3+ 一律 Unverified
+  - Release Gates：NOOP precision / Recovery success 只统计 candidate arm；Human intervention reduction 改为 cohort 求和（baseline=0 → null，不虚报 100%）
+  - Recovery nearest：优先在带 attempt 的 action 中找最近邻，无 attempt 仅作 fallback
+  - `omni-router.mjs` 文件头注释改为 “task-level reliability layer”
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.21] - 2026-08-30
 
 - 评估4.md 6 项 hardening-only（无新功能）：

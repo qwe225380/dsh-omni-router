@@ -122,10 +122,11 @@ export function verifyCompletion(contract = {}, evidenceRecords = [], options = 
       if (!isFresh(record)) return false
       if (record.stale === true) return false
       if (record.ok === false) return false
-      // Unknown freshness must never silently pass high-trust proof:
-      // if the host cannot track revisions and the record carries none,
-      // a T3+ criterion is NOT verifiable.
-      if (freshnessUnknown && record.workspaceRevision === undefined && requiredValue >= TRUST_VALUES.T3) return false
+      // Unknown freshness must never silently pass high-trust proof.
+      // The question is not "does a revision number exist" but "was that
+      // revision produced by trusted freshness tracking". Without trusted
+      // tracking, a T3+ criterion is NOT verifiable even when revision=0/1/3.
+      if (freshnessUnknown && record.revisionTrusted !== true && requiredValue >= TRUST_VALUES.T3) return false
       const trust = TRUST_VALUES[record.trustLevel] ?? record.trustValue ?? 0
       if (trust < requiredValue) return false
       return recordMatchesCriterion(record, criterion) !== null

@@ -120,3 +120,18 @@ test('release gates include NOOP precision / simple regression / recovery / inte
   const noop = report.gates.find((g) => g.name === 'NOOP precision >= 90%')
   assert.equal(noop.pass, false) // no metric data → must NOT silently pass
 })
+
+test('NOOP/recovery gates use candidate arm only and intervention handles baseline=0', () => {
+  const data = [
+    { id: 't1', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', metrics: { noopPrecision: 0.2, recoverySuccessRate: 0.2, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 't1', arm: 'omni', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', metrics: { noopPrecision: 0.95, recoverySuccessRate: 0.9, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  ]
+  const report = evaluateReleaseGates(data)
+  const noop = report.gates.find((g) => g.name === 'NOOP precision >= 90%')
+  const recovery = report.gates.find((g) => g.name === 'Recovery success >= 75%')
+  const intervention = report.gates.find((g) => g.name === 'Human intervention reduction >= 30%')
+  assert.equal(noop.value, 0.95)   // candidate only, not (0.2+0.95)/2
+  assert.equal(recovery.value, 0.9)
+  assert.equal(intervention.value, null) // baseline total = 0 → not applicable
+  assert.equal(intervention.pass, false)
+})

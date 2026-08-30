@@ -94,3 +94,9 @@ test('assignEvidenceTrust caps third-party self-reported T4', () => {
   const capped = assignEvidenceTrust({ trustLevel: 'T4' })
   assert.equal(capped.trustLevel, 'T2')
 })
+
+test('omniEventToEvidenceRecord carries revisionTrusted from the host event', () => {
+  const record = omniEventToEvidenceRecord({ type: 'test.completed', host: 'dsh', revisionTrusted: true, payload: { exitCode: 0, workspaceRevision: 1 } })
+  assert.equal(record.revisionTrusted, true)
+  assert.equal(record.workspaceRevision, 1)
+})
