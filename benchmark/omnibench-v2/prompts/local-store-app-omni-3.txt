@@ -1,8 +1,0 @@
-Task:
-Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.
-
-Acceptance criteria:
-- pagination returns correct last page
-- existing tests pass
-
-You are using the Omni control plane. Follow engineering methodology, verify with real evidence, and do not claim completion without checks. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".

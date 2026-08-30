@@ -1,8 +1,0 @@
-Task:
-Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.
-
-Acceptance criteria:
-- pagination returns correct last page
-- existing tests pass
-
-Work on the task. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".

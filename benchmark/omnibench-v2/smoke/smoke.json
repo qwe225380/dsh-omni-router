@@ -1,0 +1,21 @@
+[
+  {
+    "id": "smoke-pagination-1",
+    "repo": "D:/dsh/dsh workspace/01/omni-router/benchmark/omnibench-v2/smoke/fixture-pagination",
+    "commit": "b384172fd73ce689ee3577f203b6426736b99fe9",
+    "language": "javascript",
+    "framework": "node",
+    "task": "Fix the off-by-one error in src/pagination.js so the last page returns the remaining items instead of an empty array. Keep all other pages unchanged.",
+    "acceptance": [
+      "last page returns the remaining items",
+      "other pages behave as before"
+    ],
+    "baselineCommand": "node scripts/verify-task.js",
+    "verifyCommand": "node scripts/verify-task.js",
+    "runs": 3,
+    "arms": ["raw", "omni"],
+    "timeoutMs": 600000,
+    "rawAgentCommand": "call \"D:\\dsh\\DSHWOR~1\\01\\OMNI-R~1\\BENCHM~1\\OMNIBE~1\\smoke\\run-raw.cmd\"",
+    "omniAgentCommand": "call \"D:\\dsh\\DSHWOR~1\\01\\OMNI-R~1\\BENCHM~1\\OMNIBE~1\\smoke\\run-omni.cmd\""
+  }
+]

@@ -1,0 +1,7 @@
+{
+  "name": "smoke-fixture-pagination",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OmniBench smoke fixture: off-by-one pagination bug.",
+  "main": "src/pagination.js"
+}

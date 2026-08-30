@@ -61,9 +61,20 @@ export function ensureRepo(m) {
   if (!fs.existsSync(path.join(dir, '.git'))) {
     console.log(`cloning ${m.repo} -> ${dir}`)
     execSync(`git clone "${m.repo}" "${dir}"`, { stdio: 'inherit' })
+  } else {
+    // Refresh the cached clone so new commits are visible.
+    try { execSync(`git -C "${dir}" fetch -q origin`, { stdio: 'ignore' }) } catch { /* keep local cache */ }
   }
   console.log(`checkout ${m.id} @ ${m.commit}`)
-  execSync(`git -C "${dir}" checkout ${m.commit}`, { stdio: 'inherit' })
+  try {
+    execSync(`git -C "${dir}" checkout ${m.commit}`, { stdio: 'inherit' })
+  } catch {
+    // Stale or broken cache: re-clone once and retry.
+    fs.rmSync(dir, { recursive: true, force: true })
+    console.log(`re-cloning ${m.repo} -> ${dir}`)
+    execSync(`git clone "${m.repo}" "${dir}"`, { stdio: 'inherit' })
+    execSync(`git -C "${dir}" checkout ${m.commit}`, { stdio: 'inherit' })
+  }
   return dir
 }
 

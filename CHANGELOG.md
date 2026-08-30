@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.0-rc.26] - 2026-08-30
+
+- 新增可运行的 Smoke 套件（benchmark/omnibench-v2/smoke/）：
+  - `fixture-pagination`：本地 git fixture（commit b384172），pagination off-by-one bug
+  - 独立 hidden verifier `scripts/verify-task.js`（0=fixed / 1=present / 2+=infra）
+  - `run-raw.cmd` / `run-omni.cmd`：独立 DSH_HOME + headless（omni 经 `bootstrap-omni.cmd` 安装）
+  - `smoke.json`：1 repo × 1 bug × raw/omni × 3 runs = 6 runs
+  - 沙箱自检 `run-fake.cmd` + `fix-agent.js`：已实测 runner → agent → verifier → results.json 全链路 6/6 passed
+  - `smoke/README.md`：真实 headless 运行步骤
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.25] - 2026-08-30
 
 - 评估8.md runner 状态分类 bugfix（Benchmark 最后一项，无新功能）：

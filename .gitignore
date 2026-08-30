@@ -4,3 +4,12 @@ node_modules/
 .DS_Store
 Thumbs.db
 .npmrc
+
+# OmniBench runtime artifacts
+benchmark/omnibench-v2/prompts/
+benchmark/omnibench-v2/repos/
+benchmark/omnibench-v2/smoke/results/
+benchmark/omnibench-v2/smoke/homes/
+benchmark/omnibench-v2/results/
+
+benchmark/omnibench-v2/smoke/fixture-pagination/.git/
