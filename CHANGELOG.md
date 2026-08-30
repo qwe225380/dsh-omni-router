@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.0-rc.25] - 2026-08-30
+
+- 评估8.md runner 状态分类 bugfix（Benchmark 最后一项，无新功能）：
+  - Validity verifier exit-code contract：0 → bug absent（invalid）；1 → bug present（valid）；timeout / missing / ≥2 → UNKNOWN（`taskValid:null`，跳过 run，不再写成 true）
+  - Hidden final verifier 同样遵守：0 → PASS；1 → 真实失败；timeout / ≥2 → infra error（`success:null`）
+  - 新增 `classifyValidity()` / `classifyVerify()` 纯函数 + 8 个断言测试
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.24] - 2026-08-30
 
 - 评估7.md Benchmark-only correctness（仍不动 src/）：

@@ -6,6 +6,8 @@ import path from 'node:path'
 
 import {
   buildPrompt,
+  classifyValidity,
+  classifyVerify,
   extractMetrics,
   parseTelemetry,
   readManifests,
@@ -94,6 +96,22 @@ test('writeResults writes JSON result file', () => {
   } finally {
     fs.rmSync(dir, { recursive: true, force: true })
   }
+})
+
+test('classifyValidity implements the exit-code contract', () => {
+  assert.equal(classifyValidity({ exitCode: 0 }).taskValid, false)     // bug absent
+  assert.equal(classifyValidity({ exitCode: 1 }).taskValid, true)      // bug present
+  assert.equal(classifyValidity({ exitCode: 2 }).taskValid, null)      // infra error
+  assert.equal(classifyValidity({ exitCode: 1, timedOut: true }).taskValid, null) // timeout
+  assert.equal(classifyValidity(null).taskValid, null)                 // missing
+})
+
+test('classifyVerify maps 0/1/2+ to pass/fail/infra', () => {
+  assert.equal(classifyVerify({ exitCode: 0 }), true)
+  assert.equal(classifyVerify({ exitCode: 1 }), false)
+  assert.equal(classifyVerify({ exitCode: 2 }), null)
+  assert.equal(classifyVerify({ exitCode: 0, timedOut: true }), null)
+  assert.equal(classifyVerify(null), null)
 })
 
 test('parseTelemetry extracts TELEMETRY_JSON block', () => {

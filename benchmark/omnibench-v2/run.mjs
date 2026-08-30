@@ -128,6 +128,21 @@ export function generatePrompts(list, arms = ['raw', 'omni']) {
   return count
 }
 
+export function classifyValidity(baseline) {
+  if (!baseline || baseline.skipped === true) return { taskValid: null, reason: 'validity unknown: no baseline verifier output' }
+  if (baseline.timedOut === true) return { taskValid: null, reason: 'validity unknown: baseline verifier timeout' }
+  if (baseline.exitCode === 0) return { taskValid: false, reason: 'bug absent at starting commit' }
+  if (baseline.exitCode === 1) return { taskValid: true, reason: 'bug present at starting commit' }
+  return { taskValid: null, reason: `validity unknown: baseline verifier infra error (exit ${baseline.exitCode})` }
+}
+
+export function classifyVerify(verify) {
+  if (!verify || verify.skipped === true || verify.timedOut === true) return null
+  if (verify.exitCode === 0) return true
+  if (verify.exitCode === 1) return false
+  return null // exit >= 2 → infrastructure error, run invalid
+}
+
 export function writeResults(results, resultsDir) {
   fs.mkdirSync(resultsDir, { recursive: true })
   const file = path.join(resultsDir, `omnibench-v2-${Date.now()}.json`)
@@ -245,10 +260,9 @@ function main() {
         const baseline = m.baselineCommand ? runCommand(m.baselineCommand, runDir, 'baseline', timeoutMs) : null
         if (baseline) console.log(`baseline exit=${baseline.exitCode ?? 'skip'}`)
 
-        // Task validity protocol:
-        //   baseline exit != 0 → task valid (bug present)
-        //   baseline exit == 0 → task invalid (bug absent)
-        //   baseline missing   → validity UNKNOWN (never true)
+        // Validity exit-code contract:
+        //   0 → bug absent (invalid) · 1 → bug present (valid)
+        //   timeout / missing / >=2 → UNKNOWN (never true)
         if (!m.baselineCommand) {
           results.push({
             id: m.id,
@@ -267,7 +281,8 @@ function main() {
           console.log('SKIP: baselineCommand missing; task validity UNKNOWN (official benchmark requires it).')
           continue
         }
-        if (baseline && baseline.skipped !== true && baseline.timedOut !== true && baseline.exitCode === 0) {
+        const validity = classifyValidity(baseline)
+        if (validity.taskValid !== true) {
           results.push({
             id: m.id,
             arm,
@@ -278,12 +293,12 @@ function main() {
             commit: m.commit,
             task: m.task,
             success: null,
-            taskValid: false,
-            reason: 'starting-commit verifier passed: bug not present at starting commit',
-            baselineExitCode: 0,
+            taskValid: validity.taskValid,
+            reason: validity.reason,
+            baselineExitCode: baseline?.exitCode ?? null,
             ranAt: new Date().toISOString(),
           })
-          console.log('SKIP: starting-commit verifier passed (bug absent); task invalid for benchmarking.')
+          console.log(`SKIP: ${validity.reason}`)
           continue
         }
 
@@ -299,11 +314,11 @@ function main() {
         const verify = m.verifyCommand ? runCommand(m.verifyCommand, runDir, 'verify', timeoutMs) : null
         if (verify) console.log(`verify exit=${verify.exitCode ?? 'skip'}`)
 
-        // Hidden verifier is required for official results. An agent's own
-        // BENCHMARK: PASS is never a success signal.
+        // Hidden final verifier: 0 → PASS, 1 → genuine failure,
+        // timeout / missing / >=2 → infrastructure error (success=null).
         let success = null
         if (verify && verify.skipped !== true && verify.timedOut !== true) {
-          success = verify.exitCode === 0
+          success = verify.exitCode === 0 ? true : verify.exitCode === 1 ? false : null
         }
 
         const telemetry = extractMetrics(agent?.output || '')
