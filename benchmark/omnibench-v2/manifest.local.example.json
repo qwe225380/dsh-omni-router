@@ -7,6 +7,8 @@
     "framework": "node",
     "task": "Fix the off-by-one error in the pagination helper so the last page returns the remaining items instead of an empty array.",
     "acceptance": ["pagination returns correct last page", "existing tests pass"],
+    "baselineCommand": "node scripts/verify-task.js --starting-commit",
+    "verifyCommand": "node scripts/verify-task.js",
     "hiddenTests": [],
     "timeoutMs": 600000,
     "runs": 3

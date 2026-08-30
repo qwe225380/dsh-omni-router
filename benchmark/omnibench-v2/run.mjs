@@ -42,6 +42,10 @@ export function validateManifests(list) {
     if (!m.task) errors.push(`${m.id || '?'}: missing task`)
     if (!Array.isArray(m.acceptance) || !m.acceptance.length) errors.push(`${m.id || '?'}: missing acceptance`)
     if (!m.runs || m.runs < 3) errors.push(`${m.id || '?'}: runs should be >= 3`)
+    // Official benchmark protocol: starting-commit validity verifier and
+    // hidden final verifier are REQUIRED. Missing → task validity UNKNOWN.
+    if (!m.baselineCommand) errors.push(`${m.id || '?'}: missing baselineCommand (starting-commit validity verifier)`)
+    if (!m.verifyCommand) errors.push(`${m.id || '?'}: missing verifyCommand (hidden final verifier)`)
     if (m.id) {
       if (seen.has(m.id)) errors.push(`${m.id}: duplicate manifest id (ids must be globally unique)`)
       seen.add(m.id)
@@ -181,6 +185,8 @@ export function extractMetrics(agentOutput) {
       interventions: num('interventions'),
       humanInterventions: opt('humanInterventions'),
       noopPrecision: opt('noopPrecision'),
+      recoveryAttempts: opt('recoveryAttempts'),
+      recoverySuccesses: opt('recoverySuccesses'),
       recoverySuccessRate: opt('recoverySuccessRate'),
     },
     telemetryComplete: true,
@@ -239,8 +245,28 @@ function main() {
         const baseline = m.baselineCommand ? runCommand(m.baselineCommand, runDir, 'baseline', timeoutMs) : null
         if (baseline) console.log(`baseline exit=${baseline.exitCode ?? 'skip'}`)
 
-        // Task validity: the starting commit must FAIL the hidden verifier.
-        // If the bug is already absent, this task cannot measure anything.
+        // Task validity protocol:
+        //   baseline exit != 0 → task valid (bug present)
+        //   baseline exit == 0 → task invalid (bug absent)
+        //   baseline missing   → validity UNKNOWN (never true)
+        if (!m.baselineCommand) {
+          results.push({
+            id: m.id,
+            arm,
+            run: i,
+            difficulty: m.difficulty || 'medium',
+            model: m.model || 'fast',
+            repo: m.repo,
+            commit: m.commit,
+            task: m.task,
+            success: null,
+            taskValid: null,
+            reason: 'validity unknown: baselineCommand missing',
+            ranAt: new Date().toISOString(),
+          })
+          console.log('SKIP: baselineCommand missing; task validity UNKNOWN (official benchmark requires it).')
+          continue
+        }
         if (baseline && baseline.skipped !== true && baseline.timedOut !== true && baseline.exitCode === 0) {
           results.push({
             id: m.id,

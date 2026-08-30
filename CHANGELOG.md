@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.24] - 2026-08-30
+
+- 评估7.md Benchmark-only correctness（仍不动 src/）：
+  - Task validity 改为从 pre-pair planned dataset（baseline+candidate arms）统计；invalid task 不会被 pair 过滤隐藏；mixed 99 valid + 1 invalid → gate FAIL
+  - `validateManifests` 强制 `baselineCommand` + `verifyCommand`（starting-commit 与 hidden final verifier）；runner 遇到缺失 baselineCommand 记录 `taskValid:null`（Unknown is not Valid）
+  - Recovery KPI eligibility：每 run 记录 `recoveryAttempts/recoverySuccesses`（attempts=0 是数据）；Recovery Success = cohort 级 sum(successes)/sum(attempts)，仅在 attempts>0 时定义
+  - KPI coverage：candidate 需 noopPrecision + recoveryAttempts；humanInterventions 需 baseline + candidate 双侧完整
+  - 更新 manifest.local.example.json（含 baselineCommand/verifyCommand）
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.23] - 2026-08-30
 
 - 评估6.md Benchmark Harness Freeze（产品 Core 冻结，不再动 src 功能）：

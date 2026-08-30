@@ -40,13 +40,25 @@ test('validateManifests returns errors for invalid manifest', () => {
     task: 't',
     acceptance: ['a'],
     runs: 3,
+    baselineCommand: 'node v.js',
+    verifyCommand: 'node v.js',
   }]).length, 0)
+  const missingVerifiers = validateManifests([{
+    id: 'x',
+    repo: 'r',
+    commit: 'c',
+    task: 't',
+    acceptance: ['a'],
+    runs: 3,
+  }])
+  assert.ok(missingVerifiers.some((e) => e.includes('baselineCommand')))
+  assert.ok(missingVerifiers.some((e) => e.includes('verifyCommand')))
 })
 
 test('validateManifests rejects duplicate ids', () => {
   const errors = validateManifests([
-    { id: 'dup', repo: 'r1', commit: 'c', task: 't', acceptance: ['a'], runs: 3 },
-    { id: 'dup', repo: 'r2', commit: 'c', task: 't', acceptance: ['a'], runs: 3 },
+    { id: 'dup', repo: 'r1', commit: 'c', task: 't', acceptance: ['a'], runs: 3, baselineCommand: 'node v.js', verifyCommand: 'node v.js' },
+    { id: 'dup', repo: 'r2', commit: 'c', task: 't', acceptance: ['a'], runs: 3, baselineCommand: 'node v.js', verifyCommand: 'node v.js' },
   ])
   assert.ok(errors.some((e) => e.includes('duplicate manifest id')))
 })

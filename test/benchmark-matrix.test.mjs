@@ -123,15 +123,15 @@ test('release gates include NOOP precision / simple regression / recovery / inte
 
 test('NOOP/recovery gates use candidate arm only and intervention handles baseline=0', () => {
   const data = [
-    { id: 't1', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', metrics: { noopPrecision: 0.2, recoverySuccessRate: 0.2, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
-    { id: 't1', arm: 'omni', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', metrics: { noopPrecision: 0.95, recoverySuccessRate: 0.9, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 't1', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', taskValid: true, metrics: { noopPrecision: 0.2, recoveryAttempts: 2, recoverySuccesses: 2, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 't1', arm: 'omni', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 't1', taskValid: true, metrics: { noopPrecision: 0.95, recoveryAttempts: 4, recoverySuccesses: 3, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
   ]
   const report = evaluateReleaseGates(data)
   const noop = report.gates.find((g) => g.name === 'NOOP precision >= 90%')
   const recovery = report.gates.find((g) => g.name === 'Recovery success >= 75%')
   const intervention = report.gates.find((g) => g.name === 'Human intervention reduction >= 30%')
   assert.equal(noop.value, 0.95)   // candidate only, not (0.2+0.95)/2
-  assert.equal(recovery.value, 0.9)
+  assert.equal(recovery.value, 0.75) // cohort aggregate: 3 successes / 4 attempts
   assert.equal(intervention.value, null) // baseline total = 0 → not applicable
   assert.equal(intervention.pass, false)
 })
@@ -154,6 +154,45 @@ test('invalid tasks (bug absent at start) are excluded from pairs and gated', ()
   assert.equal(pairs.length, 0)
   const report = evaluateReleaseGates(data)
   const validity = report.gates.find((g) => g.name === 'Task validity = 100%')
-  assert.equal(validity.value, 0)
+  // Pre-pair planned runs: raw=true, omni=false → 1/2 = 0.5
+  assert.equal(validity.value, 0.5)
   assert.equal(validity.pass, false)
+})
+
+test('mixed 99 valid + 1 invalid task still fails the validity gate', () => {
+  const data = []
+  for (let i = 1; i <= 99; i += 1) {
+    data.push({ id: `v${i}`, arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: `r${i}`, task: `v${i}`, taskValid: true, metrics: {}, telemetryComplete: true, falseCompletion: false })
+    data.push({ id: `v${i}`, arm: 'omni', run: 1, success: true, difficulty: 'hard', repo: `r${i}`, task: `v${i}`, taskValid: true, metrics: {}, telemetryComplete: true, falseCompletion: false })
+  }
+  data.push({ id: 'bad', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'bad', task: 'bad', taskValid: true, metrics: {}, telemetryComplete: true, falseCompletion: false })
+  data.push({ id: 'bad', arm: 'omni', run: 1, success: null, difficulty: 'hard', repo: 'bad', task: 'bad', taskValid: false, metrics: {}, telemetryComplete: true, falseCompletion: false })
+  const report = evaluateReleaseGates(data)
+  const validity = report.gates.find((g) => g.name === 'Task validity = 100%')
+  assert.equal(validity.value, 199 / 200)
+  assert.equal(validity.pass, false)
+})
+
+test('recoveryAttempts=0 is data (coverage passes; rate not in denominator)', () => {
+  const data = [
+    { id: 's1', arm: 'raw', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 's1', taskValid: true, metrics: { noopPrecision: 0.9, recoveryAttempts: 0, recoverySuccesses: 0, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 's1', arm: 'omni', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 's1', taskValid: true, metrics: { noopPrecision: 0.95, recoveryAttempts: 0, recoverySuccesses: 0, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  ]
+  const report = evaluateReleaseGates(data)
+  const coverage = report.gates.find((g) => g.name === 'KPI telemetry coverage = 100%')
+  const recovery = report.gates.find((g) => g.name === 'Recovery success >= 75%')
+  assert.equal(coverage.value, 1)   // attempts=0 is data, coverage passes
+  assert.equal(recovery.value, null) // no attempts → N/A, gate fails
+  assert.equal(recovery.pass, false)
+})
+
+test('baseline humanInterventions missing fails KPI coverage', () => {
+  const data = [
+    { id: 'h1', arm: 'raw', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 'h1', taskValid: true, metrics: { noopPrecision: 0.9, recoveryAttempts: 0, recoverySuccesses: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 'h1', arm: 'omni', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 'h1', taskValid: true, metrics: { noopPrecision: 0.95, recoveryAttempts: 0, recoverySuccesses: 0, humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  ]
+  const report = evaluateReleaseGates(data)
+  const coverage = report.gates.find((g) => g.name === 'KPI telemetry coverage = 100%')
+  assert.equal(coverage.value, 0) // baseline humanInterventions missing
+  assert.equal(coverage.pass, false)
 })

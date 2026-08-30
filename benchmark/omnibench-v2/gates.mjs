@@ -53,29 +53,41 @@ export function evaluateReleaseGates(results = [], options = {}) {
   }
   const candidateResults = cohortResults.filter((r) => r.arm === candidateArm)
   const noopPrecision = avg(candidateResults.map((r) => r.metrics?.noopPrecision))
-  const recoverySuccessRate = avg(candidateResults.map((r) => r.metrics?.recoverySuccessRate))
   const simplePairs = pairs.filter((p) => ['easy', 'simple'].includes(p.difficulty))
   const simpleRegression = simplePairs.length ? avg(simplePairs.map((p) => p.uplift)) : null
+  const defined = (v) => v !== undefined && v !== null
   // Cohort-level intervention reduction. baseline=0 → not applicable (null),
   // never fake 100%.
-  const defined = (v) => v !== undefined && v !== null
   const sumBaselineHuman = cohortResults.filter((r) => r.arm === baselineArm).reduce((s, r) => s + (defined(r.metrics?.humanInterventions) ? r.metrics.humanInterventions : 0), 0)
   const sumCandidateHuman = candidateResults.reduce((s, r) => s + (defined(r.metrics?.humanInterventions) ? r.metrics.humanInterventions : 0), 0)
   const interventionReduction = sumBaselineHuman > 0 ? 1 - sumCandidateHuman / sumBaselineHuman : null
-  // KPI coverage: a missing required metric must fail the gate, not be
-  // silently averaged away.
-  const coverageOf = (fn) => {
-    if (!candidateResults.length) return 0
-    return candidateResults.filter((r) => fn(r)).length / candidateResults.length
+
+  // Recovery eligibility: attempts=0 is DATA (not missing). The success rate
+  // is a cohort aggregate over attempts, defined only when attempts > 0.
+  const sumRecoveryAttempts = candidateResults.reduce((s, r) => s + (defined(r.metrics?.recoveryAttempts) ? r.metrics.recoveryAttempts : 0), 0)
+  const sumRecoverySuccesses = candidateResults.reduce((s, r) => s + (defined(r.metrics?.recoverySuccesses) ? r.metrics.recoverySuccesses : 0), 0)
+  const recoverySuccessRate = sumRecoveryAttempts > 0 ? sumRecoverySuccesses / sumRecoveryAttempts : null
+
+  // Dataset validity counts the PRE-PAIR planned comparison runs (baseline +
+  // candidate arms), so invalid tasks can never be hidden by pair filtering.
+  const plannedResults = results.filter((r) => r.arm === baselineArm || r.arm === candidateArm)
+  const taskValidityRate = plannedResults.length
+    ? plannedResults.filter((r) => r.taskValid === true).length / plannedResults.length
+    : 0
+
+  // KPI coverage: a missing required base metric fails the gate. Base
+  // telemetry per run: noopPrecision + recoveryAttempts (candidate),
+  // humanInterventions (baseline AND candidate).
+  const coverageOfArm = (arm, fn) => {
+    const runs = plannedResults.filter((r) => r.arm === arm)
+    return runs.length ? runs.filter((r) => fn(r)).length / runs.length : 0
   }
   const kpiCoverage = Math.min(
-    coverageOf((r) => defined(r.metrics?.noopPrecision)),
-    coverageOf((r) => defined(r.metrics?.recoverySuccessRate)),
-    coverageOf((r) => defined(r.metrics?.humanInterventions)),
+    coverageOfArm(candidateArm, (r) => defined(r.metrics?.noopPrecision)),
+    coverageOfArm(candidateArm, (r) => defined(r.metrics?.recoveryAttempts)),
+    coverageOfArm(baselineArm, (r) => defined(r.metrics?.humanInterventions)),
+    coverageOfArm(candidateArm, (r) => defined(r.metrics?.humanInterventions)),
   )
-  const taskValidityRate = candidateResults.length
-    ? candidateResults.filter((r) => r.taskValid !== false).length / candidateResults.length
-    : 0
 
   const gates = [
     {
