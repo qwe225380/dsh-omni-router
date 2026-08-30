@@ -13,3 +13,6 @@ benchmark/omnibench-v2/smoke/homes/
 benchmark/omnibench-v2/results/
 
 benchmark/omnibench-v2/smoke/fixture-pagination/.git/
+
+benchmark/omnibench-v2/smoke/omni.patch.yml
+benchmark/omnibench-v2/smoke/omni-package-path.txt

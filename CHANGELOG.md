@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.27] - 2026-08-30
+
+- Smoke-only 修正（不动 Omni src/）：
+  - omni arm 用官方 loader patch overlay（`--patch omni.patch.yml`）把 `omni-router` 行插入 headless host plane + `agentPresets.defaultId: omni-router`；raw arm 无 patch 保持 standard/default
+  - 新增 `preflight.mjs`：用官方 `dsh --profile headless --dump-config`（不 boot Agent）证明 raw 无 omni-router、omni 有 omni-router；无法证明即 fail-closed，禁止开始计结果
+  - `bootstrap.mjs` 完全去硬编码：按 `import.meta.url` 计算 fixture/Omni 包/agent 命令（8.3 短路径或免空格 temp 副本），自动重写 smoke.json；`bootstrap-omni.cmd` 从 omni-package-path.txt 读包路径
+  - 新增 `smoke/run.mjs` 编排器：preflight(raw+omni) → 6 runs → 最新 results 路径 → matrix；结果统一写 `smoke/results`
+  - 沙箱链路复测 6/6 passed；`npm test` 全量通过
+
 ## [3.0.0-rc.26] - 2026-08-30
 
 - 新增可运行的 Smoke 套件（benchmark/omnibench-v2/smoke/）：

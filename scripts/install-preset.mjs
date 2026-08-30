@@ -35,9 +35,12 @@ const dirs = [
   ['benchmark', 'benchmark'],
 ]
 
+const COPY_SKIP = new Set(['.git', 'node_modules', 'repos', 'runs', 'prompts', 'results', 'homes'])
+
 function copyDir(srcDir, dstDir) {
   fs.mkdirSync(dstDir, { recursive: true })
   for (const entry of fs.readdirSync(srcDir)) {
+    if (COPY_SKIP.has(entry)) continue
     const srcFile = path.join(srcDir, entry)
     const dstFile = path.join(dstDir, entry)
     const stat = fs.statSync(srcFile)
