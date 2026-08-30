@@ -11,10 +11,10 @@ import {
 } from '../benchmark/omnibench-v2/gates.mjs'
 
 const sample = [
-  { id: 't1', arm: 'raw', run: 1, success: true, difficulty: 'hard', durationMs: 100, metrics: { cost: 1, interventions: 0 }, telemetryComplete: true, falseCompletion: false },
-  { id: 't1', arm: 'omni', run: 1, success: true, difficulty: 'hard', durationMs: 200, metrics: { cost: 2, interventions: 1 }, telemetryComplete: true, falseCompletion: false },
-  { id: 't2', arm: 'raw', run: 1, success: false, difficulty: 'medium', durationMs: 100, metrics: { cost: 1, interventions: 0 }, telemetryComplete: true, falseCompletion: false },
-  { id: 't2', arm: 'omni', run: 1, success: true, difficulty: 'medium', durationMs: 200, metrics: { cost: 2, interventions: 1 }, telemetryComplete: true, falseCompletion: false },
+  { id: 't1', arm: 'raw', run: 1, success: true, difficulty: 'hard', durationMs: 100, repo: 'r1', task: 't1', metrics: { cost: 1, interventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  { id: 't1', arm: 'omni', run: 1, success: true, difficulty: 'hard', durationMs: 200, repo: 'r1', task: 't1', metrics: { cost: 2, interventions: 1 }, telemetryComplete: true, falseCompletion: false },
+  { id: 't2', arm: 'raw', run: 1, success: false, difficulty: 'medium', durationMs: 100, repo: 'r2', task: 't2', metrics: { cost: 1, interventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  { id: 't2', arm: 'omni', run: 1, success: true, difficulty: 'medium', durationMs: 200, repo: 'r2', task: 't2', metrics: { cost: 2, interventions: 1 }, telemetryComplete: true, falseCompletion: false },
 ]
 
 test('summarizeBenchmark computes per-arm success rates', () => {
@@ -108,4 +108,15 @@ test('release gates count only the paired cohort, not other arms', () => {
   const tasksGate = report.gates.find((g) => g.name === 'Tasks >= 100')
   assert.equal(reposGate.value, 2)
   assert.equal(tasksGate.value, 2)
+})
+
+test('release gates include NOOP precision / simple regression / recovery / intervention', () => {
+  const report = evaluateReleaseGates(sample)
+  const names = report.gates.map((g) => g.name)
+  assert.ok(names.includes('NOOP precision >= 90%'))
+  assert.ok(names.includes('Simple-task regression <= 2pp'))
+  assert.ok(names.includes('Recovery success >= 75%'))
+  assert.ok(names.includes('Human intervention reduction >= 30%'))
+  const noop = report.gates.find((g) => g.name === 'NOOP precision >= 90%')
+  assert.equal(noop.pass, false) // no metric data → must NOT silently pass
 })

@@ -15,8 +15,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { runAgentChain, formatChainReport } from './agent-chain.mjs'
-import { buildMethodologyDirective } from './methodology.mjs'
 import { isRouterStandardAvailable, routerStandardNotice } from './compat.mjs'
 import {
   buildContextGraph,
@@ -24,13 +22,8 @@ import {
   buildTaskContext,
   selectKeyFilesForTask,
 } from './project-brain.mjs'
-import { buildMission, formatMissionPlan } from './mission-planner.mjs'
-import { runDagLoop } from './agent-runtime.mjs'
-import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
-import { compileTaskWithLLM } from './task-compiler.mjs'
-import { bindCapabilitiesToDag, formatMissionDag, isMissionDagComplete } from './mission-dag.mjs'
-import { generateMissionDag, roleForTask } from './planner-dag.mjs'
+import { isFrontendTask } from './visual-qa.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain, recordCapabilityOutcome } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
 import { capabilityToolFilter } from './capability-sandbox.mjs'
@@ -48,15 +41,10 @@ import { requiredTrustForRisk, omniEventToEvidenceRecord } from './evidence-trus
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
-import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory } from './memory.mjs'
-import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
 import { captureEvidence, evidenceSummary } from './evidence-store.mjs'
 import { evidencePass, extractHarnessEvidence } from './evidence.mjs'
 import { adaptEvidenceFromProvider } from './evidence-adapter.mjs'
 import { recordMissionRecovery } from './recovery-telemetry.mjs'
-import { listMissionStates, loadMissionState, saveMissionState } from './mission-resume.mjs'
-import { collectResults, formatResultSummary, importBenchmarkRecord, missingTaskIds, summarizeResults } from './benchmark-results.mjs'
-import { buildAstGraph, collectSourceFiles } from './ast-provider.mjs'
 
 export {
   buildContextGraph,
@@ -644,10 +632,7 @@ export function apply(ctx, config = {}) {
     let state = states.get(session.id)
     if (!state) {
       state = readPersistedState(session) || { kind: null, taskType: null, thinkingMode: null, riskLevel: null, firstText: null, planRequested: false, directOverride: false, memory: null, taskDecision: null }
-      if (!state.memory) {
-        const cwd = session.meta?.cwd || session.header?.cwd
-        state.memory = cwd ? loadMemoryEngine(cwd) : createMemoryEngine()
-      }
+      // Memory engine is loaded lazily inside omni_memory (dev surface).
       states.set(session.id, state)
     }
     return state
@@ -743,7 +728,8 @@ export function apply(ctx, config = {}) {
   function evaluateCurrentCompletion(contract, evidence, session, adapter = hostAdapter) {
     const currentRevision = adapter.getWorkspaceRevision(session?.id)
     const workspaceFingerprint = adapter.getWorkspaceFingerprint()
-    return completionStatus(contract, bindEvidenceToCriteria(contract, evidence || []), { currentRevision, workspaceFingerprint })
+    const freshnessUnknown = !adapter.getFreshnessAvailable() && !workspaceFingerprint
+    return completionStatus(contract, bindEvidenceToCriteria(contract, evidence || []), { currentRevision, workspaceFingerprint, freshnessUnknown })
   }
 
   function planMode() {
@@ -1151,10 +1137,14 @@ export function apply(ctx, config = {}) {
       },
       required: ['action'],
     },
-    execute(args) {
+    async execute(args) {
+      const { createMemoryEngine, loadMemoryEngine } = await import('./memory-engine.mjs')
+      const { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory } = await import('./memory.mjs')
       const session = currentSession()
       if (!session) return 'no agent session'
       const state = stateFor(session)
+      const cwd = session.meta?.cwd || session.header?.cwd
+      if (!state.memory) state.memory = cwd ? loadMemoryEngine(cwd) : createMemoryEngine()
       const action = String(args?.action || 'status').toLowerCase()
       if (action === 'clear') {
         state.memory = createMemoryEngine()
@@ -1193,6 +1183,7 @@ export function apply(ctx, config = {}) {
       required: ['screenshotPath'],
     },
     async execute(args) {
+      const { buildVisualQaPrompt, callVisionApi, parseVisualQaResponse } = await import('./visual-qa.mjs')
       const screenshotPath = String(args?.screenshotPath || '').trim()
       if (!screenshotPath) return 'screenshotPath is required.'
       if (!fs.existsSync(screenshotPath)) return `Screenshot not found: ${screenshotPath}`
@@ -1238,6 +1229,8 @@ export function apply(ctx, config = {}) {
       required: ['taskId', 'arm', 'task'],
     },
     async execute(args) {
+      const { buildMethodologyDirective } = await import('./methodology.mjs')
+      const { buildMission, formatMissionPlan } = await import('./mission-planner.mjs')
       const session = currentSession()
       const agent = session && agentFor(session)
       const subagents = ctxGet('subagents') 
@@ -1320,6 +1313,7 @@ export function apply(ctx, config = {}) {
       required: ['arm'],
     },
     async execute(args) {
+      const { buildMethodologyDirective } = await import('./methodology.mjs')
       const session = currentSession()
       const agent = session && agentFor(session)
       const subagents = ctxGet('subagents') 
@@ -1385,7 +1379,8 @@ export function apply(ctx, config = {}) {
       type: 'object',
       properties: {},
     },
-    execute() {
+    async execute() {
+      const { collectResults, formatResultSummary, missingTaskIds, summarizeResults } = await import('./benchmark-results.mjs')
       const session = currentSession()
       const cwd = session?.meta?.cwd || session?.header?.cwd
       if (!cwd) return 'No workspace cwd found.'
@@ -1423,6 +1418,7 @@ export function apply(ctx, config = {}) {
       },
     },
     async execute(args) {
+      const { importBenchmarkRecord } = await import('./benchmark-results.mjs')
       const session = currentSession()
       const cwd = session?.meta?.cwd || session?.header?.cwd
       if (!cwd) return 'No workspace cwd found.'
@@ -1458,6 +1454,7 @@ export function apply(ctx, config = {}) {
       },
     },
     async execute(args) {
+      const { buildAstGraph, collectSourceFiles } = await import('./ast-provider.mjs')
       const session = currentSession()
       const cwd = session?.meta?.cwd || session?.header?.cwd
       if (!cwd) return 'No workspace cwd found.'
@@ -1481,6 +1478,10 @@ export function apply(ctx, config = {}) {
   })
 
   async function createMissionExecutor({ session, agent, subagents, task, taskType, frontend, brief, capabilityBrain, evidenceRecords, resumeKey, contract: contractArg }) {
+    const { saveMissionState } = await import('./mission-resume.mjs')
+    const { isMissionDagComplete } = await import('./mission-dag.mjs')
+    const { buildVisualQaStepRequirement } = await import('./visual-qa.mjs')
+    const { roleForTask } = await import('./planner-dag.mjs')
     const cwd = session?.meta?.cwd || session?.header?.cwd
     let brain = capabilityBrain
 
@@ -1848,6 +1849,13 @@ export function apply(ctx, config = {}) {
       required: ['task'],
     },
     async execute(args) {
+      const { buildMission } = await import('./mission-planner.mjs')
+      const { compileTaskWithLLM } = await import('./task-compiler.mjs')
+      const { generateMissionDag } = await import('./planner-dag.mjs')
+      const { bindCapabilitiesToDag, formatMissionDag } = await import('./mission-dag.mjs')
+      const { runDagLoop } = await import('./agent-runtime.mjs')
+      const { saveMissionState } = await import('./mission-resume.mjs')
+      const { buildVisualQaStepRequirement } = await import('./visual-qa.mjs')
       const session = currentSession()
       const agent = session && agentFor(session)
       const subagents = ctxGet('subagents') 
@@ -1960,6 +1968,9 @@ export function apply(ctx, config = {}) {
       required: [],
     },
     async execute(args) {
+      const { listMissionStates, loadMissionState, saveMissionState } = await import('./mission-resume.mjs')
+      const { formatMissionDag } = await import('./mission-dag.mjs')
+      const { runDagLoop } = await import('./agent-runtime.mjs')
       const session = currentSession()
       const agent = session && agentFor(session)
       const subagents = ctxGet('subagents') 
@@ -2174,6 +2185,7 @@ export function apply(ctx, config = {}) {
       },
     },
     async execute(args) {
+      const { runAgentChain, formatChainReport } = await import('./agent-chain.mjs')
       const session = currentSession()
       if (!session) return 'no agent session'
       const state = stateFor(session)
@@ -2311,7 +2323,11 @@ export function apply(ctx, config = {}) {
       ? adaptEvidenceFromProvider({
           provider: payload.provider || payload.evidenceProvider || (['dsh', 'host', 'deepseek-harness'].includes(event.host) ? event.host : 'provider'),
           result: payload,
-          policy: { hostObserved: event.hostObserved === true },
+          policy: {
+            hostObserved: event.hostObserved === true,
+            deterministic: event.provenance?.deterministic === true,
+            authenticatedProvider: event.provenance?.provider || null,
+          },
         })
       : omniEventToEvidenceRecord(event)
     if (record) st.omniTaskState.evidence.push(record)

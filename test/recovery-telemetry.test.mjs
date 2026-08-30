@@ -65,3 +65,22 @@ test('failureFingerprint is deterministic and aggregate counts repeats', async (
   assert.equal(aggregate.repeatedFingerprintCount, 1)
   assert.equal(aggregate.repeatedFingerprintRate, 1)
 })
+
+test('recovery transitions bind each failure to its nearest action', () => {
+  const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'recovery-nearest-'))
+  try {
+    recordMissionRecovery(cwd, {
+      taskId: 't2',
+      actions: [
+        { type: 'failure', observation: { category: 'test_failure', file: 'a.test.js', detail: 'A' }, attempt: 3 },
+        { action: 'repair', attempt: 2 },
+        { action: 'change_hypothesis', attempt: 3 },
+      ],
+      outcome: 'failed',
+    })
+    const records = loadRecoveryTelemetry(cwd)
+    assert.equal(records[0].transitions[0].action, 'change_hypothesis')
+  } finally {
+    fs.rmSync(cwd, { recursive: true, force: true })
+  }
+})

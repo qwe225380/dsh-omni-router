@@ -47,12 +47,28 @@ export function evaluateReleaseGates(results = [], options = {}) {
   const repos = new Set(pairs.map((p) => p.repo)).size
   const tasks = Object.keys(byTask).length
 
+  const avg = (values) => {
+    const list = values.filter((v) => v !== null && v !== undefined)
+    return list.length ? list.reduce((s, v) => s + v, 0) / list.length : null
+  }
+  const noopPrecision = avg(cohortResults.map((r) => r.metrics?.noopPrecision))
+  const recoverySuccessRate = avg(cohortResults.map((r) => r.metrics?.recoverySuccessRate))
+  const simplePairs = pairs.filter((p) => ['easy', 'simple'].includes(p.difficulty))
+  const simpleRegression = simplePairs.length ? avg(simplePairs.map((p) => p.uplift)) : null
+  const interventionReduction = avg(pairs.map((p) => p.interventionReduction))
+
   const gates = [
     {
       name: 'Medium/Hard uplift >= 10pp',
       value: mediumHardUplift,
       target: 0.1,
       pass: mediumHardUplift !== null && mediumHardUplift >= 0.1,
+    },
+    {
+      name: 'Simple-task regression <= 2pp',
+      value: simpleRegression,
+      target: -0.02,
+      pass: simpleRegression !== null && simpleRegression >= -0.02,
     },
     {
       name: 'False completion < 3%',
@@ -71,6 +87,24 @@ export function evaluateReleaseGates(results = [], options = {}) {
       value: costRatio,
       target: 2.5,
       pass: costRatio !== null && costRatio <= 2.5,
+    },
+    {
+      name: 'NOOP precision >= 90%',
+      value: noopPrecision,
+      target: 0.9,
+      pass: noopPrecision !== null && noopPrecision >= 0.9,
+    },
+    {
+      name: 'Recovery success >= 75%',
+      value: recoverySuccessRate,
+      target: 0.75,
+      pass: recoverySuccessRate !== null && recoverySuccessRate >= 0.75,
+    },
+    {
+      name: 'Human intervention reduction >= 30%',
+      value: interventionReduction,
+      target: 0.3,
+      pass: interventionReduction !== null && interventionReduction >= 0.3,
     },
     {
       name: 'Every task has >= 3 paired runs',

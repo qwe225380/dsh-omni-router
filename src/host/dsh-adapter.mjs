@@ -27,6 +27,7 @@ export function createDshHostAdapter(ctx = {}) {
   }
 
   const revisions = new Map()
+  let freshnessAvailable = false
 
   return {
     describeHost() {
@@ -53,6 +54,10 @@ export function createDshHostAdapter(ctx = {}) {
 
     getWorkspaceRevision(sessionId = '') {
       return revisions.get(sessionId) || 0
+    },
+
+    getFreshnessAvailable() {
+      return freshnessAvailable
     },
 
     getWorkspaceFingerprint() {
@@ -95,10 +100,20 @@ export function createDshHostAdapter(ctx = {}) {
             const current = revisions.get(sessionId) || 0
             event.workspaceRevision = current
             event.hostObserved = true
+            // Host-derived provenance: only native command/test events are
+            // host-observed deterministic execution. External plugin envelopes
+            // carry no authenticated identity here.
+            event.provenance = {
+              source: 'dsh',
+              eventType: event.type,
+              provider: null,
+              deterministic: event.type === 'command.completed' || event.type === 'test.completed',
+            }
             event.payload = { ...event.payload, workspaceRevision: current }
             handler(event)
           })
           if (typeof off === 'function') disposables.push(off)
+          if (type === 'file.changed') freshnessAvailable = true
         } catch {
           // Some DSH versions do not expose every event name; skip gracefully.
         }

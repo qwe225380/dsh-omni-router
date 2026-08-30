@@ -36,6 +36,14 @@ test('validateManifests returns errors for invalid manifest', () => {
   }]).length, 0)
 })
 
+test('validateManifests rejects duplicate ids', () => {
+  const errors = validateManifests([
+    { id: 'dup', repo: 'r1', commit: 'c', task: 't', acceptance: ['a'], runs: 3 },
+    { id: 'dup', repo: 'r2', commit: 'c', task: 't', acceptance: ['a'], runs: 3 },
+  ])
+  assert.ok(errors.some((e) => e.includes('duplicate manifest id')))
+})
+
 test('readManifests supports single object and array', () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'omnibench-read-'))
   try {

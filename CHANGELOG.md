@@ -1,6 +1,18 @@
 # Changelog
 
-## [3.0.0-rc.20] - 2026-08-29
+## [3.0.0-rc.21] - 2026-08-30
+
+- 评估4.md 6 项 hardening-only（无新功能）：
+  - Federation Provenance 最终版：T3 需要 Host-derived authenticated identity + deterministic provenance（payload.provider/exitCode 不再决定 Trust）；Host Adapter 输出 `event.provenance`
+  - Freshness fail-safe：`getFreshnessAvailable()`；host 无法追踪 revision 且 fingerprint 为空时 `freshnessUnknown=true`，T3+ 证据无 revision 不通过（Unknown is not Pass）
+  - Recovery transition 最近邻绑定：每个 failure 绑定第一个 `attempt >= failure.attempt` 的 recovery action
+  - Pair key 改为 `repo:task:run`；manifest loader 强制 id 全局唯一
+  - Release Gates 新增：NOOP precision ≥90%、Simple-task regression ≤2pp、Recovery success ≥75%、Human intervention reduction ≥30%（无数据不静默通过）；runner 提取对应 TELEMETRY 指标
+  - Production Code Diet：agent-chain / methodology / mission-planner / agent-runtime / task-compiler / mission-dag / planner-dag / visual-qa(部分) / memory / memory-engine / mission-resume / benchmark-results / ast-provider 全部改为 dev-tool 内 dynamic import；生产入口不再加载
+  - CHANGELOG rc.20 日期修正为 2026-08-30
+  - `npm test` 全量通过
+
+## [3.0.0-rc.20] - 2026-08-30
 
 - 评估3.md 6 项收尾：
   - Freshness Final Fix：所有 Host 事件自动附带当前 workspaceRevision；`evaluateCurrentCompletion()` 统一 status/explain/mission/resume 的完成判定（同一 currentRevision + fingerprint）；新增 freshness integration test

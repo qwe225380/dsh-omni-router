@@ -52,7 +52,7 @@ export function summarizeBenchmark(results = []) {
 export function compareArms(results = []) {
   const byPair = {}
   for (const r of results) {
-    const key = `${r.id}:${r.run}`
+    const key = `${r.repo || r.id}:${r.task || r.id}:${r.run}`
     if (!byPair[key]) byPair[key] = {}
     byPair[key][r.arm] = r
   }
@@ -75,6 +75,9 @@ export function compareArms(results = []) {
       uplift: (omniSuccess ? 1 : 0) - (rawSuccess ? 1 : 0),
       costRatio: raw.metrics?.cost ? (omni.metrics?.cost || 0) / raw.metrics.cost : null,
       wallRatio: raw.durationMs ? (omni.durationMs || 0) / raw.durationMs : null,
+      interventionReduction: raw.metrics?.humanInterventions !== undefined && omni.metrics?.humanInterventions !== undefined
+        ? 1 - (omni.metrics.humanInterventions / (raw.metrics.humanInterventions || 1))
+        : null,
     })
   }
   return pairs
@@ -83,7 +86,7 @@ export function compareArms(results = []) {
 export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'omni') {
   const byPair = {}
   for (const r of results) {
-    const key = `${r.id}:${r.run}`
+    const key = `${r.repo || r.id}:${r.task || r.id}:${r.run}`
     if (!byPair[key]) byPair[key] = {}
     byPair[key][r.arm] = r
   }
@@ -106,6 +109,9 @@ export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'o
       uplift: (candidateSuccess ? 1 : 0) - (baselineSuccess ? 1 : 0),
       costRatio: baseline.metrics?.cost ? (candidate.metrics?.cost || 0) / baseline.metrics.cost : null,
       wallRatio: baseline.durationMs ? (candidate.durationMs || 0) / baseline.durationMs : null,
+      interventionReduction: baseline.metrics?.humanInterventions !== undefined && candidate.metrics?.humanInterventions !== undefined
+        ? 1 - (candidate.metrics.humanInterventions / (baseline.metrics.humanInterventions || 1))
+        : null,
     })
   }
   return pairs

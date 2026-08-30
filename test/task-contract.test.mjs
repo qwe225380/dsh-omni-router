@@ -112,6 +112,21 @@ test('bindEvidenceToCriteria stays UNBOUND without explicit targets', () => {
   assert.equal(verifyCompletion(contract, bound).completed, false)
 })
 
+test('freshnessUnknown fails closed for high-trust criteria without revision', () => {
+  const contract = buildTaskContract({
+    taskText: 'x',
+    acceptance: [{ id: 'C1', text: 'verified', requiredTrust: 'T3' }],
+  })
+  const noRevision = verifyCompletion(contract, [
+    { criterionId: 'C1', trustLevel: 'T3', ok: true },
+  ], { freshnessUnknown: true })
+  assert.equal(noRevision.completed, false)
+  const withRevision = verifyCompletion(contract, [
+    { criterionId: 'C1', trustLevel: 'T3', ok: true, workspaceRevision: 3 },
+  ], { freshnessUnknown: true, currentRevision: 3 })
+  assert.equal(withRevision.completed, true)
+})
+
 test('completionStatus returns Verified / Partially Verified / Unverified', () => {
   const contract = buildTaskContract({
     taskText: 'x',

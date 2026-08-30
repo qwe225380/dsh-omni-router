@@ -74,14 +74,20 @@ export function recordMissionRecovery(cwd, { taskId = '', actions = [], outcome,
     .filter((a) => RECOVERY_ACTIONS.includes(a?.action || a?.type))
     .map((a) => ({ action: a.action || a.type, attempt: a.attempt || null }))
   if (!failures.length && !recoveryActions.length) return null
-  // failure → chosen recovery → outcome transitions (for precise analysis)
-  const transitions = failures.map((failure) => ({
-    category: failure.category,
-    fingerprint: failure.fingerprint,
-    action: recoveryActions[0]?.action || 'none',
-    attempt: recoveryActions[0]?.attempt || failure.attempt,
-    outcome,
-  }))
+  // failure → chosen recovery → outcome transitions.
+  // Nearest binding: the first recovery action whose attempt >= failure.attempt
+  // (actions without attempt fall back to the first action).
+  const transitions = failures.map((failure) => {
+    const action = recoveryActions.find((a) => a.attempt === null || a.attempt === undefined || Number(a.attempt) >= Number(failure.attempt))
+      || recoveryActions[0]
+    return {
+      category: failure.category,
+      fingerprint: failure.fingerprint,
+      action: action?.action || 'none',
+      attempt: action?.attempt ?? failure.attempt,
+      outcome,
+    }
+  })
   return appendRecoveryTelemetry(cwd, {
     taskId,
     failureCount: failures.length,

@@ -35,6 +35,7 @@ export function readManifests(manifestPath) {
 
 export function validateManifests(list) {
   const errors = []
+  const seen = new Set()
   for (const m of list) {
     if (!m.id) errors.push('missing id')
     if (!m.repo) errors.push(`${m.id || '?'}: missing repo`)
@@ -42,6 +43,10 @@ export function validateManifests(list) {
     if (!m.task) errors.push(`${m.id || '?'}: missing task`)
     if (!Array.isArray(m.acceptance) || !m.acceptance.length) errors.push(`${m.id || '?'}: missing acceptance`)
     if (!m.runs || m.runs < 3) errors.push(`${m.id || '?'}: runs should be >= 3`)
+    if (m.id) {
+      if (seen.has(m.id)) errors.push(`${m.id}: duplicate manifest id (ids must be globally unique)`)
+      seen.add(m.id)
+    }
   }
   return errors
 }
@@ -160,6 +165,10 @@ export function extractMetrics(agentOutput) {
     }
   }
   const num = (key) => Number(telemetry[key] ?? telemetry.metrics?.[key] ?? 0) || 0
+  const opt = (key) => {
+    const v = telemetry[key] ?? telemetry.metrics?.[key]
+    return v === undefined || v === null ? null : (Number(v) || 0)
+  }
   return {
     metrics: {
       inputTokens: num('inputTokens'),
@@ -171,6 +180,9 @@ export function extractMetrics(agentOutput) {
       cost: num('cost'),
       contextTokens: num('contextTokens'),
       interventions: num('interventions'),
+      humanInterventions: opt('humanInterventions'),
+      noopPrecision: opt('noopPrecision'),
+      recoverySuccessRate: opt('recoverySuccessRate'),
     },
     telemetryComplete: true,
   }

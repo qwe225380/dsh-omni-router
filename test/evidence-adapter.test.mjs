@@ -26,10 +26,11 @@ test('parseProviderOk reads provider-specific success fields', () => {
   assert.equal(parseProviderOk('agentteams', { success: true }), true)
 })
 
-test('trustForProvider assigns T3 only to host-observed exit code', () => {
-  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }, { hostObserved: true }), 'T3')
+test('trustForProvider assigns T3 only to authenticated host-observed deterministic execution', () => {
+  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }, { authenticatedProvider: 'dsh-doublecheck', deterministic: true }), 'T3')
+  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }, { authenticatedProvider: 'dsh', deterministic: true }), 'T2')
   assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }), 'T2')
-  assert.equal(trustForProvider('dsh-doublecheck', { passed: true }, { hostObserved: true }), 'T2')
+  assert.equal(trustForProvider('dsh-doublecheck', { passed: true }, { authenticatedProvider: 'dsh-doublecheck', deterministic: true }), 'T2')
   assert.equal(trustForProvider('dsh-doublecheck', {}), 'T2')
   assert.equal(trustForProvider('agentteams', {}), 'T2')
   assert.equal(trustForProvider('unknown', { trustLevel: 'T4' }), 'T2')
@@ -39,7 +40,7 @@ test('adaptEvidenceFromProvider produces EvidenceRecord v1 with Omni-assigned tr
   const record = adaptEvidenceFromProvider({
     provider: 'dsh-doublecheck',
     result: { delivery: 'PASS', criterionIds: ['C2'], exitCode: 0, files: ['a.test.js'] },
-    policy: { hostObserved: true },
+    policy: { authenticatedProvider: 'dsh-doublecheck', deterministic: true },
   })
   assert.equal(record.kind, 'delivery.verify')
   assert.equal(record.trustLevel, 'T3')

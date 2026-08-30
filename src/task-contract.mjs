@@ -106,6 +106,7 @@ export function verifyCompletion(contract = {}, evidenceRecords = [], options = 
   const criteria = normalizeAcceptance(contract.acceptance)
   const fingerprint = options.workspaceFingerprint || ''
   const currentRevision = options.currentRevision
+  const freshnessUnknown = options.freshnessUnknown === true
   const records = Array.isArray(evidenceRecords) ? evidenceRecords : []
 
   const isFresh = (record) => {
@@ -121,6 +122,10 @@ export function verifyCompletion(contract = {}, evidenceRecords = [], options = 
       if (!isFresh(record)) return false
       if (record.stale === true) return false
       if (record.ok === false) return false
+      // Unknown freshness must never silently pass high-trust proof:
+      // if the host cannot track revisions and the record carries none,
+      // a T3+ criterion is NOT verifiable.
+      if (freshnessUnknown && record.workspaceRevision === undefined && requiredValue >= TRUST_VALUES.T3) return false
       const trust = TRUST_VALUES[record.trustLevel] ?? record.trustValue ?? 0
       if (trust < requiredValue) return false
       return recordMatchesCriterion(record, criterion) !== null

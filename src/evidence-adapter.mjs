@@ -36,12 +36,11 @@ export function parseProviderOk(provider = '', result = {}) {
 }
 
 export function trustForProvider(provider = '', result = {}, policy = {}) {
-  // Provider claims are never accepted. Trust is derived from provider class,
-  // HOST-observed determinism (hostObserved), and Omni policy only.
+  // Provider claims are never accepted. Trust is derived from HOST-derived
+  // authenticated identity + host-observed determinism + Omni policy only.
   const name = String(provider || '').toLowerCase()
-  // A payload-provided exitCode alone is still a provider assertion; T3
-  // requires the host to attest that it observed the deterministic execution.
-  if (name.includes('doublecheck') && result.exitCode !== undefined && policy.hostObserved === true) return 'T3'
+  const authenticated = policy.authenticatedProvider && String(policy.authenticatedProvider).toLowerCase() === name
+  if (name.includes('doublecheck') && result.exitCode !== undefined && authenticated && policy.deterministic === true) return 'T3'
   if (TRUSTED_PROVIDERS.has(name)) return 'T2'
   return 'T2'
 }
