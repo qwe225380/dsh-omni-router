@@ -89,9 +89,13 @@ export function createDshHostAdapter(ctx = {}) {
             if (event.type === 'file.changed') {
               const next = (revisions.get(sessionId) || 0) + 1
               revisions.set(sessionId, next)
-              event.workspaceRevision = next
-              event.payload = { ...event.payload, workspaceRevision: next }
             }
+            // Every host event carries the CURRENT session revision so each
+            // EvidenceRecord knows which workspace version produced it.
+            const current = revisions.get(sessionId) || 0
+            event.workspaceRevision = current
+            event.hostObserved = true
+            event.payload = { ...event.payload, workspaceRevision: current }
             handler(event)
           })
           if (typeof off === 'function') disposables.push(off)

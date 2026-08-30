@@ -1,6 +1,17 @@
 # Changelog
 
-## [3.0.0-rc.19] - 2026-08-21
+## [3.0.0-rc.20] - 2026-08-29
+
+- 评估3.md 6 项收尾：
+  - Freshness Final Fix：所有 Host 事件自动附带当前 workspaceRevision；`evaluateCurrentCompletion()` 统一 status/explain/mission/resume 的完成判定（同一 currentRevision + fingerprint）；新增 freshness integration test
+  - Federation Provenance：`evidenceProvider` 身份正确传递；T3 需要 Host 证明 `hostObserved`（payload 自带 exitCode 不再自动 T3）；删除 `omni-evidence-provider` 死分支
+  - Benchmark Cohort Fix：所有 Release Gate 只统计 `baseline ∩ candidate` 的 paired cohort
+  - Recovery Telemetry：`omni_mission_resume` 也记录；schema 增加 `transitions`（failure → action → outcome）
+  - Production Code Diet：移除 `omni-router.mjs` 15 个死 import（skill-suggest / mission-ir / context-expansion 等）
+  - 最后清理：默认 public tools 收敛为 `omni_status / omni_explain / omni_doctor`；CHANGELOG 日期修正
+  - `npm test` 全量通过
+
+## [3.0.0-rc.19] - 2026-08-29
 
 - 评价2.md 8 项收尾：
   - P0-1：单一共享 Host Adapter 实例（`hostAdapter`），修复 Workspace Revision 归零 bug

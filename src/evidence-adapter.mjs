@@ -35,13 +35,13 @@ export function parseProviderOk(provider = '', result = {}) {
   return result.ok === true || result.exitCode === 0 || result.passed === true
 }
 
-export function trustForProvider(provider = '', result = {}) {
+export function trustForProvider(provider = '', result = {}, policy = {}) {
   // Provider claims are never accepted. Trust is derived from provider class,
-  // host-observed determinism, and Omni policy only.
+  // HOST-observed determinism (hostObserved), and Omni policy only.
   const name = String(provider || '').toLowerCase()
-  // Only a real host-observed exit code counts as deterministic execution.
-  // `passed: true` is still a provider assertion → T2.
-  if (name.includes('doublecheck') && result.exitCode !== undefined) return 'T3'
+  // A payload-provided exitCode alone is still a provider assertion; T3
+  // requires the host to attest that it observed the deterministic execution.
+  if (name.includes('doublecheck') && result.exitCode !== undefined && policy.hostObserved === true) return 'T3'
   if (TRUSTED_PROVIDERS.has(name)) return 'T2'
   return 'T2'
 }
@@ -59,7 +59,7 @@ function isIndependentVerifier(provider = '') {
 }
 
 export function adaptEvidenceFromProvider({ provider = '', result = {}, policy = {} } = {}) {
-  const trustLevel = policy.grantedT4 === true && isIndependentVerifier(provider) ? 'T4' : trustForProvider(provider, result)
+  const trustLevel = policy.grantedT4 === true && isIndependentVerifier(provider) ? 'T4' : trustForProvider(provider, result, policy)
   const record = createEvidenceRecord({
     id: `E-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
     criterionIds: Array.isArray(result.criterionIds) ? result.criterionIds : [],

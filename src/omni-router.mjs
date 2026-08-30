@@ -16,7 +16,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runAgentChain, formatChainReport } from './agent-chain.mjs'
-import { buildSkillSuggestionText, filterAvailableSkills, suggestSkillsForTask } from './skill-suggest.mjs'
 import { buildMethodologyDirective } from './methodology.mjs'
 import { isRouterStandardAvailable, routerStandardNotice } from './compat.mjs'
 import {
@@ -30,7 +29,7 @@ import { runDagLoop } from './agent-runtime.mjs'
 import { buildVisualQaPrompt, buildVisualQaStepRequirement, callVisionApi, isFrontendTask, parseVisualQaResponse } from './visual-qa.mjs'
 import { createTaskDecision, buildPolicyFromTaskDecision } from './task-decision.mjs'
 import { compileTaskWithLLM } from './task-compiler.mjs'
-import { bindCapabilitiesToDag, createMissionDag, formatMissionDag, isMissionDagComplete } from './mission-dag.mjs'
+import { bindCapabilitiesToDag, formatMissionDag, isMissionDagComplete } from './mission-dag.mjs'
 import { generateMissionDag, roleForTask } from './planner-dag.mjs'
 import { autoPopulateCapabilityBrain, createCapabilityBrain, recordCapabilityOutcome } from './capability-brain.mjs'
 import { loadCapabilityManifests } from './capability-manifest.mjs'
@@ -38,22 +37,20 @@ import { capabilityToolFilter } from './capability-sandbox.mjs'
 import { baselineAudit, formatCapabilityAudit, taskTimeAudit } from './capability-auditor.mjs'
 import { appendCapabilityAudit, createStaticRegistryAdapter, discoverCandidates, evaluateProvisionPlan, formatProvisionResult, probeCapability, provisionCapabilities } from './capability-provisioner.mjs'
 import { evaluateProviderValue, formatPerformanceRegistry, loadPerformanceRegistry, recommendDemotion, recordProvisionOutcome, savePerformanceRegistry } from './capability-performance.mjs'
-import { decideIntelligenceLevel, formatIntelligenceLevel } from './progressive-intelligence.mjs'
-import { bindEvidenceToCriteria, buildTaskContract, completionStatus, formatTaskContract, verifyCompletion } from './task-contract.mjs'
+import { decideIntelligenceLevel } from './progressive-intelligence.mjs'
+import { bindEvidenceToCriteria, buildTaskContract, completionStatus, verifyCompletion } from './task-contract.mjs'
 import { buildKernelPrompt } from './kernel-prompt.mjs'
-import { decideIntervention, formatInterventionGate, interventionForIntelligenceLevel } from './intervention-gate.mjs'
-import { createOmniTaskState, formatOmniTaskState } from './omni-task-state.mjs'
-import { compileMissionToHost, toMissionIR } from './mission-ir.mjs'
+import { interventionForIntelligenceLevel } from './intervention-gate.mjs'
+import { createOmniTaskState } from './omni-task-state.mjs'
 import { createDshHostAdapter } from './host/dsh-adapter.mjs'
-import { negotiateHost, formatHostNegotiation } from './host-interface.mjs'
+import { negotiateHost } from './host-interface.mjs'
 import { requiredTrustForRisk, omniEventToEvidenceRecord } from './evidence-trust.mjs'
-import { buildProgressiveContext } from './context-expansion.mjs'
 import { buildDynamicContext } from './dynamic-context.mjs'
 import { classifyFailure } from './failure-taxonomy.mjs'
 import { retrieveContext } from './hybrid-retrieval.mjs'
-import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory, summarizeMemory } from './memory.mjs'
+import { formatMemory, recordDecision, recordFailure, recordProject, recordTrajectory } from './memory.mjs'
 import { createMemoryEngine, loadMemoryEngine, saveMemoryEngine } from './memory-engine.mjs'
-import { captureEvidence, createEvidenceStore, evidenceSummary } from './evidence-store.mjs'
+import { captureEvidence, evidenceSummary } from './evidence-store.mjs'
 import { evidencePass, extractHarnessEvidence } from './evidence.mjs'
 import { adaptEvidenceFromProvider } from './evidence-adapter.mjs'
 import { recordMissionRecovery } from './recovery-telemetry.mjs'
@@ -553,15 +550,12 @@ export function apply(ctx, config = {}) {
     'omni_status', 'omni_plan', 'omni_direct',
     'browser_snapshot', 'browser_elements', 'browser_status', 'browser_tabs', 'browser_cookies',
   ])
-  // Core Feature Freeze: default model-visible Omni surface includes the
-  // reliability controls and capability auto-provisioning (out-of-box).
+  // Core Feature Freeze: default model-visible Omni surface is three tools.
+  // Capability audit/provision are advanced/internal tools (developerMode).
   const PUBLIC_OMNI_TOOLS = new Set([
     'omni_status',
     'omni_explain',
     'omni_doctor',
-    'omni_capability_audit',
-    'omni_capability_provision',
-    'omni_capability_probe',
   ])
 
   function ctxGet(key) {
@@ -741,6 +735,15 @@ export function apply(ctx, config = {}) {
       intervention,
       host: negotiateHost(hostCaps),
     })
+  }
+
+  // Single completion evaluator used by status/explain/mission/resume so they
+  // can never disagree. Always reads the shared adapter's current revision and
+  // workspace fingerprint.
+  function evaluateCurrentCompletion(contract, evidence, session, adapter = hostAdapter) {
+    const currentRevision = adapter.getWorkspaceRevision(session?.id)
+    const workspaceFingerprint = adapter.getWorkspaceFingerprint()
+    return completionStatus(contract, bindEvidenceToCriteria(contract, evidence || []), { currentRevision, workspaceFingerprint })
   }
 
   function planMode() {
@@ -1054,7 +1057,7 @@ export function apply(ctx, config = {}) {
       const omniState = state.omniTaskState || buildCanonicalOmniState(state)
       const contract = omniState.contract
       const intervention = omniState.intervention
-      const completion = completionStatus(contract, omniState.evidence || [])
+      const completion = evaluateCurrentCompletion(contract, omniState.evidence || [], session)
       return [
         `omni-router: ${state.kind || 'unclassified'}`,
         `taskType=${state.taskType || 'unknown'}`,
@@ -1088,7 +1091,7 @@ export function apply(ctx, config = {}) {
       const contract = omniState.contract
       const intervention = omniState.intervention
       const trust = requiredTrustForRisk(contract.risk)
-      const completion = completionStatus(contract, omniState.evidence || [])
+      const completion = evaluateCurrentCompletion(contract, omniState.evidence || [], session)
       const topic = String(args?.topic || '').toLowerCase()
       const lines = [
         `Mode: ${contract.intelligenceLevel} (${intervention.mode})`,
@@ -1921,7 +1924,7 @@ export function apply(ctx, config = {}) {
       // Recovery outcome must follow Proof, not the DAG status:
       // "Done is proven, not declared."
       if (cwd) {
-        recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: proof.completed ? 'success' : 'failed' })
+        recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: proof.completed ? 'success' : 'failed', cost: metrics.cost || 0 })
       }
       return [
         `Mission run: ${finalDag.status}`,
@@ -2034,6 +2037,7 @@ export function apply(ctx, config = {}) {
       const evSummary = evidenceSummary({ entries: evidenceRecords })
       const currentRevision = hostAdapter.getWorkspaceRevision(session.id)
       const proof = verifyCompletion(contract, bindEvidenceToCriteria(contract, evidenceRecords), { currentRevision })
+      recordMissionRecovery(cwd, { taskId: session.id, actions: finalDag.actions, outcome: proof.completed ? 'success' : 'failed', cost: metrics.cost || 0 })
       return [
         `Mission resume: ${finalDag.status}`,
         `Proof of completion: ${proof.verifiedCount}/${proof.requiredCount} criteria verified${proof.missing.length ? ` (missing: ${proof.missing.join(', ')})` : ''}`,
@@ -2303,9 +2307,12 @@ export function apply(ctx, config = {}) {
     // Explicit Federation Envelope only. Native DSH events must stay on the
     // native normalization path; `status`/`delivery` alone are NOT enough.
     const external = Boolean(payload.provider || payload.evidenceProvider)
-      || (payload.schemaVersion === '1' && event.type === 'omni-evidence-provider')
     const record = external
-      ? adaptEvidenceFromProvider({ provider: payload.provider || event.host || 'provider', result: payload })
+      ? adaptEvidenceFromProvider({
+          provider: payload.provider || payload.evidenceProvider || (['dsh', 'host', 'deepseek-harness'].includes(event.host) ? event.host : 'provider'),
+          result: payload,
+          policy: { hostObserved: event.hostObserved === true },
+        })
       : omniEventToEvidenceRecord(event)
     if (record) st.omniTaskState.evidence.push(record)
   })

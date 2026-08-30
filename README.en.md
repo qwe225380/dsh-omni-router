@@ -244,7 +244,7 @@ Omni handles these real agent failure modes:
   → capability reuse first
 
 ✓ Users must manually install missing capabilities
-  → trusted capability provisioning
+  → approval-gated provisioning (recommend by default, auto-trusted only on explicit opt-in)
 
 ✓ Two routers controlling the same model
   → compatibility delegation

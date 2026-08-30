@@ -244,7 +244,7 @@ Omni 不只是功能堆叠，它专门处理这些 Agent failure modes：
   → capability reuse first
 
 ✓ 缺能力时用户需要手动安装
-  → trusted capability provisioning
+  → approval-gated provisioning (recommend by default, auto-trusted only on explicit opt-in)
 
 ✓ 两个 Router 同时控制模型
   → compatibility delegation

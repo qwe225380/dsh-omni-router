@@ -32,6 +32,8 @@ test('recordMissionRecovery only writes when failures or recovery actions exist'
     assert.equal(records[0].recoveryCount, 2)
     assert.equal(records[0].failures[0].category, 'test_failure')
     assert.match(records[0].failures[0].fingerprint, /^[0-9a-f]{12}$/)
+    assert.equal(records[0].transitions[0].action, 'repair')
+    assert.equal(records[0].transitions[0].outcome, 'success')
   } finally {
     fs.rmSync(cwd, { recursive: true, force: true })
   }

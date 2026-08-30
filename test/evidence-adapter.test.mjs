@@ -27,8 +27,9 @@ test('parseProviderOk reads provider-specific success fields', () => {
 })
 
 test('trustForProvider assigns T3 only to host-observed exit code', () => {
-  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }), 'T3')
-  assert.equal(trustForProvider('dsh-doublecheck', { passed: true }), 'T2')
+  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }, { hostObserved: true }), 'T3')
+  assert.equal(trustForProvider('dsh-doublecheck', { exitCode: 0 }), 'T2')
+  assert.equal(trustForProvider('dsh-doublecheck', { passed: true }, { hostObserved: true }), 'T2')
   assert.equal(trustForProvider('dsh-doublecheck', {}), 'T2')
   assert.equal(trustForProvider('agentteams', {}), 'T2')
   assert.equal(trustForProvider('unknown', { trustLevel: 'T4' }), 'T2')
@@ -38,6 +39,7 @@ test('adaptEvidenceFromProvider produces EvidenceRecord v1 with Omni-assigned tr
   const record = adaptEvidenceFromProvider({
     provider: 'dsh-doublecheck',
     result: { delivery: 'PASS', criterionIds: ['C2'], exitCode: 0, files: ['a.test.js'] },
+    policy: { hostObserved: true },
   })
   assert.equal(record.kind, 'delivery.verify')
   assert.equal(record.trustLevel, 'T3')

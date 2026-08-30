@@ -17,8 +17,13 @@ const here = path.dirname(fileURLToPath(import.meta.url))
 export function evaluateReleaseGates(results = [], options = {}) {
   const baselineArm = options.baselineArm || 'raw'
   const candidateArm = options.candidateArm || 'omni'
-  const summary = summarizeBenchmark(results)
   const pairs = baselineArm === 'raw' && candidateArm === 'omni' ? compareArms(results) : comparePair(results, baselineArm, candidateArm)
+
+  // Comparison cohort = baselineArm ∩ candidateArm on the SAME repo/task/run.
+  // Every gate below counts ONLY this cohort, never other arms in results.json.
+  const cohortKeys = new Set(pairs.map((p) => `${p.repo}:${p.task}:${p.run}`))
+  const cohortResults = results.filter((r) => cohortKeys.has(`${r.repo || r.id}:${r.task || r.id}:${r.run}`))
+  const summary = summarizeBenchmark(cohortResults)
   const candidateSummary = summary.byArm[candidateArm] || summarizeBenchmark([]).omni
 
   const mediumHardPairs = pairs.filter((p) => ['medium', 'hard', 'long'].includes(p.difficulty))
@@ -31,17 +36,16 @@ export function evaluateReleaseGates(results = [], options = {}) {
   const costValues = pairs.map((p) => p.costRatio).filter((v) => v !== null && v !== undefined)
   const costRatio = costValues.length ? costValues.reduce((s, v) => s + v, 0) / costValues.length : null
 
-  const allTasks = new Set(results.map((r) => `${r.repo || r.id}:${r.task || r.id}`))
   const byTask = {}
-  for (const taskKey of allTasks) byTask[taskKey] = []
   for (const pair of pairs) {
     const taskKey = `${pair.repo}:${pair.task}`
-    if (byTask[taskKey]) byTask[taskKey].push(pair)
+    byTask[taskKey] = byTask[taskKey] || []
+    byTask[taskKey].push(pair)
   }
   const perTaskCounts = Object.values(byTask).map((list) => list.length)
   const minPairedPerTask = perTaskCounts.length ? Math.min(...perTaskCounts) : 0
-  const repos = new Set(results.map((r) => r.repo)).size
-  const tasks = allTasks.size
+  const repos = new Set(pairs.map((p) => p.repo)).size
+  const tasks = Object.keys(byTask).length
 
   const gates = [
     {

@@ -40,6 +40,7 @@ function appendRecoveryTelemetry(cwd, entry = {}) {
     recoveryCount: entry.recoveryCount || 0,
     actions: entry.actions || [],
     failures: entry.failures || [],
+    transitions: entry.transitions || [],
     cost: entry.cost ?? null,
     outcome: entry.outcome || null,
     at: entry.at || new Date().toISOString(),
@@ -73,12 +74,21 @@ export function recordMissionRecovery(cwd, { taskId = '', actions = [], outcome,
     .filter((a) => RECOVERY_ACTIONS.includes(a?.action || a?.type))
     .map((a) => ({ action: a.action || a.type, attempt: a.attempt || null }))
   if (!failures.length && !recoveryActions.length) return null
+  // failure → chosen recovery → outcome transitions (for precise analysis)
+  const transitions = failures.map((failure) => ({
+    category: failure.category,
+    fingerprint: failure.fingerprint,
+    action: recoveryActions[0]?.action || 'none',
+    attempt: recoveryActions[0]?.attempt || failure.attempt,
+    outcome,
+  }))
   return appendRecoveryTelemetry(cwd, {
     taskId,
     failureCount: failures.length,
     recoveryCount: recoveryActions.length,
     actions: recoveryActions,
     failures,
+    transitions,
     cost,
     outcome,
   })
@@ -101,7 +111,9 @@ export function aggregateRecoveryTelemetry(records = []) {
     }
     for (const failure of entry.failures || []) {
       fingerprints.set(failure.fingerprint, (fingerprints.get(failure.fingerprint) || 0) + 1)
-      const key = `${failure.category}:${(entry.actions || []).map((a) => a.action).join('+') || 'none'}`
+      const transition = (entry.transitions || []).find((t) => t.fingerprint === failure.fingerprint)
+      const action = transition?.action || (entry.actions || []).map((a) => a.action).join('+') || 'none'
+      const key = `${failure.category}:${action}`
       const slot = byCategoryAction[key] || { count: 0, success: 0 }
       slot.count += 1
       if (ok) slot.success += 1

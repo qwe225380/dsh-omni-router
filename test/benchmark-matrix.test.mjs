@@ -57,7 +57,8 @@ test('evaluateReleaseGates fails tasks with no paired runs', () => {
   ]
   const report = evaluateReleaseGates(withMissing)
   const gate = report.gates.find((g) => g.name === 'Every task has >= 3 paired runs')
-  assert.equal(gate.value, 0)
+  // Cohort = paired baseline∩candidate only (t1, t2); each has 1 paired run.
+  assert.equal(gate.value, 1)
   assert.equal(gate.pass, false)
 })
 
@@ -94,4 +95,17 @@ test('evaluateReleaseGates honors baseline/candidate arms', () => {
   ]
   const report = evaluateReleaseGates(multi, { baselineArm: 'omni', candidateArm: 'mid' })
   assert.ok(report.pairs >= 2)
+})
+
+test('release gates count only the paired cohort, not other arms', () => {
+  const contaminated = [
+    ...sample,
+    { id: 't9', arm: 'frontier', run: 1, success: true, difficulty: 'hard', repo: 'r9', task: 't9', metrics: {}, telemetryComplete: true, falseCompletion: true },
+    { id: 't10', arm: 'frontier', run: 1, success: true, difficulty: 'hard', repo: 'r10', task: 't10', metrics: {}, telemetryComplete: true, falseCompletion: true },
+  ]
+  const report = evaluateReleaseGates(contaminated, { verbose: true })
+  const reposGate = report.gates.find((g) => g.name === 'Repositories >= 50')
+  const tasksGate = report.gates.find((g) => g.name === 'Tasks >= 100')
+  assert.equal(reposGate.value, 2)
+  assert.equal(tasksGate.value, 2)
 })
