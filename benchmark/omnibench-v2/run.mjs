@@ -20,12 +20,11 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 export function buildPrompt(manifest, arm) {
+  // All arms get the IDENTICAL user prompt. The difference must come from the
+  // environment (model / harness config / plugins / Omni installed), never
+  // from the prompt — otherwise the benchmark measures the prompt, not Omni.
   const criteria = (manifest.acceptance || []).map((c) => `- ${c}`).join('\n')
-  const task = `Task:\n${manifest.task}\n\nAcceptance criteria:\n${criteria}`
-  if (arm === 'raw') {
-    return `${task}\n\nWork on the task. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
-  }
-  return `${task}\n\nYou are using the Omni control plane. Follow engineering methodology, verify with real evidence, and do not claim completion without checks. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
+  return `Task:\n${manifest.task}\n\nAcceptance criteria:\n${criteria}\n\nComplete the task. Use the capabilities available in your environment. When done, reply exactly "BENCHMARK: PASS" if you verified all criteria, otherwise "BENCHMARK: FAIL".`
 }
 
 export function readManifests(manifestPath) {
@@ -240,6 +239,28 @@ function main() {
         const baseline = m.baselineCommand ? runCommand(m.baselineCommand, runDir, 'baseline', timeoutMs) : null
         if (baseline) console.log(`baseline exit=${baseline.exitCode ?? 'skip'}`)
 
+        // Task validity: the starting commit must FAIL the hidden verifier.
+        // If the bug is already absent, this task cannot measure anything.
+        if (baseline && baseline.skipped !== true && baseline.timedOut !== true && baseline.exitCode === 0) {
+          results.push({
+            id: m.id,
+            arm,
+            run: i,
+            difficulty: m.difficulty || 'medium',
+            model: m.model || 'fast',
+            repo: m.repo,
+            commit: m.commit,
+            task: m.task,
+            success: null,
+            taskValid: false,
+            reason: 'starting-commit verifier passed: bug not present at starting commit',
+            baselineExitCode: 0,
+            ranAt: new Date().toISOString(),
+          })
+          console.log('SKIP: starting-commit verifier passed (bug absent); task invalid for benchmarking.')
+          continue
+        }
+
         let agent = null
         if (agentCommand) {
           const command = `${agentCommand} ${JSON.stringify(prompt)}`
@@ -274,6 +295,7 @@ function main() {
           success,
           falseCompletion,
           agentClaimedPass,
+          taskValid: true,
           agentExitCode: agent?.exitCode ?? null,
           verifyExitCode: verify?.exitCode ?? null,
           durationMs: (agent?.durationMs || 0) + (verify?.durationMs || 0),

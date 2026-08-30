@@ -58,9 +58,24 @@ export function evaluateReleaseGates(results = [], options = {}) {
   const simpleRegression = simplePairs.length ? avg(simplePairs.map((p) => p.uplift)) : null
   // Cohort-level intervention reduction. baseline=0 → not applicable (null),
   // never fake 100%.
-  const sumBaselineHuman = cohortResults.filter((r) => r.arm === baselineArm).reduce((s, r) => s + (r.metrics?.humanInterventions || 0), 0)
-  const sumCandidateHuman = candidateResults.reduce((s, r) => s + (r.metrics?.humanInterventions || 0), 0)
+  const defined = (v) => v !== undefined && v !== null
+  const sumBaselineHuman = cohortResults.filter((r) => r.arm === baselineArm).reduce((s, r) => s + (defined(r.metrics?.humanInterventions) ? r.metrics.humanInterventions : 0), 0)
+  const sumCandidateHuman = candidateResults.reduce((s, r) => s + (defined(r.metrics?.humanInterventions) ? r.metrics.humanInterventions : 0), 0)
   const interventionReduction = sumBaselineHuman > 0 ? 1 - sumCandidateHuman / sumBaselineHuman : null
+  // KPI coverage: a missing required metric must fail the gate, not be
+  // silently averaged away.
+  const coverageOf = (fn) => {
+    if (!candidateResults.length) return 0
+    return candidateResults.filter((r) => fn(r)).length / candidateResults.length
+  }
+  const kpiCoverage = Math.min(
+    coverageOf((r) => defined(r.metrics?.noopPrecision)),
+    coverageOf((r) => defined(r.metrics?.recoverySuccessRate)),
+    coverageOf((r) => defined(r.metrics?.humanInterventions)),
+  )
+  const taskValidityRate = candidateResults.length
+    ? candidateResults.filter((r) => r.taskValid !== false).length / candidateResults.length
+    : 0
 
   const gates = [
     {
@@ -86,6 +101,18 @@ export function evaluateReleaseGates(results = [], options = {}) {
       value: telemetryCompleteRate,
       target: 1,
       pass: telemetryCompleteRate >= 1,
+    },
+    {
+      name: 'KPI telemetry coverage = 100%',
+      value: kpiCoverage,
+      target: 1,
+      pass: kpiCoverage >= 1,
+    },
+    {
+      name: 'Task validity = 100%',
+      value: taskValidityRate,
+      target: 1,
+      pass: taskValidityRate >= 1,
     },
     {
       name: 'Cost ratio <= 2.5x',

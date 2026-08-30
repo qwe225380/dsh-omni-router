@@ -14,13 +14,20 @@ import {
   writeResults,
 } from '../benchmark/omnibench-v2/run.mjs'
 
-test('buildPrompt includes task and BENCHMARK marker', () => {
+test('buildPrompt is identical for every arm (no prompt leakage)', () => {
   const manifest = { task: 'Fix pagination', acceptance: ['all tests pass'] }
   const raw = buildPrompt(manifest, 'raw')
   assert.match(raw, /Fix pagination/)
   assert.match(raw, /BENCHMARK: PASS/)
   const omni = buildPrompt(manifest, 'omni')
-  assert.match(omni, /Omni control plane/)
+  const stack = buildPrompt(manifest, 'stack')
+  const stackOmni = buildPrompt(manifest, 'stack_omni')
+  const frontier = buildPrompt(manifest, 'frontier')
+  assert.equal(omni, raw)
+  assert.equal(stack, raw)
+  assert.equal(stackOmni, raw)
+  assert.equal(frontier, raw)
+  assert.doesNotMatch(raw, /Omni control plane/)
 })
 
 test('validateManifests returns errors for invalid manifest', () => {

@@ -62,6 +62,7 @@ export function compareArms(results = []) {
     const omni = pair.omni
     if (!raw || !omni) continue
     if (raw.success === null || omni.success === null) continue
+    if (raw.taskValid === false || omni.taskValid === false) continue
     const rawSuccess = raw.success === true
     const omniSuccess = omni.success === true
     pairs.push({
@@ -75,8 +76,8 @@ export function compareArms(results = []) {
       uplift: (omniSuccess ? 1 : 0) - (rawSuccess ? 1 : 0),
       costRatio: raw.metrics?.cost ? (omni.metrics?.cost || 0) / raw.metrics.cost : null,
       wallRatio: raw.durationMs ? (omni.durationMs || 0) / raw.durationMs : null,
-      interventionReduction: raw.metrics?.humanInterventions !== undefined && omni.metrics?.humanInterventions !== undefined
-        ? 1 - (omni.metrics.humanInterventions / (raw.metrics.humanInterventions || 1))
+      interventionReduction: raw.metrics?.humanInterventions > 0 && omni.metrics?.humanInterventions !== undefined
+        ? 1 - (omni.metrics.humanInterventions / raw.metrics.humanInterventions)
         : null,
     })
   }
@@ -96,6 +97,7 @@ export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'o
     const candidate = pair[candidateArm]
     if (!baseline || !candidate) continue
     if (baseline.success === null || candidate.success === null) continue
+    if (baseline.taskValid === false || candidate.taskValid === false) continue
     const baselineSuccess = baseline.success === true
     const candidateSuccess = candidate.success === true
     pairs.push({
@@ -109,8 +111,8 @@ export function comparePair(results = [], baselineArm = 'raw', candidateArm = 'o
       uplift: (candidateSuccess ? 1 : 0) - (baselineSuccess ? 1 : 0),
       costRatio: baseline.metrics?.cost ? (candidate.metrics?.cost || 0) / baseline.metrics.cost : null,
       wallRatio: baseline.durationMs ? (candidate.durationMs || 0) / baseline.durationMs : null,
-      interventionReduction: baseline.metrics?.humanInterventions !== undefined && candidate.metrics?.humanInterventions !== undefined
-        ? 1 - (candidate.metrics.humanInterventions / (baseline.metrics.humanInterventions || 1))
+      interventionReduction: baseline.metrics?.humanInterventions > 0 && candidate.metrics?.humanInterventions !== undefined
+        ? 1 - (candidate.metrics.humanInterventions / baseline.metrics.humanInterventions)
         : null,
     })
   }

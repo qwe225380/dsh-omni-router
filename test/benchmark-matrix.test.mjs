@@ -135,3 +135,25 @@ test('NOOP/recovery gates use candidate arm only and intervention handles baseli
   assert.equal(intervention.value, null) // baseline total = 0 → not applicable
   assert.equal(intervention.pass, false)
 })
+
+test('pair interventionReduction is null when baseline has zero interventions', () => {
+  const zero = [
+    { id: 'z1', arm: 'raw', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 'z1', metrics: { humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+    { id: 'z1', arm: 'omni', run: 1, success: true, difficulty: 'easy', repo: 'r1', task: 'z1', metrics: { humanInterventions: 0 }, telemetryComplete: true, falseCompletion: false },
+  ]
+  const pairs = comparePair(zero, 'raw', 'omni')
+  assert.equal(pairs[0].interventionReduction, null)
+})
+
+test('invalid tasks (bug absent at start) are excluded from pairs and gated', () => {
+  const data = [
+    { id: 'v1', arm: 'raw', run: 1, success: true, difficulty: 'hard', repo: 'r1', task: 'v1', taskValid: true, metrics: {}, telemetryComplete: true, falseCompletion: false },
+    { id: 'v1', arm: 'omni', run: 1, success: null, difficulty: 'hard', repo: 'r1', task: 'v1', taskValid: false, metrics: {}, telemetryComplete: true, falseCompletion: false },
+  ]
+  const pairs = comparePair(data, 'raw', 'omni')
+  assert.equal(pairs.length, 0)
+  const report = evaluateReleaseGates(data)
+  const validity = report.gates.find((g) => g.name === 'Task validity = 100%')
+  assert.equal(validity.value, 0)
+  assert.equal(validity.pass, false)
+})

@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.23] - 2026-08-30
+
+- 评估6.md Benchmark Harness Freeze（产品 Core 冻结，不再动 src 功能）：
+  - 所有 arm 使用完全相同的 User Prompt（raw/omni/stack/stack_omni/frontier），差异只来自环境与插件，不再有 Omni 特有提示污染
+  - Release Gate 新增 `KPI telemetry coverage = 100%`：NOOP/Recovery/Human intervention 任一指标缺失 → Gate FAIL，不再“过滤 null 后部分平均”
+  - matrix 层 per-pair `interventionReduction`：baseline=0 → null（不再虚报 100% reduction）
+  - 任务有效性协议：starting-commit hidden verifier 通过（bug 不存在）→ 任务标记 `taskValid:false`、success=null、跳过 agent、从 paired cohort 排除；新增 `Task validity = 100%` Gate
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.22] - 2026-08-30
 
 - 评估5.md 4 项 correctness（Code Freeze 前最后一轮）：
