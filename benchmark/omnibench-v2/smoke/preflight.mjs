@@ -15,14 +15,13 @@
 
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-const here = path.dirname(fileURLToPath(import.meta.url))
-const armIdx = process.argv.indexOf('--arm')
-const arm = armIdx !== -1 ? process.argv[armIdx + 1] : ''
-if (arm !== 'raw' && arm !== 'omni') {
-  console.error('Usage: node preflight.mjs --arm raw|omni')
-  process.exit(2)
+export function detectOmniCoreRow(out = '') {
+  const normalized = String(out).replace(/\\/g, '/')
+  const hasCoreId = /^\s*-?\s*id\s*:\s*["']?omni-router["']?\s*$/mi.test(normalized)
+  const hasCorePath = /src\/omni-router\.mjs/i.test(normalized)
+  return hasCoreId && hasCorePath
 }
 
 function resolveLauncher() {
@@ -31,41 +30,56 @@ function resolveLauncher() {
   return { bin: 'npx', pre: ['--yes', '@deepseek-ai/dsh'] }
 }
 
-const launcher = resolveLauncher()
-const home = path.join(here, 'homes', arm)
-const env = { ...process.env, DSH_HOME: home }
+function main() {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const armIdx = process.argv.indexOf('--arm')
+  const arm = armIdx !== -1 ? process.argv[armIdx + 1] : ''
+  if (arm !== 'raw' && arm !== 'omni') {
+    console.error('Usage: node preflight.mjs --arm raw|omni')
+    process.exit(2)
+  }
 
-// preflight omni must inspect the SAME composition the omni arm actually runs:
-// with the omni.patch.yml overlay. raw inspects the untouched headless.
-const args = arm === 'omni'
-  ? [...launcher.pre, '--profile', 'headless', '--patch', path.join(here, 'omni.patch.yml'), '--dump-config']
-  : [...launcher.pre, '--profile', 'headless', '--dump-config']
+  const launcher = resolveLauncher()
+  const home = path.join(here, 'homes', arm)
+  const env = { ...process.env, DSH_HOME: home }
 
-const dump = spawnSync(launcher.bin, args, { encoding: 'utf8', env })
-const out = `${dump.stdout || ''}\n${dump.stderr || ''}`
+  // preflight omni must inspect the SAME composition the omni arm actually runs:
+  // with the omni.patch.yml overlay. raw inspects the untouched headless.
+  const args = arm === 'omni'
+    ? [...launcher.pre, '--profile', 'headless', '--patch', path.join(here, 'omni.patch.yml'), '--dump-config']
+    : [...launcher.pre, '--profile', 'headless', '--dump-config']
 
-if (dump.status !== 0) {
-  console.error(`PREFLIGHT ${arm.toUpperCase()}: FAIL CLOSED — --dump-config exited ${dump.status} (${launcher.bin}):\n${out.slice(0, 1500)}`)
-  process.exit(1)
-}
+  const dump = spawnSync(launcher.bin, args, { encoding: 'utf8', env })
+  const out = `${dump.stdout || ''}\n${dump.stderr || ''}`
 
-// Strict Omni Core row detection: the dump must name the row `omni-router`
-// AND point it at the actual Core file `src/omni-router.mjs`. Strings like
-// the installer bundle name are not enough.
-const hasCoreRow = /id\s*:\s*["']?omni-router["']?\s*:/.test(out) && /src\/omni-router\.mjs/.test(out)
-
-if (arm === 'raw') {
-  if (hasCoreRow) {
-    console.error('PREFLIGHT RAW: FAIL — the raw composition contains the omni-router Core row; raw arm must stay on the standard/default composition.')
+  if (dump.status !== 0) {
+    console.error(`PREFLIGHT ${arm.toUpperCase()}: FAIL CLOSED — --dump-config exited ${dump.status} (${launcher.bin}):\n${out.slice(0, 1500)}`)
     process.exit(1)
   }
-  console.log('PREFLIGHT RAW: PASS — exact raw composition has no omni-router Core row')
+
+  // Strict Omni Core row detection: the dump must name the row `omni-router`
+  // (exact YAML `id: omni-router`) AND point it at the actual Core file
+  // `src/omni-router.mjs` (accepting `\` separators too). Strings like the
+  // installer bundle name are not enough.
+  const hasCoreRow = detectOmniCoreRow(out)
+
+  if (arm === 'raw') {
+    if (hasCoreRow) {
+      console.error('PREFLIGHT RAW: FAIL — the raw composition contains the omni-router Core row; raw arm must stay on the standard/default composition.')
+      process.exit(1)
+    }
+    console.log('PREFLIGHT RAW: PASS — exact raw composition has no omni-router Core row')
+    process.exit(0)
+  }
+
+  if (!hasCoreRow) {
+    console.error('PREFLIGHT OMNI: FAIL — the patched composition does not contain the omni-router Core row (id: omni-router → src/omni-router.mjs).\nCheck bootstrap-omni.cmd and omni.patch.yml. Dump head:\n' + out.slice(0, 1500))
+    process.exit(1)
+  }
+  console.log('PREFLIGHT OMNI: PASS — exact patched composition contains the omni-router Core row')
   process.exit(0)
 }
 
-if (!hasCoreRow) {
-  console.error('PREFLIGHT OMNI: FAIL — the patched composition does not contain the omni-router Core row (id: omni-router → src/omni-router.mjs).\nCheck bootstrap-omni.cmd and omni.patch.yml. Dump head:\n' + out.slice(0, 1500))
-  process.exit(1)
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
 }
-console.log('PREFLIGHT OMNI: PASS — exact patched composition contains the omni-router Core row')
-process.exit(0)

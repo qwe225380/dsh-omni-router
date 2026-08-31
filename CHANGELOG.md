@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.0.0-rc.29] - 2026-08-30
+
+- Smoke-only 修复（唯一改动项：preflight regex，不再扩 Smoke）：
+  - `detectOmniCoreRow()` 修正：
+    - `id: omni-router` 按行精确匹配（不再要求结尾冒号）
+    - 路径先归一化 `\` → `/`，Windows dump 反斜杠也能匹配 `src/omni-router.mjs`
+  - 新增 3 个最小测试：YAML Core 行 → true；仅 installer 包名 → false；Windows 反斜杠路径 → true
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.28] - 2026-08-30
 
 - Smoke-only correctness 修正（不动 Omni src/）：
