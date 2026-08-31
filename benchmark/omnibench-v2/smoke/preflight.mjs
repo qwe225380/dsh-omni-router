@@ -1,14 +1,16 @@
 /**
  * Smoke preflight (identity verification before any run is counted).
  *
- *   node preflight.mjs --arm raw    → PASS iff the composition does NOT
- *                                     contain omni-router (standard/default)
- *   node preflight.mjs --arm omni   → PASS iff the composition DOES contain
- *                                     omni-router (row, defaultId or tool)
+ *   node preflight.mjs --arm raw    → dump the EXACT raw composition
+ *                                     (no patch) and prove it has NO Omni Core row
+ *   node preflight.mjs --arm omni   → dump the EXACT omni composition
+ *                                     (--patch omni.patch.yml) and prove it HAS
+ *                                     the omni-router Core row
  *
- * Uses the official non-booting inspection: `dsh --profile headless --dump-config`.
- * If the identity cannot be proven, the check FAILS CLOSED and the smoke run
- * must not start.
+ * Uses the official non-booting inspection: `dsh --profile headless --dump-config`
+ * (same launcher resolution as the run wrappers: global dsh, else npx).
+ * Any non-zero dump exit FAILS CLOSED. If identity cannot be proven, the
+ * smoke run must not start.
  */
 
 import path from 'node:path'
@@ -23,37 +25,47 @@ if (arm !== 'raw' && arm !== 'omni') {
   process.exit(2)
 }
 
+function resolveLauncher() {
+  const probe = spawnSync('dsh', ['--version'], { encoding: 'utf8', stdio: 'ignore' })
+  if (probe.error?.code !== 'ENOENT') return { bin: 'dsh', pre: [] }
+  return { bin: 'npx', pre: ['--yes', '@deepseek-ai/dsh'] }
+}
+
+const launcher = resolveLauncher()
 const home = path.join(here, 'homes', arm)
 const env = { ...process.env, DSH_HOME: home }
-const args = ['--profile', 'headless', '--dump-config']
-const dsh = spawnSync('dsh', args, { encoding: 'utf8', env })
-const out = `${dsh.stdout || ''}\n${dsh.stderr || ''}`
-const hasDsh = dsh.error?.code !== 'ENOENT'
 
-if (!hasDsh) {
-  console.error(`PREFLIGHT ${arm.toUpperCase()}: FAIL — dsh not found on PATH (expected: dsh --profile headless --dump-config)`)
+// preflight omni must inspect the SAME composition the omni arm actually runs:
+// with the omni.patch.yml overlay. raw inspects the untouched headless.
+const args = arm === 'omni'
+  ? [...launcher.pre, '--profile', 'headless', '--patch', path.join(here, 'omni.patch.yml'), '--dump-config']
+  : [...launcher.pre, '--profile', 'headless', '--dump-config']
+
+const dump = spawnSync(launcher.bin, args, { encoding: 'utf8', env })
+const out = `${dump.stdout || ''}\n${dump.stderr || ''}`
+
+if (dump.status !== 0) {
+  console.error(`PREFLIGHT ${arm.toUpperCase()}: FAIL CLOSED — --dump-config exited ${dump.status} (${launcher.bin}):\n${out.slice(0, 1500)}`)
   process.exit(1)
 }
 
-const hasOmni = /omni-router|omni_status|omni_doctor|omni_explain/i.test(out)
-const exitOk = dsh.status === 0
+// Strict Omni Core row detection: the dump must name the row `omni-router`
+// AND point it at the actual Core file `src/omni-router.mjs`. Strings like
+// the installer bundle name are not enough.
+const hasCoreRow = /id\s*:\s*["']?omni-router["']?\s*:/.test(out) && /src\/omni-router\.mjs/.test(out)
 
 if (arm === 'raw') {
-  if (hasOmni) {
-    console.error('PREFLIGHT RAW: FAIL — raw composition contains omni-router; raw arm must stay on the standard/default preset.')
+  if (hasCoreRow) {
+    console.error('PREFLIGHT RAW: FAIL — the raw composition contains the omni-router Core row; raw arm must stay on the standard/default composition.')
     process.exit(1)
   }
-  console.log(`PREFLIGHT RAW: PASS — no omni-router in composition (dump exit=${dsh.status})`)
+  console.log('PREFLIGHT RAW: PASS — exact raw composition has no omni-router Core row')
   process.exit(0)
 }
 
-if (!exitOk) {
-  console.error(`PREFLIGHT OMNI: FAIL — --dump-config exited ${dsh.status}:\n${out.slice(0, 1200)}`)
+if (!hasCoreRow) {
+  console.error('PREFLIGHT OMNI: FAIL — the patched composition does not contain the omni-router Core row (id: omni-router → src/omni-router.mjs).\nCheck bootstrap-omni.cmd and omni.patch.yml. Dump head:\n' + out.slice(0, 1500))
   process.exit(1)
 }
-if (!hasOmni) {
-  console.error('PREFLIGHT OMNI: FAIL — omni-router is NOT in the composition.\nRun bootstrap-omni.cmd and check the patch overlay (omni.patch.yml).\nDump head:\n' + out.slice(0, 1200))
-  process.exit(1)
-}
-console.log('PREFLIGHT OMNI: PASS — omni-router present in the headless composition')
+console.log('PREFLIGHT OMNI: PASS — exact patched composition contains the omni-router Core row')
 process.exit(0)

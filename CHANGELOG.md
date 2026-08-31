@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.0-rc.28] - 2026-08-30
+
+- Smoke-only correctness 修正（不动 Omni src/）：
+  - preflight omni 现在检查与真实 arm 完全相同的组合：`--patch omni.patch.yml --dump-config`；raw 无 patch；两侧 dump exit != 0 → FAIL CLOSED
+  - Omni 身份检测收紧：必须同时出现 `id: omni-router` 行与 `src/omni-router.mjs`（installer bundle 字符串不算）；raw 必须无该 Core 行
+  - 无 8.3 short-path fallback 修复：wrapper 不再被复制后依赖 %~dp0——优先 8.3 短路径；否则复制到免空格 temp 并用显式 `--smoke-root="<真实目录>"` 参数调用
+  - 删除 omni.patch.yml 中无效的 `agentPresets.defaultId` 段（官方字段是 `default`，且该 override 对 headless 无作用）；patch 只挂 Omni Core 行
+  - preflight launcher 与 run wrapper 一致：有全局 dsh 用 dsh，否则 npx @deepseek-ai/dsh
+  - 沙箱链路复测 6/6 passed；`npm test` 全量通过
+
 ## [3.0.0-rc.27] - 2026-08-30
 
 - Smoke-only 修正（不动 Omni src/）：
