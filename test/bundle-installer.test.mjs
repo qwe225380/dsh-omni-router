@@ -39,6 +39,12 @@ test('the bundled preset uses the current persona field name', () => {
   assert.doesNotMatch(text, /^\s+text:/mu, '`text` was renamed to `prefix` in the 0.1.7 series')
 })
 
+test('the bundled preset no longer declares the retired workflow-worker-thread row', () => {
+  const composition = fs.readFileSync(path.join(repoRoot, 'agent.cordis.yml'), 'utf8')
+  assert.doesNotMatch(composition, /name:\s*'@deepseek-ai\/dsh-workflow-worker-thread'/u, 'that package stopped at 0.1.5-rc.3 and the host flags the row as a startup problem')
+  assert.match(composition, /@deepseek-ai\/dsh-workflow-ptc/u, '0.2.x ships dsh-workflow-ptc instead')
+})
+
 test('combined preset points at the bootstrap file router-standard actually ships', () => {
   const home = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-home-'))
   const router = path.join(home, '.agent-presets', 'router-standard')
@@ -72,7 +78,10 @@ test('copyPresetTo copies the bundled preset files into a target directory', () 
     assert.ok(fs.existsSync(path.join(target, 'preset.yml')))
     assert.ok(fs.existsSync(path.join(target, 'src', 'omni-router.mjs')))
     assert.ok(fs.existsSync(path.join(target, 'src', 'host', 'dsh-adapter.mjs')))
-    assert.ok(fs.existsSync(path.join(target, 'benchmark', 'omnibench-v2', 'matrix.mjs')))
+    assert.ok(fs.existsSync(path.join(target, 'benchmark', 'real-tasks.json')), 'the benchmark tools read real-tasks.json from the package root')
+    assert.equal(fs.existsSync(path.join(target, 'benchmark', 'omnibench-v2')), false, 'repository-only benchmark assets must not ship')
+    assert.equal(fs.existsSync(path.join(target, 'test')), false, 'the test suite is not part of an installed preset')
+    assert.equal(fs.existsSync(path.join(target, 'docs')), false, 'repository docs are not part of an installed preset')
     assert.ok(fs.existsSync(path.join(target, 'package.json')))
     assert.ok(fs.existsSync(path.join(target, 'version.json')))
 

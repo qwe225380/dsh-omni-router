@@ -163,8 +163,12 @@
         toolName: subagent_fork
         backgroundMode: continuable
 
-    - id: workflow-worker-thread
-      name: '@deepseek-ai/dsh-workflow-worker-thread'
+    # `dsh-workflow-worker-thread` stopped at 0.1.5-rc.3; the 0.2.x line ships
+    # `dsh-workflow-ptc`. The host flags the old row as a startup problem and
+    # rewrites it, so declare the current row directly instead of relying on
+    # that repair.
+    - id: workflow-ptc
+      name: '@deepseek-ai/dsh-workflow-ptc'
       config:
         provider: spawn
 

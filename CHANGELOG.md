@@ -1,5 +1,23 @@
 # Changelog
 
+## [3.0.0-rc.31] - 2026-10-23
+
+- 继续跟进 DSH 0.2.x：
+  - **`workflow-worker-thread` 行替换为 `workflow-ptc`**：前者最后一个版本是 0.1.5-rc.3，
+    0.2.x 线已改发 `@deepseek-ai/dsh-workflow-ptc`；宿主会把旧行判为 legacy
+    并自动改写，现直接声明当前行，不再依赖宿主修复。
+  - **安装器只复制运行期需要的文件**：preset 目录现在只写入 `src/` 与
+    `benchmark/real-tasks.json`（基准工具按包根解析该文件），不再复制
+    `test/`、`docs/` 和 `benchmark/` 其余内容。已安装目录实测 820.3 KB → 391.9 KB，
+    安装耗时同步下降；宿主每次启动都会扫描该目录。
+  - **升级时清理旧布局**：`copyPresetTo` 在复制前移除历史遗留的 `test/`、`docs/`
+    与 `benchmark/`（保留 `real-tasks.json`），老安装也能收敛到精简布局。
+  - **`scripts/install-preset.mjs` 复用 `lib/installer.js`**：此前脚本自己维护了一份
+    复制清单，与 bundle 插件那条路径各写一遍，两边已经开始不一致；现统一为单一实现。
+  - `copyPresetTo` 增加断言：仓库专用资源不得出现在已安装的 preset 里。
+  - 新增 regression test：legacy `workflow-worker-thread` 行不得再出现。
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.30] - 2026-10-23
 
 - DSH 0.2.x 兼容性修复（安装链路 + preset 组成）：
