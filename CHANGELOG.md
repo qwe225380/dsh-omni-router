@@ -1,5 +1,25 @@
 # Changelog
 
+## [3.0.0-rc.30] - 2026-10-23
+
+- DSH 0.2.x 兼容性修复（安装链路 + preset 组成）：
+  - **安装根目录改按 `DSH_HOME` 解析**（`lib/installer.js`、`scripts/install-preset.mjs`）：
+    桌面版把 home 迁到了 `DSH_HOME`（Windows 上是 `AppData/Roaming/dsh-desktop/harness`），
+    而安装器此前硬编码 `os.homedir()/.dsh`，导致 preset 被复制进运行中的 host 根本不扫描的目录，
+    表现为"装了但没有 Omni Router 选项"。现优先读 `DSH_HOME`，未设置时才回退 `~/.dsh`。
+  - **`persona` 行字段 `text` → `prefix`**（`agent.cordis.yml`）：该字段在 0.1.7 系列改名，
+    误用会以 `missing required value` 校验失败并拖垮整个 preset 的挂载。
+  - **新增 `engines.dsh: >=0.2.1-0 <0.3.0`**：这是 DSH 插件兼容性检查唯一采信的字段；
+    未声明时桌面端不会给出任何兼容性提示。
+  - **组合 preset 不再硬编码 `router-bootstrap-v1.mjs`**：改为探测 `router-standard` 实际携带的
+    版本化 entry（如 `router-bootstrap-v34.mjs`），否则生成的组合 preset 会指向不存在的文件。
+  - **修复组合 preset 插入行的 CRLF 失效**：原实现用含 `\n` 的锚点做 `replace`，
+    在 CRLF 检出上静默不生效；现按文件自身换行符在首个 plugin 行前插入。
+  - 新增 4 个回归测试：`DSH_HOME` 优先级、`~/.dsh` 回退、persona 字段名、bootstrap 版本探测。
+  - 文档更新：`docs/COMPATIBILITY.md`（0.2.1、安装位置与 CLI/桌面差异、已跟进的内核变更）、
+    `docs/INSTALL.md`。
+  - `npm test` 全量通过
+
 ## [3.0.0-rc.29] - 2026-08-30
 
 - Smoke-only 修复（唯一改动项：preflight regex，不再扩 Smoke）：

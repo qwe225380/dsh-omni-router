@@ -6,17 +6,21 @@
  *   node scripts/install-preset.mjs [--force]
  *
  * Copies this repository's preset files into:
- *   ~/.dsh/.agent-presets/omni-router
+ *   <DSH_HOME>/.agent-presets/omni-router
+ *
+ * DSH_HOME wins when set (the desktop build relocates its home); it falls back
+ * to ~/.dsh for a plain CLI install.
  */
 
 import fs from 'node:fs'
-import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { resolvePresetRoot } from '../lib/installer.js'
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '..')
-const target = path.join(os.homedir(), '.dsh', '.agent-presets', 'omni-router')
+const target = path.join(resolvePresetRoot(), 'omni-router')
 
 const files = [
   'agent.cordis.yml',
@@ -98,3 +102,10 @@ fs.writeFileSync(path.join(target, 'version.json'), JSON.stringify({
 
 console.log(`Installed Omni Router preset ${sourceVersion} to:\n  ${target}`)
 console.log('Restart DSH, then select "Omni Router (experimental)" in a new session.')
+if (!process.env.DSH_HOME) {
+  console.log('')
+  console.log('Note: DSH_HOME was not set, so this is the legacy ~/.dsh home.')
+  console.log('The desktop app scans this directory on startup and registers the preset')
+  console.log('automatically. A standalone `dsh` CLI does not: declare the preset as an')
+  console.log("@deepseek-ai/dsh-agent-preset row in the profile patch instead (see docs/COMPATIBILITY.md).")
+}

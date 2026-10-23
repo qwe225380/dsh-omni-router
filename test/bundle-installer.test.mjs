@@ -4,7 +4,63 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 
-import { copyPresetTo } from '../lib/installer.js'
+import { copyPresetTo, ensureCombinedPreset, resolveDshHome, resolvePresetRoot } from '../lib/installer.js'
+
+const repoRoot = path.resolve(import.meta.dirname, '..')
+
+test('resolvePresetRoot prefers DSH_HOME over the legacy ~/.dsh home', () => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-home-'))
+  try {
+    assert.equal(resolveDshHome({ DSH_HOME: base }), path.resolve(base))
+    assert.equal(resolvePresetRoot({ DSH_HOME: base }), path.join(path.resolve(base), '.agent-presets'))
+  } finally {
+    fs.rmSync(base, { recursive: true, force: true })
+  }
+})
+
+test('resolvePresetRoot falls back to ~/.dsh when DSH_HOME is absent or blank', () => {
+  const legacy = path.join(os.homedir(), '.dsh', '.agent-presets')
+  assert.equal(resolvePresetRoot({}), legacy)
+  assert.equal(resolvePresetRoot({ DSH_HOME: '   ' }), legacy)
+})
+
+test('the bundled preset uses the current persona field name', () => {
+  const composition = fs.readFileSync(path.join(repoRoot, 'agent.cordis.yml'), 'utf8')
+  const lines = composition.split(/\r?\n/u)
+  const start = lines.findIndex((line) => /^- id: persona$/u.test(line))
+  assert.notEqual(start, -1, 'agent.cordis.yml must keep a persona row')
+  const block = []
+  for (const line of lines.slice(start + 1)) {
+    if (/^- id: /u.test(line)) break
+    block.push(line)
+  }
+  const text = block.join('\n')
+  assert.match(text, /^\s+prefix:/mu, 'persona rows take `prefix`, not `text`')
+  assert.doesNotMatch(text, /^\s+text:/mu, '`text` was renamed to `prefix` in the 0.1.7 series')
+})
+
+test('combined preset points at the bootstrap file router-standard actually ships', () => {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-home-'))
+  const router = path.join(home, '.agent-presets', 'router-standard')
+  try {
+    fs.mkdirSync(router, { recursive: true })
+    fs.writeFileSync(path.join(router, 'agent.cordis.yml'), "- id: noop\n  name: ./noop.mjs\n")
+    fs.writeFileSync(path.join(router, 'preset.yml'), 'name: Router Standard\n')
+    fs.writeFileSync(path.join(router, 'router-bootstrap-v34.mjs'), 'export function apply() {}\n')
+    fs.writeFileSync(path.join(router, 'router-core.mjs'), 'export function apply() {}\n')
+
+    const result = ensureCombinedPreset({ env: { DSH_HOME: home } })
+    assert.equal(result.created, true)
+
+    const target = path.join(home, '.agent-presets', 'omni-router-standard')
+    const composition = fs.readFileSync(path.join(target, 'agent.cordis.yml'), 'utf8')
+    assert.match(composition, /name: \.\/router-bootstrap-v34\.mjs/u)
+    assert.doesNotMatch(composition, /router-bootstrap-v1\.mjs/u)
+    assert.ok(fs.existsSync(path.join(target, 'router-bootstrap-v34.mjs')), 'the referenced file must be copied too')
+  } finally {
+    fs.rmSync(home, { recursive: true, force: true })
+  }
+})
 
 test('copyPresetTo copies the bundled preset files into a target directory', () => {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'omni-router-install-'))

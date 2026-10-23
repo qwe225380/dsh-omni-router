@@ -16,7 +16,10 @@
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: You are a helpful software engineer assistant.
+    # `prefix` is the field name inside a scoped persona row. Harness renamed
+    # this from `text` in the 0.1.7 series; a `text:` row fails validation with
+    # "missing required value", which takes the whole preset down with it.
+    prefix: You are a helpful software engineer assistant.
 
 - id: agent-instructions
   name: '@deepseek-ai/dsh-agent-instructions'
