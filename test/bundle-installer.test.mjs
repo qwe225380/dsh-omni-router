@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import { copyPresetTo, ensureCombinedPreset, resolveDshHome, resolvePresetRoot } from '../lib/installer.js'
 
@@ -60,7 +61,9 @@ test('combined preset points at the bootstrap file router-standard actually ship
 
     const target = path.join(home, '.agent-presets', 'omni-router-standard')
     const composition = fs.readFileSync(path.join(target, 'agent.cordis.yml'), 'utf8')
-    assert.match(composition, /name: \.\/router-bootstrap-v34\.mjs/u)
+    const expected = pathToFileURL(path.join(target, 'router-bootstrap-v34.mjs')).href
+    assert.ok(composition.includes(`name: ${expected}`), `the row must resolve to ${expected}, not a profile-relative path`)
+    assert.doesNotMatch(composition, /name: \.\/router-bootstrap/u, 'the desktop inlines the composition, so a ./ row resolves against profiles/web')
     assert.doesNotMatch(composition, /router-bootstrap-v1\.mjs/u)
     assert.ok(fs.existsSync(path.join(target, 'router-bootstrap-v34.mjs')), 'the referenced file must be copied too')
   } finally {
@@ -84,6 +87,15 @@ test('copyPresetTo copies the bundled preset files into a target directory', () 
     assert.equal(fs.existsSync(path.join(target, 'docs')), false, 'repository docs are not part of an installed preset')
     assert.ok(fs.existsSync(path.join(target, 'package.json')))
     assert.ok(fs.existsSync(path.join(target, 'version.json')))
+
+    // The desktop inlines this composition into the profile patch, so a `./`
+    // row would resolve against profiles/web/ and the plugin would never start.
+    // A file:// URL is required: the loader feeds non-relative specifiers to
+    // import(), which rejects a bare `C:/...` as the `c:` scheme on Windows.
+    const installed = fs.readFileSync(path.join(target, 'agent.cordis.yml'), 'utf8')
+    const expected = pathToFileURL(path.join(target, 'src', 'omni-router.mjs')).href
+    assert.ok(installed.includes(`name: ${expected}`), `the local row must be a file URL, got: ${expected}`)
+    assert.doesNotMatch(installed, /name: \.\/src\//u, 'a relative local row cannot load from the profile patch')
 
     const second = copyPresetTo(target)
     assert.equal(second, false, 'same-version install should be skipped')
